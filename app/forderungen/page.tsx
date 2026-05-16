@@ -50,6 +50,7 @@ export default function Forderungen() {
   const [districtId, setDistrictId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [activeCategory, setActiveCategory] = useState<string | null>(null)
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -184,6 +185,27 @@ export default function Forderungen() {
             </button>
           </div>
 
+          {/* Kategorie Filter */}
+          {demands.length > 0 && (
+            <div className="flex gap-2 flex-wrap mb-4">
+              <button
+                onClick={() => setActiveCategory(null)}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${activeCategory === null ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              >
+                Alle
+              </button>
+              {[...new Set(demands.map(d => d.category))].filter(Boolean).map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat === activeCategory ? null : cat)}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${activeCategory === cat ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="flex items-center gap-2 mb-8 text-sm text-gray-500 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
             <ArrowRight size={14} className="text-blue-500 shrink-0" />
             Forderungen mit <span className="font-semibold text-blue-700 mx-1">{VOTE_THRESHOLD} Unterstützungen</span> werden automatisch zur Bürgerabstimmung.
@@ -195,7 +217,7 @@ export default function Forderungen() {
             </div>
           ) : demands.length > 0 ? (
             <div className="flex flex-col gap-4">
-              {demands.map((d) => {
+              {demands.filter(d => activeCategory === null || d.category === activeCategory).map((d) => {
                 const progress = Math.min((d.supports / VOTE_THRESHOLD) * 100, 100)
                 const reachedThreshold = d.supports >= VOTE_THRESHOLD
                 const isSupported = supported.has(d.id)
