@@ -18,15 +18,26 @@ export default function Login() {
     setError('')
 
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
       setError('E-Mail oder Passwort falsch. Bitte nochmal versuchen.')
       setLoading(false)
+      return
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('age_group, gender')
+      .eq('id', data.user.id)
+      .single()
+
+    if (!profile?.age_group || !profile?.gender) {
+      router.push('/onboarding')
     } else {
       router.push('/dashboard')
-      router.refresh()
     }
+    router.refresh()
   }
 
   return (
