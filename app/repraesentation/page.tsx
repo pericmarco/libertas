@@ -17,7 +17,7 @@ export default async function Repraesentation() {
   const districtId = district?.id ?? ''
 
   const [{ data: profiles }, { data: demographics }] = await Promise.all([
-    supabase.from('profiles').select('age_group, gender').eq('district_id', districtId),
+    supabase.from('profiles').select('age_group, gender'),
     supabase.from('district_demographics').select('category, label, percentage').eq('district_id', districtId),
   ])
 

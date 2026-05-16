@@ -43,9 +43,15 @@ export default function Onboarding() {
     const { data } = await supabase.auth.getUser()
     if (!data.user) return
 
+    const { data: district } = await supabase
+      .from('districts')
+      .select('id')
+      .eq('name', 'Neustadt-Süd')
+      .single()
+
     await supabase
       .from('profiles')
-      .upsert({ id: data.user.id, age_group: ageGroup, gender })
+      .upsert({ id: data.user.id, age_group: ageGroup, gender, district_id: district?.id ?? null })
 
     router.push('/dashboard')
   }
