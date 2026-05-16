@@ -21,11 +21,12 @@ export default async function Repraesentation() {
     supabase.from('district_demographics').select('category, label, percentage').eq('district_id', districtId),
   ])
 
-  const score = calcRepScore(profiles ?? [], demographics ?? [])
-  const { label: scoreText, color: scoreColor } = scoreLabel(score)
-
   const withData = (profiles ?? []).filter(p => p.age_group && p.gender)
   const total = profiles?.length ?? 0
+  const hasEnoughData = withData.length >= 10
+
+  const score = hasEnoughData ? calcRepScore(profiles ?? [], demographics ?? []) : 0
+  const { label: scoreText, color: scoreColor } = scoreLabel(score)
 
   const ageGroups = ['18–24', '25–34', '35–44', '45–54', '55–64', '65+']
   const genders = ['Männlich', 'Weiblich', 'Divers', 'Keine Angabe']
@@ -61,16 +62,34 @@ export default async function Repraesentation() {
           {/* Score Karte */}
           <Card className="mb-6 border-2 border-blue-100">
             <CardContent className="p-8">
-              <div className="flex items-end gap-4 mb-4">
-                <span className={`text-7xl font-bold ${scoreColor}`}>{score}</span>
-                <div className="mb-2">
-                  <div className="text-gray-400 text-lg">/ 100</div>
-                  <Badge className={badgeClass}>{scoreText}</Badge>
+              {hasEnoughData ? (
+                <>
+                  <div className="flex items-end gap-4 mb-4">
+                    <span className={`text-7xl font-bold ${scoreColor}`}>{score}</span>
+                    <div className="mb-2">
+                      <div className="text-gray-400 text-lg">/ 100</div>
+                      <Badge className={badgeClass}>{scoreText}</Badge>
+                    </div>
+                  </div>
+                  <Progress value={score} className="h-3 mb-4" />
+                </>
+              ) : (
+                <div className="mb-4">
+                  <div className="text-2xl font-bold text-gray-300 mb-2">Noch nicht verfügbar</div>
+                  <div className="w-full bg-gray-100 rounded-full h-3 mb-4" />
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
+                      <div className="h-full bg-blue-400 rounded-full transition-all" style={{ width: `${(withData.length / 10) * 100}%` }} />
+                    </div>
+                    <span className="text-sm text-gray-500 shrink-0">{withData.length} / 10 Teilnehmer</span>
+                  </div>
+                  <p className="text-sm text-gray-400 mt-3">
+                    Mindestens 10 Nutzer mit Demografieangaben sind nötig für einen aussagekräftigen Score.
+                  </p>
                 </div>
-              </div>
-              <Progress value={score} className="h-3 mb-4" />
+              )}
               <p className="text-sm text-gray-400">
-                Basierend auf {withData.length} von {total} registrierten Nutzern mit Demografieangaben · Referenz: Bevölkerungsdaten Köln Neustadt-Süd
+                Basierend auf {withData.length} von {total} registrierten Nutzern · Referenz: Bevölkerungsdaten Köln Neustadt-Süd
               </p>
             </CardContent>
           </Card>
