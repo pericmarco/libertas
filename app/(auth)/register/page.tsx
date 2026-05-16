@@ -1,6 +1,80 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
+
+type District = { id: string; name: string; city: string }
 
 export default function Register() {
+  const [fullName, setFullName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [districtId, setDistrictId] = useState('')
+  const [districts, setDistricts] = useState<District[]>([])
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.from('districts').select('id, name, city').then(({ data }) => {
+      if (data) setDistricts(data)
+    })
+  }, [])
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
+    const supabase = createClient()
+
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name: fullName },
+      },
+    })
+
+    if (signUpError) {
+      setError(signUpError.message)
+      setLoading(false)
+      return
+    }
+
+    if (data.user) {
+      await supabase.from('profiles').insert({
+        id: data.user.id,
+        full_name: fullName,
+        district_id: districtId || null,
+      })
+    }
+
+    setSuccess(true)
+    setLoading(false)
+  }
+
+  if (success) {
+    return (
+      <main className="min-h-screen flex items-center justify-center px-6 bg-gray-50">
+        <div className="w-full max-w-md text-center">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-3xl">✓</span>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Registrierung erfolgreich!</h1>
+          <p className="text-gray-500 mb-6">
+            Wir haben dir eine Bestätigungs-E-Mail geschickt. Bitte klicke auf den Link darin um dein Konto zu aktivieren.
+          </p>
+          <Link href="/login" className="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors">
+            Zur Anmeldung
+          </Link>
+        </div>
+      </main>
+    )
+  }
+
   return (
     <main className="min-h-screen flex items-center justify-center px-6 bg-gray-50">
       <div className="w-full max-w-md">
@@ -14,34 +88,72 @@ export default function Register() {
           <h1 className="text-2xl font-bold text-gray-900">Konto erstellen</h1>
           <p className="text-gray-500 mt-1">Werde Teil deiner lokalen Demokratie</p>
         </div>
+
         <div className="bg-white rounded-2xl border border-gray-200 p-8">
-          <form className="flex flex-col gap-4">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Vollständiger Name</label>
-              <input type="text" placeholder="Max Mustermann" className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              <input
+                type="text"
+                placeholder="Max Mustermann"
+                value={fullName}
+                onChange={e => setFullName(e.target.value)}
+                required
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">E-Mail</label>
-              <input type="email" placeholder="du@beispiel.de" className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              <input
+                type="email"
+                placeholder="du@beispiel.de"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Wahlkreis / Stadtteil</label>
-              <select className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
-                <option value="">Wahlkreis wählen…</option>
-                <option>Köln Neustadt-Süd</option>
-                <option>Köln Neustadt-Nord</option>
-                <option>Köln Lindenthal</option>
-                <option>Köln Ehrenfeld</option>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Stadtteil</label>
+              <select
+                value={districtId}
+                onChange={e => setDistrictId(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+              >
+                <option value="">Stadtteil wählen…</option>
+                {districts.map(d => (
+                  <option key={d.id} value={d.id}>{d.city} {d.name}</option>
+                ))}
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Passwort</label>
-              <input type="password" placeholder="••••••••" className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              <input
+                type="password"
+                placeholder="Mindestens 6 Zeichen"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                minLength={6}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
-            <button type="submit" className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors mt-2">
-              Registrieren
+
+            {error && (
+              <div className="text-sm text-red-600 bg-red-50 px-4 py-3 rounded-xl">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Registrieren…' : 'Registrieren'}
             </button>
           </form>
+
           <p className="text-center text-sm text-gray-500 mt-6">
             Bereits ein Konto?{' '}
             <Link href="/login" className="text-blue-600 font-medium hover:underline">Anmelden</Link>

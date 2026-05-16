@@ -1,29 +1,43 @@
 import Navbar from '@/components/layout/Navbar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
-import { MapPin, TrendingUp, Users, CheckCircle } from 'lucide-react'
+import { MapPin, TrendingUp, Users, CheckCircle, Newspaper, ExternalLink } from 'lucide-react'
+import { createClient } from '@/lib/supabase/server'
+import Link from 'next/link'
 
-const topics = [
-  { title: 'Radwegausbau Neustadt-Süd', category: 'Verkehr', status: 'active' },
-  { title: 'Neuer Spielplatz Vorgebirgspark', category: 'Freizeit', status: 'pending' },
-  { title: 'ÖPNV-Takt Linie 12 erhöhen', category: 'Verkehr', status: 'active' },
-]
+export default async function Dashboard() {
+  const supabase = await createClient()
 
-const stats = [
-  { label: 'Aktive Themen', value: '12', icon: TrendingUp, color: 'text-blue-600' },
-  { label: 'Bürger im Wahlkreis', value: '24.800', icon: Users, color: 'text-green-600' },
-  { label: 'Umgesetzte Forderungen', value: '8', icon: CheckCircle, color: 'text-purple-600' },
-]
+  const { data: district } = await supabase
+    .from('districts')
+    .select('*')
+    .eq('name', 'Neustadt-Süd')
+    .single()
 
-export default function Dashboard() {
+  const districtId = district?.id ?? ''
+
+  const [
+    { data: topics },
+    { count: demandsUmgesetzt },
+    { data: news },
+  ] = await Promise.all([
+    supabase.from('topics').select('*').order('created_at', { ascending: false }),
+    supabase.from('demands').select('*', { count: 'exact', head: true }).eq('status', 'umgesetzt'),
+    supabase.from('news').select('*').eq('district_id', districtId).order('published_at', { ascending: false }).limit(4),
+  ])
+
+  const stats = [
+    { label: 'Aktive Themen', value: String(topics?.filter(t => t.status === 'active').length ?? 0), icon: TrendingUp, color: 'text-blue-600' },
+    { label: 'Bürger im Wahlkreis', value: district?.population?.toLocaleString('de-DE') ?? '–', icon: Users, color: 'text-green-600' },
+    { label: 'Umgesetzte Forderungen', value: String(demandsUmgesetzt ?? 0), icon: CheckCircle, color: 'text-purple-600' },
+  ]
+
   return (
     <>
       <Navbar />
       <main className="pt-16 min-h-screen">
         <div className="max-w-6xl mx-auto px-6 py-10">
 
-          {/* Header */}
           <div className="mb-8">
             <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
               <MapPin size={14} />
@@ -34,7 +48,7 @@ export default function Dashboard() {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             {stats.map(({ label, value, icon: Icon, color }) => (
               <Card key={label}>
                 <CardContent className="p-6 flex items-center gap-4">
@@ -50,23 +64,50 @@ export default function Dashboard() {
             ))}
           </div>
 
-          {/* Repräsentations-Score */}
-          <Card className="mb-8">
+{/* Aktuelle News */}
+          <Card className="mb-6">
             <CardHeader>
-              <CardTitle className="text-base font-semibold">Repräsentations-Score letzte Abstimmung</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <Newspaper size={16} className="text-gray-400" />
+                  Aktuelles aus dem Wahlkreis
+                </CardTitle>
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-end gap-4 mb-3">
-                <span className="text-4xl font-bold text-blue-600">78</span>
-                <span className="text-gray-400 mb-1">/ 100</span>
-                <Badge className="mb-1 bg-green-100 text-green-700 hover:bg-green-100">Gut repräsentativ</Badge>
-              </div>
-              <Progress value={78} className="h-2 mb-4" />
-              <div className="grid grid-cols-3 gap-4 text-sm">
-                <div><span className="text-gray-500">Alter</span><div className="font-medium">Gut verteilt</div></div>
-                <div><span className="text-gray-500">Geschlecht</span><div className="font-medium">52% / 48%</div></div>
-                <div><span className="text-gray-500">Teilnehmer</span><div className="font-medium">1.240</div></div>
-              </div>
+            <CardContent className="p-0">
+              {news && news.length > 0 ? news.map((item, i) => {
+                const date = new Date(item.published_at).toLocaleDateString('de-DE', { day: 'numeric', month: 'long' })
+                const categoryColors: Record<string, string> = {
+                  Verkehr: 'bg-blue-100 text-blue-700',
+                  Politik: 'bg-purple-100 text-purple-700',
+                  Veranstaltung: 'bg-green-100 text-green-700',
+                  Umwelt: 'bg-emerald-100 text-emerald-700',
+                }
+                return (
+                  <div key={item.id} className={`px-6 py-4 hover:bg-gray-50 transition-colors ${i < news.length - 1 ? 'border-b' : ''}`}>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${categoryColors[item.category] ?? 'bg-gray-100 text-gray-600'}`}>
+                            {item.category}
+                          </span>
+                          <span className="text-xs text-gray-400">{date}</span>
+                        </div>
+                        <div className="font-medium text-gray-900 mb-1">{item.title}</div>
+                        {item.summary && <p className="text-sm text-gray-500 leading-relaxed">{item.summary}</p>}
+                        {item.source && <div className="text-xs text-gray-400 mt-1.5">Quelle: {item.source}</div>}
+                      </div>
+                      {item.source_url && (
+                        <a href={item.source_url} target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-blue-500 transition-colors shrink-0 mt-1">
+                          <ExternalLink size={15} />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )
+              }) : (
+                <div className="px-6 py-8 text-center text-gray-400 text-sm">Keine aktuellen News</div>
+              )}
             </CardContent>
           </Card>
 
@@ -76,8 +117,8 @@ export default function Dashboard() {
               <CardTitle className="text-base font-semibold">Aktuelle Themen</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              {topics.map((topic, i) => (
-                <div key={i} className="flex items-center justify-between px-6 py-4 border-b last:border-0 hover:bg-gray-50 transition-colors cursor-pointer">
+              {topics && topics.length > 0 ? topics.map((topic) => (
+                <div key={topic.id} className="flex items-center justify-between px-6 py-4 border-b last:border-0 hover:bg-gray-50 transition-colors cursor-pointer">
                   <div>
                     <div className="font-medium text-gray-900">{topic.title}</div>
                     <div className="text-sm text-gray-500">{topic.category}</div>
@@ -86,7 +127,9 @@ export default function Dashboard() {
                     {topic.status === 'active' ? 'Aktiv' : 'Ausstehend'}
                   </Badge>
                 </div>
-              ))}
+              )) : (
+                <div className="px-6 py-8 text-center text-gray-400 text-sm">Keine Themen vorhanden</div>
+              )}
             </CardContent>
           </Card>
 

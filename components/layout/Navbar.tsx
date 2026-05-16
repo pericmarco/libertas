@@ -1,19 +1,43 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Vote, Megaphone, Users } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
+import { LayoutDashboard, Vote, Megaphone, Users, LogOut, BarChart2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
+import { useEffect, useState } from 'react'
+import type { User } from '@supabase/supabase-js'
 
 const links = [
-  { href: '/dashboard',    label: 'Dashboard',    icon: LayoutDashboard },
-  { href: '/abstimmungen', label: 'Abstimmungen', icon: Vote },
-  { href: '/forderungen',  label: 'Forderungen',  icon: Megaphone },
-  { href: '/politiker',    label: 'Politiker',    icon: Users },
+  { href: '/dashboard',       label: 'Dashboard',    icon: LayoutDashboard },
+  { href: '/forderungen',     label: 'Forderungen',  icon: Megaphone },
+  { href: '/abstimmungen',    label: 'Abstimmungen', icon: Vote },
+  { href: '/politiker',       label: 'Politiker',    icon: Users },
+  { href: '/repraesentation', label: 'Score',        icon: BarChart2 },
 ]
 
 export default function Navbar() {
   const pathname = usePathname()
+  const router = useRouter()
+  const [user, setUser] = useState<User | null>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data }) => setUser(data.user))
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  async function handleLogout() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/')
+    router.refresh()
+  }
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white border-b border-gray-100">
@@ -43,12 +67,22 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <Link
-          href="/login"
-          className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
-        >
-          Anmelden
-        </Link>
+        {user ? (
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+          >
+            <LogOut size={16} />
+            Abmelden
+          </button>
+        ) : (
+          <Link
+            href="/login"
+            className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+          >
+            Anmelden
+          </Link>
+        )}
       </div>
     </header>
   )

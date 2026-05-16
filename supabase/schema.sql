@@ -85,7 +85,7 @@ CREATE TABLE demands (
   description text,
   category    text,
   district_id uuid REFERENCES districts(id),
-  user_id     uuid REFERENCES auth.users(id),
+  user_id     uuid REFERENCES auth.users(id) ON DELETE SET NULL,
   supports    integer DEFAULT 0,
   status      text DEFAULT 'eingereicht' CHECK (status IN ('eingereicht','geprüft','bearbeitet','umgesetzt','abgelehnt')),
   created_at  timestamptz DEFAULT now()
