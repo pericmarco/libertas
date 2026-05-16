@@ -45,8 +45,7 @@ export default function Onboarding() {
 
     await supabase
       .from('profiles')
-      .update({ age_group: ageGroup, gender })
-      .eq('id', data.user.id)
+      .upsert({ id: data.user.id, age_group: ageGroup, gender })
 
     router.push('/dashboard')
   }
