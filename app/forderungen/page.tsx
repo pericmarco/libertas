@@ -161,8 +161,11 @@ export default function Forderungen() {
                   : null
 
                 return (
-                  <Link key={d.id} href={`/forderungen/${d.id}`}>
-                    <div className="bg-white rounded-2xl border border-gray-100 hover:border-blue-200 hover:shadow-sm transition-all cursor-pointer p-5">
+                  <div
+                    key={d.id}
+                    onClick={() => router.push(`/forderungen/${d.id}`)}
+                    className="bg-white rounded-2xl border border-gray-100 hover:border-blue-200 hover:shadow-sm transition-all cursor-pointer p-5"
+                  >
 
                       {/* Top row: category + status */}
                       <div className="flex items-center gap-2 mb-2">
@@ -217,8 +220,7 @@ export default function Forderungen() {
                         <ChevronRight size={15} className="text-gray-300 shrink-0" />
                       </div>
 
-                    </div>
-                  </Link>
+                  </div>
                 )
               })}
             </div>
