@@ -10,24 +10,6 @@ import { createClient } from '@/lib/supabase/client'
 
 const VOTE_THRESHOLD = 300
 
-const CATEGORIES = ['Verkehr', 'Umwelt', 'Sicherheit', 'Freizeit', 'Bildung', 'Sauberkeit', 'Sonstiges']
-
-const BLOCKED_WORDS = [
-  'idiot', 'idioten', 'depp', 'vollidiot', 'dummkopf',
-  'scheiß', 'scheiss', 'wichser', 'arschloch', 'arsch',
-  'hurensohn', 'hure', 'fick', 'ficken',
-  'nazi', 'hitler', 'heil',
-  'ausländer raus', 'kanake', 'nigger', 'neger',
-  'jude', 'juden', 'judensau',
-  'behinderter', 'behindi', 'mongo',
-  'verrecke', 'krepier', 'stirb',
-]
-
-function containsBlockedContent(text: string): boolean {
-  const lower = text.toLowerCase()
-  return BLOCKED_WORDS.some(word => lower.includes(word))
-}
-
 const statusColors: Record<string, string> = {
   eingereicht: 'bg-gray-100 text-gray-600',
   geprüft:     'bg-yellow-100 text-yellow-700',
@@ -56,16 +38,8 @@ export default function Forderungen() {
   const [demands, setDemands] = useState<Demand[]>([])
   const [supported, setSupported] = useState<Set<string>>(new Set())
   const [userId, setUserId] = useState<string | null>(null)
-  const [districtId, setDistrictId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [showModal, setShowModal] = useState(false)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
-
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [category, setCategory] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [submitError, setSubmitError] = useState('')
 
   const router = useRouter()
 
@@ -75,10 +49,6 @@ export default function Forderungen() {
       const { data: userData } = await supabase.auth.getUser()
       const uid = userData.user?.id ?? null
       setUserId(uid)
-
-      const { data: districtData } = await supabase
-        .from('districts').select('id').eq('name', 'Neustadt-Süd').single()
-      setDistrictId(districtData?.id ?? null)
 
       const { data: demandsData } = await supabase
         .from('demands').select('id, title, category, supports, status')
@@ -121,36 +91,6 @@ export default function Forderungen() {
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!userId || !districtId) return
-    setSubmitting(true)
-    setSubmitError('')
-
-    if (containsBlockedContent(title) || containsBlockedContent(description)) {
-      setSubmitError('Deine Forderung enthält unzulässige Ausdrücke. Bitte formuliere sie sachlich.')
-      setSubmitting(false)
-      return
-    }
-
-    const supabase = createClient()
-    const { data, error } = await supabase.from('demands').insert({
-      title, description, category,
-      district_id: districtId, user_id: userId,
-      supports: 0, status: 'eingereicht',
-    }).select('id, title, category, supports, status').single()
-
-    if (error) {
-      setSubmitError('Fehler beim Einreichen. Bitte nochmal versuchen.')
-      setSubmitting(false)
-      return
-    }
-
-    setDemands(prev => [data, ...prev])
-    setTitle(''); setDescription(''); setCategory('')
-    setShowModal(false); setSubmitting(false)
-  }
-
   const categories = [...new Set(demands.map(d => d.category))].filter(Boolean)
   const filtered = demands.filter(d => activeCategory === null || d.category === activeCategory)
 
@@ -166,13 +106,13 @@ export default function Forderungen() {
               <h1 className="text-3xl font-bold text-gray-900">Bürgerforderungen</h1>
               <p className="text-gray-500 mt-1">Welche Themen bewegen Neustadt-Süd?</p>
             </div>
-            <button
-              onClick={() => { if (!userId) { router.push('/login'); return } setShowModal(true) }}
+            <Link
+              href={userId ? '/forderungen/neu' : '/login'}
               className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Plus size={15} />
               Einreichen
-            </button>
+            </Link>
           </div>
 
           {/* Kategorie Filter */}
@@ -252,51 +192,6 @@ export default function Forderungen() {
         </div>
       </main>
 
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowModal(false)} />
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg p-8">
-            <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700">
-              ✕
-            </button>
-            <h2 className="text-xl font-bold text-gray-900 mb-1">Forderung einreichen</h2>
-            <p className="text-sm text-gray-500 mb-4">Eine Forderung ist ein strukturelles kommunales Anliegen — kein Einzelproblem.</p>
-            <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 mb-6 text-xs text-blue-700 leading-relaxed">
-              <strong>Beispiel ✓</strong> „Unser Viertel ist dauerhaft schlecht beleuchtet und unsicher."<br />
-              <strong>Kein Beispiel ✗</strong> „Die Laterne vor Hausnummer 12 ist kaputt." → Das ist ein Mängelmelder-Fall.
-            </div>
-
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Titel *</label>
-                <input type="text" value={title} onChange={e => setTitle(e.target.value)}
-                  placeholder="Kurz und prägnant" required maxLength={100}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Beschreibung</label>
-                <textarea value={description} onChange={e => setDescription(e.target.value)}
-                  placeholder="Warum ist das wichtig? Was soll konkret passieren?" rows={4}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Kategorie *</label>
-                <select value={category} onChange={e => setCategory(e.target.value)} required
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                  <option value="">Wählen…</option>
-                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-              {submitError && <div className="text-sm text-red-600 bg-red-50 px-4 py-3 rounded-xl">{submitError}</div>}
-              <button type="submit" disabled={submitting}
-                className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 mt-2">
-                {submitting ? 'Einreichen…' : 'Forderung einreichen'}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
     </>
   )
 }
