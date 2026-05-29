@@ -334,15 +334,17 @@ export default function ForderungDetail() {
                 <div className="text-sm text-gray-400 py-4 text-center">Noch keine Beiträge in dieser Kategorie.</div>
               ) : displayArguments.filter(c => c.type === activeContribType).map(c => {
                 const style = CONTRIBUTION_STYLES[c.type as ContributionType]
-                const dateStr = (c as { date?: string }).date ?? c.created_at
+                const entry = c as Record<string, string>
+                const dateStr = entry.date ?? entry.created_at
+                const bodyText = entry.content ?? entry.text
                 return (
                   <div key={c.id} className={`rounded-xl border p-4 ${style.bg}`}>
                     <div className="flex items-center justify-between mb-2">
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${style.badge}`}>{style.label}</span>
                       <span className="text-xs text-gray-400">{new Date(dateStr).toLocaleDateString('de-DE', { day: 'numeric', month: 'long' })}</span>
                     </div>
-                    <p className="text-sm text-gray-700 leading-relaxed mb-1">{(c as { content?: string; text?: string }).content ?? (c as { text?: string }).text}</p>
-                    {(c as { author?: string }).author && <div className="text-xs text-gray-400">{(c as { author?: string }).author}</div>}
+                    <p className="text-sm text-gray-700 leading-relaxed mb-1">{bodyText}</p>
+                    {entry.author && <div className="text-xs text-gray-400">{entry.author}</div>}
                   </div>
                 )
               })}
@@ -360,7 +362,9 @@ export default function ForderungDetail() {
                 <div className="text-sm text-gray-400 py-4 text-center">Noch keine Rückmeldungen aus Politik oder Verwaltung.</div>
               ) : displayResponses.map(r => {
                 const pos = POSITION_STYLES[r.position]
-                const dateStr = (r as { date?: string }).date ?? r.created_at
+                const resp = r as Record<string, string>
+                const dateStr = resp.date ?? resp.created_at
+                const bodyText = resp.content ?? resp.text
                 return (
                   <div key={r.id} className="border border-gray-200 rounded-xl p-4 bg-gray-50">
                     <div className="flex items-start justify-between gap-3 mb-3">
@@ -382,7 +386,7 @@ export default function ForderungDetail() {
                         </span>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-700 leading-relaxed mb-2">{(r as { content?: string; text?: string }).content ?? r.text}</p>
+                    <p className="text-sm text-gray-700 leading-relaxed mb-2">{bodyText}</p>
                     <div className="text-xs text-gray-400">
                       {new Date(dateStr).toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' })}
                     </div>
