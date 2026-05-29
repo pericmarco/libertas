@@ -11,7 +11,7 @@ import type { User } from '@supabase/supabase-js'
 const links = [
   { href: '/dashboard',       label: 'Dashboard',    icon: LayoutDashboard },
   { href: '/forderungen',     label: 'Forderungen',  icon: Megaphone },
-  { href: '/abstimmungen',    label: 'Abstimmungen', icon: Vote },
+  { href: '/abstimmungen',    label: 'Priorisierung', icon: Vote },
   { href: '/politiker',       label: 'Politiker',    icon: Users },
   { href: '/repraesentation', label: 'Score',        icon: BarChart2 },
 ]

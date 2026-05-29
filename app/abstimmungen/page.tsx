@@ -71,9 +71,12 @@ export default function Abstimmungen() {
       <Navbar />
       <main className="pt-16 min-h-screen">
         <div className="max-w-6xl mx-auto px-6 py-10">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Abstimmungen</h1>
-            <p className="text-gray-500 mt-1">Laufende Bürgerabstimmungen in deinem Wahlkreis</p>
+          <div className="mb-4">
+            <h1 className="text-3xl font-bold text-gray-900">Bürgerpriorisierung</h1>
+            <p className="text-gray-500 mt-1">Konkrete Lösungsoptionen zu relevanten Forderungen</p>
+          </div>
+          <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 mb-8 text-sm text-blue-700 leading-relaxed">
+            Eine Bürgerpriorisierung entsteht erst wenn eine Forderung genug Unterstützung gesammelt hat und konkrete Lösungsoptionen verglichen werden sollen — sie ist kein automatischer Schritt.
           </div>
 
           {/* Tabs */}
