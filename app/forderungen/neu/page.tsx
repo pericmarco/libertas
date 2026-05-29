@@ -115,7 +115,7 @@ export default function NeueFordering() {
           <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 mb-8 text-sm text-blue-700 leading-relaxed">
             <Info size={16} className="shrink-0 mt-0.5" />
             <span>
-              Libertas ist für politische und strukturelle Anliegen gedacht. Einzelne Schäden wie Müll, Schlaglöcher oder kaputte Laternen gehören meist in offizielle Mängelmelder.
+              Lybertas ist für politische und strukturelle Anliegen gedacht. Einzelne Schäden wie Müll, Schlaglöcher oder kaputte Laternen gehören meist in offizielle Mängelmelder.
             </span>
           </div>
 
@@ -174,7 +174,7 @@ export default function NeueFordering() {
                     <strong>Das klingt eher nach einem Fall für den offiziellen Mängelmelder.</strong>
                     <div className="mt-2 text-xs space-y-1">
                       <div>❌ „Laterne kaputt" → Mängelmelder</div>
-                      <div>✓ „Unser Viertel ist dauerhaft schlecht beleuchtet" → Libertas</div>
+                      <div>✓ „Unser Viertel ist dauerhaft schlecht beleuchtet" → Lybertas</div>
                     </div>
                     <p className="mt-2 text-xs text-orange-600">
                       Du kannst deine Eingabe trotzdem als strukturelles Anliegen formulieren, wenn dahinter ein größeres Problem steckt.
@@ -295,7 +295,7 @@ export default function NeueFordering() {
                         </button>
                       ))}
                     </div>
-                    <p className="text-xs text-gray-400">Du musst nicht genau wissen, wer zuständig ist. Libertas kann später helfen, die passenden Adressaten zuzuordnen.</p>
+                    <p className="text-xs text-gray-400">Du musst nicht genau wissen, wer zuständig ist. Lybertas kann später helfen, die passenden Adressaten zuzuordnen.</p>
                   </div>
 
                   {/* Submit */}

@@ -83,7 +83,7 @@ export default function Register() {
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">L</span>
             </div>
-            <span className="font-semibold text-gray-900">Libertas</span>
+            <span className="font-semibold text-gray-900">Lybertas</span>
           </Link>
           <h1 className="text-2xl font-bold text-gray-900">Konto erstellen</h1>
           <p className="text-gray-500 mt-1">Werde Teil deiner lokalen Demokratie</p>

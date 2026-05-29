@@ -12,7 +12,7 @@ export default function Home() {
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">L</span>
             </div>
-            <span className="font-semibold text-gray-900">Libertas</span>
+            <span className="font-semibold text-gray-900">Lybertas</span>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/login" className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
@@ -37,7 +37,7 @@ export default function Home() {
             <span className="text-blue-600">Wirklich.</span>
           </h1>
           <p className="text-xl text-gray-500 mb-10 leading-relaxed max-w-2xl mx-auto">
-            Libertas bringt Demokratie in deinen Alltag. Reiche Forderungen ein, unterstütze Anliegen deiner Nachbarn und stimme über lokale Themen ab — direkt in deinem Stadtteil.
+            Lybertas bringt Demokratie in deinen Alltag. Reiche Forderungen ein, unterstütze Anliegen deiner Nachbarn und stimme über lokale Themen ab — direkt in deinem Stadtteil.
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
             <Link href="/register" className="flex items-center gap-2 px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors text-lg">
@@ -60,7 +60,7 @@ export default function Home() {
       <section className="py-20 px-6 bg-gray-50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
-            <h2 className="text-3xl font-bold text-gray-900 mb-3">Was du bei Libertas tun kannst</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-3">Was du bei Lybertas tun kannst</h2>
             <p className="text-gray-500">Drei einfache Wege um wirklich mitzumachen</p>
           </div>
 
@@ -131,7 +131,7 @@ export default function Home() {
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-white mb-4">Mach mit beim Pilotprojekt</h2>
           <p className="text-blue-100 mb-8 leading-relaxed">
-            Libertas startet jetzt in Köln Neustadt-Süd. Sei dabei und hilf dabei lokale Demokratie neu zu gestalten.
+            Lybertas startet jetzt in Köln Neustadt-Süd. Sei dabei und hilf dabei lokale Demokratie neu zu gestalten.
           </p>
           <Link href="/register" className="inline-flex items-center gap-2 px-8 py-4 bg-white text-blue-600 rounded-xl font-semibold hover:bg-blue-50 transition-colors text-lg">
             Kostenlos registrieren
@@ -147,7 +147,7 @@ export default function Home() {
             <div className="w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center">
               <span className="text-white font-bold text-xs">L</span>
             </div>
-            <span>Libertas · Köln 2026</span>
+            <span>Lybertas · Köln 2026</span>
           </div>
           <div className="flex gap-6">
             <Link href="/login" className="hover:text-gray-600 transition-colors">Anmelden</Link>

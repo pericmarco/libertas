@@ -48,7 +48,7 @@ export default function Navbar() {
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">L</span>
             </div>
-            <span className="font-semibold text-gray-900">Libertas</span>
+            <span className="font-semibold text-gray-900">Lybertas</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">

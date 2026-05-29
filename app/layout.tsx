@@ -5,7 +5,7 @@ import "./globals.css";
 const geist = Geist({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Libertas – Politische Beteiligung in deinem Wahlkreis",
+  title: "Lybertas – Politische Beteiligung in deinem Wahlkreis",
   description: "Informiere dich, stimme ab und reiche Forderungen ein – direkt in deinem Wahlkreis.",
 };
 
