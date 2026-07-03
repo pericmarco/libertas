@@ -1,6 +1,12 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+const PUBLIC_PATHS = ['/', '/login', '/register']
+
+function isPublicPath(pathname: string) {
+  return PUBLIC_PATHS.includes(pathname) || pathname.startsWith('/auth/callback')
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
@@ -25,7 +31,14 @@ export async function updateSession(request: NextRequest) {
 
   // Do not run any logic between createServerClient and getUser — this call
   // refreshes the auth session cookie when the access token has expired.
-  await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user && !isPublicPath(request.nextUrl.pathname)) {
+    const loginUrl = request.nextUrl.clone()
+    loginUrl.pathname = '/login'
+    loginUrl.search = ''
+    return NextResponse.redirect(loginUrl)
+  }
 
   return supabaseResponse
 }

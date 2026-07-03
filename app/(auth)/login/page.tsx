@@ -21,7 +21,11 @@ export default function Login() {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
-      setError('E-Mail oder Passwort falsch. Bitte nochmal versuchen.')
+      if (error.code === 'email_not_confirmed') {
+        setError('Bitte bestätige zuerst deine E-Mail-Adresse. Wir haben dir einen Link geschickt.')
+      } else {
+        setError('E-Mail oder Passwort falsch. Bitte nochmal versuchen.')
+      }
       setLoading(false)
       return
     }
