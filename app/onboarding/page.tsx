@@ -14,6 +14,7 @@ export default function Onboarding() {
   const [districts, setDistricts] = useState<District[]>([])
   const [loading, setLoading] = useState(false)
   const [checking, setChecking] = useState(true)
+  const [error, setError] = useState('')
   const router = useRouter()
 
   useEffect(() => {
@@ -48,14 +49,21 @@ export default function Onboarding() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
+    setError('')
 
     const supabase = createClient()
     const { data } = await supabase.auth.getUser()
     if (!data.user) return
 
-    await supabase
+    const { error: upsertError } = await supabase
       .from('profiles')
       .upsert({ id: data.user.id, age_group: ageGroup, gender, district_id: districtId })
+
+    if (upsertError) {
+      setError(upsertError.message)
+      setLoading(false)
+      return
+    }
 
     router.push('/dashboard')
   }
@@ -137,6 +145,12 @@ export default function Onboarding() {
                 ))}
               </select>
             </div>
+
+            {error && (
+              <div className="text-sm text-red-600 bg-red-50 px-4 py-3 rounded-xl">
+                {error}
+              </div>
+            )}
 
             <button
               type="submit"
