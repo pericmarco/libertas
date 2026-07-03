@@ -35,11 +35,11 @@ export default function Register() {
 
     const supabase = createClient()
 
-    const { data, error: signUpError } = await supabase.auth.signUp({
+    const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: fullName },
+        data: { full_name: fullName, district_id: districtId || null },
       },
     })
 
@@ -47,14 +47,6 @@ export default function Register() {
       setError(signUpError.message)
       setLoading(false)
       return
-    }
-
-    if (data.user) {
-      await supabase.from('profiles').insert({
-        id: data.user.id,
-        full_name: fullName,
-        district_id: districtId || null,
-      })
     }
 
     setSuccess(true)
