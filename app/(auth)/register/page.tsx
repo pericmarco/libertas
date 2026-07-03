@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { REGION_NAME } from '@/lib/constants'
 
 type District = { id: string; name: string; city: string }
 
@@ -18,9 +19,13 @@ export default function Register() {
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.from('districts').select('id, name, city').then(({ data }) => {
+    async function load() {
+      const { data: region } = await supabase.from('regions').select('id').eq('name', REGION_NAME).single()
+      if (!region) return
+      const { data } = await supabase.from('districts').select('id, name, city').eq('region_id', region.id)
       if (data) setDistricts(data)
-    })
+    }
+    load()
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {

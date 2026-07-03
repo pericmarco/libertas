@@ -113,7 +113,7 @@ export default function Forderungen() {
           <div className="flex items-start justify-between mb-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Bürgerforderungen</h1>
-              <p className="text-gray-500 mt-1">Welche Themen bewegen Neustadt-Süd?</p>
+              <p className="text-gray-500 mt-1">Welche Themen bewegen Köln Innenstadt?</p>
             </div>
             <Link
               href={userId ? '/forderungen/neu' : '/login'}

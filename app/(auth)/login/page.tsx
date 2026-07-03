@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { AGE_GROUPS } from '@/lib/constants'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -32,11 +33,14 @@ export default function Login() {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('age_group, gender')
+      .select('age_group, gender, district_id')
       .eq('id', data.user.id)
       .single()
 
-    if (!profile?.age_group || !profile?.gender) {
+    const hasCompleteProfile =
+      profile?.age_group && AGE_GROUPS.includes(profile.age_group) && profile?.gender && profile?.district_id
+
+    if (!hasCompleteProfile) {
       router.push('/onboarding')
     } else {
       router.push('/dashboard')

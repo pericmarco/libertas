@@ -42,7 +42,7 @@ const CONTRIBUTION_STYLES = {
 // Demo-Daten — werden später durch echte DB-Einträge ersetzt
 const DEMO_ADDRESSEES = ['Stadt Köln', 'Stadtplanungsamt', 'Bezirksvertretung Innenstadt', 'Fraktionen im Stadtrat']
 
-const DEMO_SOLUTION = 'Die Stadt soll ein strukturiertes Konzept für sichere Radinfrastruktur im gesamten Stadtteil Neustadt-Süd entwickeln. Das Konzept soll fehlende Markierungen ergänzen, Konfliktpunkte mit dem Autoverkehr entschärfen und regelmäßige Kontrollen von zugeparkten Radwegen sicherstellen.'
+const DEMO_SOLUTION = 'Die Stadt soll ein strukturiertes Konzept für sichere Radinfrastruktur in Köln Innenstadt entwickeln. Das Konzept soll fehlende Markierungen ergänzen, Konfliktpunkte mit dem Autoverkehr entschärfen und regelmäßige Kontrollen von zugeparkten Radwegen sicherstellen.'
 
 const DEMO_RESPONSES = [
   {
@@ -226,7 +226,7 @@ export default function ForderungDetail() {
               {demand.category && (
                 <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">{demand.category}</span>
               )}
-              <span className="text-xs text-gray-400">Köln · Neustadt-Süd</span>
+              <span className="text-xs text-gray-400">Köln Innenstadt</span>
               {!isAbgelehnt && (
                 <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-blue-50 text-blue-600">
                   {PROCESS_STEPS[currentStep]?.label}

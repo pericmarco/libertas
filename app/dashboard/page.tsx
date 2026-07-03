@@ -3,18 +3,25 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { MapPin, TrendingUp, Users, CheckCircle, Newspaper, ExternalLink } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { REGION_NAME } from '@/lib/constants'
 import Link from 'next/link'
 
 export default async function Dashboard() {
   const supabase = await createClient()
 
-  const { data: district } = await supabase
-    .from('districts')
-    .select('*')
-    .eq('name', 'Neustadt-Süd')
+  const { data: region } = await supabase
+    .from('regions')
+    .select('id')
+    .eq('name', REGION_NAME)
     .single()
 
-  const districtId = district?.id ?? ''
+  const { data: districts } = await supabase
+    .from('districts')
+    .select('id, population')
+    .eq('region_id', region?.id ?? '')
+
+  const districtIds = districts?.map(d => d.id) ?? []
+  const totalPopulation = districts?.reduce((sum, d) => sum + (d.population ?? 0), 0) ?? 0
 
   const [
     { data: topics },
@@ -23,12 +30,12 @@ export default async function Dashboard() {
   ] = await Promise.all([
     supabase.from('topics').select('*').order('created_at', { ascending: false }),
     supabase.from('demands').select('*', { count: 'exact', head: true }).eq('status', 'umgesetzt'),
-    supabase.from('news').select('*').eq('district_id', districtId).order('published_at', { ascending: false }).limit(4),
+    supabase.from('news').select('*').in('district_id', districtIds).order('published_at', { ascending: false }).limit(4),
   ])
 
   const stats = [
     { label: 'Aktive Themen', value: String(topics?.filter(t => t.status === 'active').length ?? 0), icon: TrendingUp, color: 'text-blue-600' },
-    { label: 'Bürger im Wahlkreis', value: district?.population?.toLocaleString('de-DE') ?? '–', icon: Users, color: 'text-green-600' },
+    { label: 'Bürger in Köln Innenstadt', value: totalPopulation.toLocaleString('de-DE'), icon: Users, color: 'text-green-600' },
     { label: 'Umgesetzte Forderungen', value: String(demandsUmgesetzt ?? 0), icon: CheckCircle, color: 'text-purple-600' },
   ]
 
@@ -41,7 +48,7 @@ export default async function Dashboard() {
           <div className="mb-8">
             <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
               <MapPin size={14} />
-              <span>Köln Neustadt-Süd</span>
+              <span>Köln Innenstadt</span>
             </div>
             <h1 className="text-3xl font-bold text-gray-900">Dein Dashboard</h1>
             <p className="text-gray-500 mt-1">Aktuelle politische Themen in deinem Wahlkreis</p>

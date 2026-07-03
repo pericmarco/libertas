@@ -3,13 +3,15 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { AGE_GROUPS, GENDERS, REGION_NAME } from '@/lib/constants'
 
-const AGE_GROUPS = ['18–24', '25–34', '35–44', '45–54', '55–64', '65+']
-const GENDERS = ['Männlich', 'Weiblich', 'Divers', 'Keine Angabe']
+type District = { id: string; name: string }
 
 export default function Onboarding() {
   const [ageGroup, setAgeGroup] = useState('')
   const [gender, setGender] = useState('')
+  const [districtId, setDistrictId] = useState('')
+  const [districts, setDistricts] = useState<District[]>([])
   const [loading, setLoading] = useState(false)
   const [checking, setChecking] = useState(true)
   const router = useRouter()
@@ -23,15 +25,23 @@ export default function Onboarding() {
       }
       const { data: profile } = await supabase
         .from('profiles')
-        .select('age_group, gender')
+        .select('age_group, gender, district_id')
         .eq('id', data.user.id)
         .single()
 
-      if (profile?.age_group && profile?.gender) {
+      if (profile?.age_group && AGE_GROUPS.includes(profile.age_group) && profile?.gender && profile?.district_id) {
         router.push('/dashboard')
-      } else {
-        setChecking(false)
+        return
       }
+
+      if (profile?.district_id) setDistrictId(profile.district_id)
+
+      const { data: region } = await supabase.from('regions').select('id').eq('name', REGION_NAME).single()
+      if (region) {
+        const { data: districtData } = await supabase.from('districts').select('id, name').eq('region_id', region.id)
+        if (districtData) setDistricts(districtData)
+      }
+      setChecking(false)
     })
   }, [router])
 
@@ -43,15 +53,9 @@ export default function Onboarding() {
     const { data } = await supabase.auth.getUser()
     if (!data.user) return
 
-    const { data: district } = await supabase
-      .from('districts')
-      .select('id')
-      .eq('name', 'Neustadt-Süd')
-      .single()
-
     await supabase
       .from('profiles')
-      .upsert({ id: data.user.id, age_group: ageGroup, gender, district_id: district?.id ?? null })
+      .upsert({ id: data.user.id, age_group: ageGroup, gender, district_id: districtId })
 
     router.push('/dashboard')
   }
@@ -120,9 +124,23 @@ export default function Onboarding() {
               </div>
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">Stadtteil</label>
+              <select
+                value={districtId}
+                onChange={e => setDistrictId(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+              >
+                <option value="">Stadtteil wählen…</option>
+                {districts.map(d => (
+                  <option key={d.id} value={d.id}>{d.name}</option>
+                ))}
+              </select>
+            </div>
+
             <button
               type="submit"
-              disabled={!ageGroup || !gender || loading}
+              disabled={!ageGroup || !gender || !districtId || loading}
               className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {loading ? 'Speichern…' : 'Weiter zum Dashboard'}

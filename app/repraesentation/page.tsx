@@ -4,21 +4,20 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { createClient } from '@/lib/supabase/server'
 import { calcRepScore, scoreLabel } from '@/lib/score'
+import { AGE_GROUPS, GENDERS, REGION_NAME } from '@/lib/constants'
 
 export default async function Repraesentation() {
   const supabase = await createClient()
 
-  const { data: district } = await supabase
-    .from('districts')
-    .select('*')
-    .eq('name', 'Neustadt-Süd')
+  const { data: region } = await supabase
+    .from('regions')
+    .select('id')
+    .eq('name', REGION_NAME)
     .single()
-
-  const districtId = district?.id ?? ''
 
   const [{ data: profiles }, { data: demographics }] = await Promise.all([
     supabase.from('profiles').select('age_group, gender'),
-    supabase.from('district_demographics').select('category, label, percentage').eq('district_id', districtId),
+    supabase.from('district_demographics').select('category, label, percentage').eq('region_id', region?.id ?? ''),
   ])
 
   const withData = (profiles ?? []).filter(p => p.age_group && p.gender)
@@ -28,8 +27,8 @@ export default async function Repraesentation() {
   const score = hasEnoughData ? calcRepScore(profiles ?? [], demographics ?? []) : 0
   const { label: scoreText, color: scoreColor } = scoreLabel(score)
 
-  const ageGroups = ['18–24', '25–34', '35–44', '45–54', '55–64', '65+']
-  const genders = ['Männlich', 'Weiblich', 'Divers', 'Keine Angabe']
+  const ageGroups = AGE_GROUPS
+  const genders = GENDERS
 
   function pct(list: typeof profiles, key: 'age_group' | 'gender', val: string) {
     if (!list || list.length === 0) return 0
@@ -55,7 +54,7 @@ export default async function Repraesentation() {
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900">Repräsentations-Score</h1>
             <p className="text-gray-500 mt-1">
-              Wie gut spiegeln die Teilnehmenden die Bevölkerung von Neustadt-Süd wider?
+              Wie gut spiegeln die Teilnehmenden die Bevölkerung von Köln Innenstadt wider?
             </p>
           </div>
 
@@ -89,7 +88,7 @@ export default async function Repraesentation() {
                 </div>
               )}
               <p className="text-sm text-gray-400">
-                Basierend auf {withData.length} von {total} registrierten Nutzern · Referenz: Bevölkerungsdaten Köln Neustadt-Süd
+                Basierend auf {withData.length} von {total} registrierten Nutzern · Referenz: Bevölkerungsdaten Köln Innenstadt
               </p>
             </CardContent>
           </Card>

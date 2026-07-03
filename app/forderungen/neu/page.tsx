@@ -62,8 +62,8 @@ export default function NeueFordering() {
     const { data: userData } = await supabase.auth.getUser()
     if (!userData.user) { router.push('/login'); return }
 
-    const { data: districtData } = await supabase
-      .from('districts').select('id').eq('name', 'Neustadt-Süd').single()
+    const { data: profile } = await supabase
+      .from('profiles').select('district_id').eq('id', userData.user.id).single()
 
     setSubmitting(true)
 
@@ -73,7 +73,7 @@ export default function NeueFordering() {
       solution: solution.trim() || null,
       category,
       addressees: addressees.length > 0 ? addressees : null,
-      district_id: districtData?.id ?? null,
+      district_id: profile?.district_id ?? null,
       user_id: userData.user.id,
       supports: 0,
       status: 'eingereicht',
@@ -90,7 +90,7 @@ export default function NeueFordering() {
   }
 
   const previewTitle = title || 'Titel deiner Forderung'
-  const previewLocation = location || 'Köln · Neustadt-Süd'
+  const previewLocation = location || 'Köln Innenstadt'
   const previewCategory = category || null
   const previewProblem = problem ? (problem.length > 80 ? problem.slice(0, 80) + '…' : problem) : null
   const previewSolution = solution ? (solution.length > 80 ? solution.slice(0, 80) + '…' : solution) : null
@@ -213,7 +213,7 @@ export default function NeueFordering() {
                       type="text"
                       value={location}
                       onChange={e => setLocation(e.target.value)}
-                      placeholder="z. B. Köln Neustadt-Süd, Neumarkt"
+                      placeholder="z. B. Köln Innenstadt, Neumarkt"
                       className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <p className="text-xs text-gray-400 mt-2">Wo tritt das Problem auf?</p>
