@@ -106,15 +106,15 @@ export default function NeueFordering() {
 
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Forderung stellen</h1>
-            <p className="text-gray-500 mt-1">Bringe ein strukturelles Problem in deinem Stadtteil auf die politische Agenda.</p>
+            <h1 className="text-3xl font-bold text-gray-900">Anliegen einreichen</h1>
+            <p className="text-gray-500 mt-1">Bring ein Thema aus deinem Stadtteil sichtbar auf den Tisch von Stadt und Verwaltung.</p>
           </div>
 
           {/* Info-Banner */}
           <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 mb-8 text-sm text-blue-700 leading-relaxed">
             <Info size={16} className="shrink-0 mt-0.5" />
             <span>
-              Lybertas ist für politische und strukturelle Anliegen gedacht. Einzelne Schäden wie Müll, Schlaglöcher oder kaputte Laternen gehören meist in offizielle Mängelmelder.
+              Lybertas bündelt beides an einem Ort: strukturelle Anliegen für deinen Stadtteil und konkrete Mängel vor Ort. Alles wird gesammelt und an die richtige Stelle bei Stadt und Verwaltung weitergegeben.
             </span>
           </div>
 
@@ -140,10 +140,10 @@ export default function NeueFordering() {
                         ? <CheckCircle size={16} className="text-blue-600" />
                         : <Circle size={16} className="text-gray-300" />
                       }
-                      <span className="text-sm font-semibold text-gray-900">Politische Forderung</span>
+                      <span className="text-sm font-semibold text-gray-900">Bürgeranliegen</span>
                     </div>
                     <p className="text-xs text-gray-500 leading-relaxed">
-                      Für strukturelle Probleme, politische Anliegen oder Verbesserungsvorschläge in deinem Stadtteil.
+                      Für strukturelle Probleme, wiederkehrende Themen oder Verbesserungsvorschläge in deinem Stadtteil.
                     </p>
                   </button>
 
@@ -170,13 +170,13 @@ export default function NeueFordering() {
 
                 {demandType === 'maengel' && (
                   <div className="mt-4 bg-orange-50 border border-orange-100 rounded-xl px-4 py-3 text-sm text-orange-700 leading-relaxed">
-                    <strong>Das klingt eher nach einem Fall für den offiziellen Mängelmelder.</strong>
+                    <strong>Konkrete Mängel vor Ort kannst du hier direkt melden.</strong>
                     <div className="mt-2 text-xs space-y-1">
-                      <div>❌ „Laterne kaputt" → Mängelmelder</div>
-                      <div>✓ „Unser Viertel ist dauerhaft schlecht beleuchtet" → Lybertas</div>
+                      <div>🔧 „Laterne kaputt" → Mängelmeldung</div>
+                      <div>📣 „Unser Viertel ist dauerhaft schlecht beleuchtet" → Bürgeranliegen</div>
                     </div>
                     <p className="mt-2 text-xs text-orange-600">
-                      Du kannst deine Eingabe trotzdem als strukturelles Anliegen formulieren, wenn dahinter ein größeres Problem steckt.
+                      Steckt hinter dem Mangel ein größeres, wiederkehrendes Problem, formuliere es als Bürgeranliegen — so bekommt es mehr Gewicht.
                     </p>
                   </div>
                 )}

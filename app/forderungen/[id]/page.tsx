@@ -249,7 +249,7 @@ export default function ForderungDetail() {
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-3">{demand.title}</h1>
             <div className="text-xs text-gray-400 bg-gray-50 rounded-xl px-3 py-2 leading-relaxed">
-              Diese Forderung beschreibt ein strukturelles lokales Anliegen. Einzelne Schäden wie kaputte Laternen oder Müll gehören in offizielle Mängelmelder der Stadt.
+              Diese Forderung beschreibt ein lokales Anliegen für Köln Innenstadt.
             </div>
           </div>
 
