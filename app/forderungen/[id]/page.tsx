@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
-import { ChevronLeft, ThumbsUp, MessageSquare, Lightbulb, ShieldCheck, CheckCircle, Circle, AlertCircle, X } from 'lucide-react'
+import { ChevronLeft, ThumbsUp, MessageSquare, Lightbulb, ShieldCheck, CheckCircle, Circle, AlertCircle, Heart, Info } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
-const VOTE_THRESHOLD = 300
+const RELEVANCE_THRESHOLD = 50
 
 const PROCESS_STEPS = [
   { label: 'Eingereicht' },
@@ -33,42 +33,20 @@ const POSITION_STYLES: Record<string, { bg: string; label: string }> = {
   'alternative':           { bg: 'bg-purple-100 text-purple-700',label: 'Alternative vorgeschlagen' },
 }
 
-const CONTRIBUTION_STYLES = {
-  unterstützend: { bg: 'bg-green-50 border-green-100', badge: 'bg-green-100 text-green-700', label: 'Unterstützender Beitrag' },
-  gegenargument: { bg: 'bg-red-50 border-red-100',     badge: 'bg-red-100 text-red-600',     label: 'Gegenargument' },
-  alternative:   { bg: 'bg-blue-50 border-blue-100',   badge: 'bg-blue-100 text-blue-700',   label: 'Alternative Lösung' },
+type PositionType = 'unterstützend' | 'gegenargument' | 'alternative'
+
+const POSITION_META: Record<PositionType, { icon: typeof ThumbsUp; label: string; desc: string; badge: string; box: string }> = {
+  unterstützend: { icon: ThumbsUp,      label: 'Unterstützung',    desc: 'Ich finde diese Forderung wichtig. Begründung optional.', badge: 'bg-green-100 text-green-700', box: 'bg-green-50 border-green-100' },
+  gegenargument: { icon: MessageSquare, label: 'Gegenargument',    desc: 'Ich sehe das anders. Begründung optional.',              badge: 'bg-red-100 text-red-600',     box: 'bg-red-50 border-red-100' },
+  alternative:   { icon: Lightbulb,     label: 'Alternative',      desc: 'Ich schlage einen anderen Weg vor. Text erforderlich.',  badge: 'bg-blue-100 text-blue-700',   box: 'bg-blue-50 border-blue-100' },
 }
 
-// Demo-Daten — werden später durch echte DB-Einträge ersetzt
+// Demo-Daten — Antworten von Politik/Verwaltung kommen in einer späteren Phase aus echten Einträgen
 const DEMO_ADDRESSEES = ['Stadt Köln', 'Stadtplanungsamt', 'Bezirksvertretung Innenstadt', 'Fraktionen im Stadtrat']
-
 const DEMO_SOLUTION = 'Die Stadt soll ein strukturiertes Konzept für sichere Radinfrastruktur in Köln Innenstadt entwickeln. Das Konzept soll fehlende Markierungen ergänzen, Konfliktpunkte mit dem Autoverkehr entschärfen und regelmäßige Kontrollen von zugeparkten Radwegen sicherstellen.'
-
 const DEMO_RESPONSES = [
-  {
-    id: '1', author: 'Stadt Köln', role: 'Verwaltung', party: null,
-    position: 'prüft',
-    content: 'Das Anliegen wird fachlich geprüft. Die Zuständigkeiten zwischen Stadtplanungsamt und Bezirksvertretung werden aktuell geklärt.',
-    date: '2026-05-15',
-  },
-  {
-    id: '2', author: 'SPD Köln', role: 'Fraktion', party: 'SPD',
-    position: 'unterstützt',
-    content: 'Wir unterstützen die Forderung und haben sie in unserer letzten Fraktionssitzung besprochen. Ein Antrag wird vorbereitet.',
-    date: '2026-05-18',
-  },
-  {
-    id: '3', author: 'Grüne Köln', role: 'Fraktion', party: 'Grüne',
-    position: 'teilweise unterstützt',
-    content: 'Wir sehen den Handlungsbedarf, möchten aber auch den Ausbau von Fahrradstellplätzen und die Verbesserung der Beleuchtung an Radwegen stärker in den Fokus stellen.',
-    date: '2026-05-20',
-  },
-]
-
-const DEMO_CONTRIBUTIONS = [
-  { id: '1', type: 'unterstützend', author: 'Anwohnerin, 34', content: 'Ich fahre täglich mit dem Rad zur Arbeit. Die Situation an der Kreuzung Bonner Straße ist wirklich gefährlich — dort parken regelmäßig Autos auf dem Radweg.', date: '2026-05-12' },
-  { id: '2', type: 'gegenargument', author: 'Anwohner, 55', content: 'Bevor neue Markierungen gezogen werden, sollte die Stadt prüfen, ob der Platz auf den betroffenen Straßen überhaupt ausreicht. Sonst entstehen nur Konflikte.', date: '2026-05-13' },
-  { id: '3', type: 'alternative', author: 'Bürgerin, 41', content: 'Statt vieler kleiner Maßnahmen wäre eine komplett autofreie Nebenstraße als Fahrradstraße sinnvoller — das schafft eine sichere Verbindungsroute durch den ganzen Stadtteil.', date: '2026-05-14' },
+  { id: '1', author: 'Stadt Köln', role: 'Verwaltung', position: 'prüft', text: 'Das Anliegen wird fachlich geprüft. Die Zuständigkeiten zwischen Stadtplanungsamt und Bezirksvertretung werden aktuell geklärt.', created_at: '2026-05-15' },
+  { id: '2', author: 'SPD Köln', role: 'Fraktion', position: 'unterstützt', text: 'Wir unterstützen die Forderung und haben sie in unserer letzten Fraktionssitzung besprochen. Ein Antrag wird vorbereitet.', created_at: '2026-05-18' },
 ]
 
 type Demand = {
@@ -78,29 +56,20 @@ type Demand = {
   solution: string | null
   addressees: string[] | null
   category: string | null
-  supports: number
+  relevance_score: number
   status: string
   created_at: string
 }
 
-type ContributionType = 'unterstützend' | 'gegenargument' | 'alternative'
-
 type Argument = {
   id: string
+  user_id: string
   type: string
-  text: string
+  text: string | null
   created_at: string
 }
 
-type Response = {
-  id: string
-  author: string
-  role: string
-  party: string | null
-  position: string
-  text: string
-  created_at: string
-}
+type Response = { id: string; author: string; role: string; position: string; text: string; created_at: string }
 
 export default function ForderungDetail() {
   const { id } = useParams<{ id: string }>()
@@ -108,70 +77,104 @@ export default function ForderungDetail() {
   const [demand, setDemand] = useState<Demand | null>(null)
   const [arguments_, setArguments] = useState<Argument[]>([])
   const [responses, setResponses] = useState<Response[]>([])
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({})
+  const [userLikes, setUserLikes] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
-  const [isSupported, setIsSupported] = useState(false)
-  const [activeContribType, setActiveContribType] = useState<ContributionType>('unterstützend')
-  const [showContribModal, setShowContribModal] = useState(false)
-  const [newContribType, setNewContribType] = useState<ContributionType>('unterstützend')
-  const [newContribText, setNewContribText] = useState('')
-  const [submittingContrib, setSubmittingContrib] = useState(false)
+  const [activeContribType, setActiveContribType] = useState<PositionType>('unterstützend')
+
+  // Positions-Editor
+  const [selectedType, setSelectedType] = useState<PositionType | null>(null)
+  const [draftText, setDraftText] = useState('')
+  const [savingPos, setSavingPos] = useState(false)
+  const [posError, setPosError] = useState('')
 
   useEffect(() => {
     const supabase = createClient()
     async function load() {
       const { data: userData } = await supabase.auth.getUser()
-      setUserId(userData.user?.id ?? null)
+      const uid = userData.user?.id ?? null
+      setUserId(uid)
 
       const [{ data: demandData }, { data: argsData }, { data: respData }] = await Promise.all([
         supabase.from('demands').select('*').eq('id', id).single(),
-        supabase.from('demand_arguments').select('*').eq('demand_id', id).order('created_at', { ascending: true }),
+        supabase.from('demand_arguments').select('id, user_id, type, text, created_at').eq('demand_id', id).order('created_at', { ascending: true }),
         supabase.from('demand_responses').select('*').eq('demand_id', id).order('created_at', { ascending: true }),
       ])
 
       setDemand(demandData)
-      setArguments(argsData ?? [])
+      const args = argsData ?? []
+      setArguments(args)
       setResponses(respData ?? [])
 
-      if (userData.user?.id) {
-        const { data: support } = await supabase
-          .from('demand_supports').select('id').eq('demand_id', id).eq('user_id', userData.user.id).single()
-        setIsSupported(!!support)
+      // eigene Position in den Editor laden
+      const own = args.find(a => a.user_id === uid)
+      if (own) {
+        setSelectedType(own.type as PositionType)
+        setDraftText(own.text ?? '')
+      }
+
+      // Likes für die Beiträge dieser Forderung laden
+      const argIds = args.map(a => a.id)
+      if (argIds.length > 0) {
+        const { data: likes } = await supabase.from('demand_argument_likes').select('argument_id, user_id').in('argument_id', argIds)
+        const counts: Record<string, number> = {}
+        const mine = new Set<string>()
+        for (const l of likes ?? []) {
+          counts[l.argument_id] = (counts[l.argument_id] ?? 0) + 1
+          if (l.user_id === uid) mine.add(l.argument_id)
+        }
+        setLikeCounts(counts)
+        setUserLikes(mine)
       }
       setLoading(false)
     }
     load()
   }, [id])
 
-  async function submitContrib() {
-    if (!userId || newContribText.trim().length < 10) return
-    setSubmittingContrib(true)
+  const ownPosition = arguments_.find(a => a.user_id === userId) ?? null
+
+  async function savePosition() {
+    if (!userId) { router.push('/login'); return }
+    if (!selectedType) return
+    const text = draftText.trim()
+    if (selectedType === 'alternative' && text.length < 10) {
+      setPosError('Für eine Alternative ist ein Textbeitrag erforderlich (mind. 10 Zeichen).')
+      return
+    }
+    setSavingPos(true)
+    setPosError('')
     const supabase = createClient()
-    const { data } = await supabase.from('demand_arguments').insert({
-      demand_id: id,
-      user_id: userId,
-      type: newContribType,
-      text: newContribText.trim(),
-    }).select('*').single()
-    if (data) setArguments(prev => [...prev, data])
-    setShowContribModal(false)
-    setNewContribText('')
-    setSubmittingContrib(false)
+    const { data, error } = await supabase
+      .from('demand_arguments')
+      .upsert({ demand_id: id, user_id: userId, type: selectedType, text: text || null }, { onConflict: 'demand_id,user_id' })
+      .select('id, user_id, type, text, created_at')
+      .single()
+    setSavingPos(false)
+    if (error) { setPosError(error.message); return }
+    setArguments(prev => [...prev.filter(a => a.user_id !== userId), data])
   }
 
-  async function toggleSupport() {
+  async function removePosition() {
+    if (!userId) return
+    const supabase = createClient()
+    await supabase.from('demand_arguments').delete().eq('demand_id', id).eq('user_id', userId)
+    setArguments(prev => prev.filter(a => a.user_id !== userId))
+    setSelectedType(null)
+    setDraftText('')
+  }
+
+  async function toggleLike(argId: string) {
     if (!userId) { router.push('/login'); return }
     const supabase = createClient()
-    if (isSupported) {
-      await supabase.from('demand_supports').delete().eq('demand_id', id).eq('user_id', userId)
-      await supabase.rpc('decrement_supports', { demand_id: id })
-      setDemand(prev => prev ? { ...prev, supports: prev.supports - 1 } : prev)
+    const liked = userLikes.has(argId)
+    setUserLikes(prev => { const n = new Set(prev); liked ? n.delete(argId) : n.add(argId); return n })
+    setLikeCounts(prev => ({ ...prev, [argId]: (prev[argId] ?? 0) + (liked ? -1 : 1) }))
+    if (liked) {
+      await supabase.from('demand_argument_likes').delete().eq('argument_id', argId).eq('user_id', userId)
     } else {
-      await supabase.from('demand_supports').insert({ demand_id: id, user_id: userId })
-      await supabase.rpc('increment_supports', { demand_id: id })
-      setDemand(prev => prev ? { ...prev, supports: prev.supports + 1 } : prev)
+      await supabase.from('demand_argument_likes').insert({ argument_id: argId, user_id: userId })
     }
-    setIsSupported(!isSupported)
   }
 
   if (loading) return (
@@ -196,19 +199,30 @@ export default function ForderungDetail() {
 
   const currentStep = STATUS_TO_STEP[demand.status] ?? 0
   const isAbgelehnt = demand.status === 'abgelehnt'
-  const progress = Math.min((demand.supports / VOTE_THRESHOLD) * 100, 100)
-  const remaining = Math.max(VOTE_THRESHOLD - demand.supports, 0)
 
-  const displayArguments = arguments_.length > 0 ? arguments_ : DEMO_CONTRIBUTIONS
+  // Relevanz = Anzahl der Positionen (ein Like + Text zählt als ein Engagement)
+  const relevance = arguments_.length
+  const progress = Math.min((relevance / RELEVANCE_THRESHOLD) * 100, 100)
+  const remaining = Math.max(RELEVANCE_THRESHOLD - relevance, 0)
+
   const displayResponses = responses.length > 0 ? responses : DEMO_RESPONSES
   const displaySolution = demand.solution ?? DEMO_SOLUTION
   const displayAddressees = demand.addressees ?? DEMO_ADDRESSEES
 
+  // Nur Beiträge MIT Text werden als Bürgerbeiträge angezeigt, sortiert nach Likes
+  const textArgs = arguments_.filter(a => a.text && a.text.trim().length > 0)
   const contribCounts = {
-    unterstützend: displayArguments.filter(c => c.type === 'unterstützend').length,
-    gegenargument: displayArguments.filter(c => c.type === 'gegenargument').length,
-    alternative:   displayArguments.filter(c => c.type === 'alternative').length,
+    unterstützend: textArgs.filter(c => c.type === 'unterstützend').length,
+    gegenargument: textArgs.filter(c => c.type === 'gegenargument').length,
+    alternative:   textArgs.filter(c => c.type === 'alternative').length,
   }
+  const visibleContribs = textArgs
+    .filter(c => c.type === activeContribType)
+    .sort((a, b) => (likeCounts[b.id] ?? 0) - (likeCounts[a.id] ?? 0))
+
+  const canSave = selectedType !== null &&
+    (selectedType !== 'alternative' || draftText.trim().length >= 10) &&
+    !(ownPosition?.type === selectedType && (ownPosition?.text ?? '') === draftText.trim())
 
   return (
     <>
@@ -244,9 +258,7 @@ export default function ForderungDetail() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
                 <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Das Problem</div>
-                <p className="text-sm text-gray-700 leading-relaxed">
-                  {demand.description ?? 'Keine Beschreibung hinterlegt.'}
-                </p>
+                <p className="text-sm text-gray-700 leading-relaxed">{demand.description ?? 'Keine Beschreibung hinterlegt.'}</p>
               </div>
               <div className="md:border-l md:pl-5 border-gray-100">
                 <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Gewünschte Lösung</div>
@@ -265,86 +277,136 @@ export default function ForderungDetail() {
             </div>
           </div>
 
-          {/* 4. Unterstützung */}
+          {/* 4. Relevanz-Score (nur Anzeige) */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <div className="text-4xl font-bold text-gray-900">{demand.supports}</div>
-                <div className="text-sm text-gray-500 mt-0.5">von {VOTE_THRESHOLD} Unterstützungen</div>
+                <div className="text-4xl font-bold text-gray-900">{relevance}</div>
+                <div className="text-sm text-gray-500 mt-0.5">von {RELEVANCE_THRESHOLD} Relevanzpunkten</div>
               </div>
-              <button
-                onClick={toggleSupport}
-                className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm transition-all ${
-                  isSupported ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-                }`}
-              >
-                <ThumbsUp size={16} className={isSupported ? 'fill-white' : ''} />
-                {isSupported ? 'Unterstützt' : 'Forderung unterstützen'}
-              </button>
+              <div className="text-right max-w-[55%]">
+                <div className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-50 rounded-full px-3 py-1.5">
+                  <Info size={13} /> Relevanz-Score
+                </div>
+              </div>
             </div>
             <div className="w-full bg-gray-100 rounded-full h-2 mb-3 overflow-hidden">
               <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${progress}%` }} />
             </div>
-            <p className="text-xs text-gray-400">
-              Unterstützung bedeutet: Ich finde dieses Anliegen relevant. Das ist noch keine Abstimmung.
-              {remaining > 0 && ` · Noch ${remaining} Unterstützungen bis zur Bürgerpriorisierung.`}
+            <p className="text-xs text-gray-400 leading-relaxed">
+              Der Relevanz-Score zählt das gesamte Engagement rund um diese Forderung — Unterstützung, Gegenargumente und Alternativen zusammen.
+              {remaining > 0 && ` Noch ${remaining} Relevanzpunkte bis zur möglichen Bürgerpriorisierung.`}
             </p>
           </div>
 
-          {/* 5. Drei Bürgeraktionen */}
+          {/* 5. Deine Position */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
-            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Dein Beitrag zur Diskussion</div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {[
-                { type: 'unterstützend' as ContributionType, icon: ThumbsUp,      label: 'Unterstützender Beitrag', desc: 'Ich finde diese Forderung wichtig und teile die Einschätzung.' },
-                { type: 'gegenargument' as ContributionType, icon: MessageSquare, label: 'Gegenargument',            desc: 'Ich sehe das Problem anders oder halte die Lösung für problematisch.' },
-                { type: 'alternative'   as ContributionType, icon: Lightbulb,     label: 'Alternative vorschlagen', desc: 'Ich erkenne das Problem, schlage aber einen anderen Lösungsweg vor.' },
-              ].map(({ type, icon: Icon, label, desc }) => (
-                <button
-                  key={type}
-                  onClick={() => { if (!userId) { router.push('/login'); return } setNewContribType(type); setShowContribModal(true) }}
-                  className="text-left p-4 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50/40 transition-all group"
-                >
-                  <Icon size={18} className="text-gray-400 group-hover:text-blue-500 mb-2 transition-colors" />
-                  <div className="text-sm font-semibold text-gray-800 mb-1">{label}</div>
-                  <div className="text-xs text-gray-400 leading-relaxed">{desc}</div>
-                </button>
-              ))}
+            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Deine Position zu dieser Forderung</div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+              {(Object.keys(POSITION_META) as PositionType[]).map(type => {
+                const meta = POSITION_META[type]
+                const Icon = meta.icon
+                const isSelected = selectedType === type
+                const isCurrent = ownPosition?.type === type
+                return (
+                  <button
+                    key={type}
+                    onClick={() => { if (!userId) { router.push('/login'); return } setSelectedType(type); setPosError(''); if (ownPosition?.type === type) setDraftText(ownPosition.text ?? '') ; else setDraftText('') }}
+                    className={`text-left p-4 rounded-xl border transition-all ${
+                      isSelected ? 'border-blue-400 bg-blue-50/50 ring-1 ring-blue-200' : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/30'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <Icon size={18} className={isSelected ? 'text-blue-600' : 'text-gray-400'} />
+                      {isCurrent && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-600 text-white">Aktiv</span>}
+                    </div>
+                    <div className="text-sm font-semibold text-gray-800 mb-1">{meta.label}</div>
+                    <div className="text-xs text-gray-400 leading-relaxed">{meta.desc}</div>
+                  </button>
+                )
+              })}
             </div>
+
+            {selectedType && (
+              <div>
+                <textarea
+                  value={draftText}
+                  onChange={e => { setDraftText(e.target.value); setPosError('') }}
+                  rows={3}
+                  placeholder={
+                    selectedType === 'unterstützend' ? 'Warum findest du diese Forderung wichtig? (optional)' :
+                    selectedType === 'gegenargument' ? 'Was siehst du kritisch? (optional)' :
+                    'Beschreibe deinen alternativen Lösungsweg (erforderlich)'
+                  }
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none mb-2"
+                />
+                {selectedType === 'alternative' && (
+                  <p className="text-xs text-gray-400 mb-2">Eine Alternative braucht immer eine konkrete Beschreibung.</p>
+                )}
+                {posError && <div className="text-sm text-red-600 bg-red-50 px-4 py-2.5 rounded-xl mb-2">{posError}</div>}
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={savePosition}
+                    disabled={!canSave || savingPos}
+                    className="px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {savingPos ? 'Speichern…' : ownPosition ? 'Position aktualisieren' : 'Position speichern'}
+                  </button>
+                  {ownPosition && (
+                    <button onClick={removePosition} className="text-sm text-gray-400 hover:text-red-600 transition-colors">
+                      Position entfernen
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+            <p className="text-xs text-gray-400 mt-4 leading-relaxed">
+              Du kannst pro Forderung eine Position wählen. Wenn du deine Meinung änderst, ersetzt eine neue Position die vorherige — es zählt immer nur eine Stimme pro Person.
+            </p>
           </div>
 
-          {/* 6. Bürgerbeiträge */}
+          {/* 6. Bürgerbeiträge mit Like-System */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
             <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Beiträge aus der Bürgerschaft</div>
             <div className="flex gap-1 p-1 bg-gray-100 rounded-xl w-fit mb-5">
-              {(['unterstützend', 'gegenargument', 'alternative'] as ContributionType[]).map(tab => (
+              {(['unterstützend', 'gegenargument', 'alternative'] as PositionType[]).map(tab => (
                 <button
                   key={tab}
                   onClick={() => setActiveContribType(tab)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${activeContribType === tab ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                 >
-                  {tab === 'unterstützend' && `Unterstützend (${contribCounts.unterstützend})`}
-                  {tab === 'gegenargument' && `Gegenargument (${contribCounts.gegenargument})`}
-                  {tab === 'alternative'   && `Alternative (${contribCounts.alternative})`}
+                  {POSITION_META[tab].label} ({contribCounts[tab]})
                 </button>
               ))}
             </div>
             <div className="flex flex-col gap-3">
-              {displayArguments.filter(c => c.type === activeContribType).length === 0 ? (
+              {visibleContribs.length === 0 ? (
                 <div className="text-sm text-gray-400 py-4 text-center">Noch keine Beiträge in dieser Kategorie.</div>
-              ) : displayArguments.filter(c => c.type === activeContribType).map(c => {
-                const style = CONTRIBUTION_STYLES[c.type as ContributionType]
-                const entry = c as Record<string, string>
-                const dateStr = entry.date ?? entry.created_at
-                const bodyText = entry.content ?? entry.text
+              ) : visibleContribs.map(c => {
+                const meta = POSITION_META[c.type as PositionType]
+                const isOwn = c.user_id === userId
+                const likes = likeCounts[c.id] ?? 0
+                const liked = userLikes.has(c.id)
                 return (
-                  <div key={c.id} className={`rounded-xl border p-4 ${style.bg}`}>
+                  <div key={c.id} className={`rounded-xl border p-4 ${meta.box}`}>
                     <div className="flex items-center justify-between mb-2">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${style.badge}`}>{style.label}</span>
-                      <span className="text-xs text-gray-400">{new Date(dateStr).toLocaleDateString('de-DE', { day: 'numeric', month: 'long' })}</span>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${meta.badge}`}>{meta.label}</span>
+                      <span className="text-xs text-gray-400">{new Date(c.created_at).toLocaleDateString('de-DE', { day: 'numeric', month: 'long' })}</span>
                     </div>
-                    <p className="text-sm text-gray-700 leading-relaxed mb-1">{bodyText}</p>
-                    {entry.author && <div className="text-xs text-gray-400">{entry.author}</div>}
+                    <p className="text-sm text-gray-700 leading-relaxed mb-3">{c.text}</p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => !isOwn && toggleLike(c.id)}
+                        disabled={isOwn}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                          isOwn ? 'text-gray-300 cursor-default' : liked ? 'bg-blue-600 text-white' : 'bg-white/70 text-gray-500 hover:text-blue-600 border border-gray-200'
+                        }`}
+                      >
+                        <Heart size={12} className={liked && !isOwn ? 'fill-white' : ''} />
+                        {likes}
+                      </button>
+                      {isOwn && <span className="text-xs text-gray-400">Dein Beitrag</span>}
+                    </div>
                   </div>
                 )
               })}
@@ -362,9 +424,6 @@ export default function ForderungDetail() {
                 <div className="text-sm text-gray-400 py-4 text-center">Noch keine Rückmeldungen aus Politik oder Verwaltung.</div>
               ) : displayResponses.map(r => {
                 const pos = POSITION_STYLES[r.position]
-                const resp = r as Record<string, string>
-                const dateStr = resp.date ?? resp.created_at
-                const bodyText = resp.content ?? resp.text
                 return (
                   <div key={r.id} className="border border-gray-200 rounded-xl p-4 bg-gray-50">
                     <div className="flex items-start justify-between gap-3 mb-3">
@@ -386,9 +445,9 @@ export default function ForderungDetail() {
                         </span>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-700 leading-relaxed mb-2">{bodyText}</p>
+                    <p className="text-sm text-gray-700 leading-relaxed mb-2">{r.text}</p>
                     <div className="text-xs text-gray-400">
-                      {new Date(dateStr).toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      {new Date(r.created_at).toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' })}
                     </div>
                   </div>
                 )
@@ -396,7 +455,7 @@ export default function ForderungDetail() {
             </div>
           </div>
 
-          {/* 8. Prozessstatus kompakt */}
+          {/* 8. Prozessstatus */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
             <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Aktueller Prozessstand</div>
             {isAbgelehnt ? (
@@ -431,19 +490,11 @@ export default function ForderungDetail() {
             <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6">
               <div className="text-xs font-semibold text-blue-400 uppercase tracking-wide mb-2">Mögliche spätere Bürgerpriorisierung</div>
               <p className="text-sm text-blue-700 mb-4 leading-relaxed">
-                Diese Forderung ist noch keine Abstimmung. Wenn genug Unterstützung gesammelt wurde, können konkrete Lösungsoptionen von Bürgern priorisiert werden.
+                Diese Forderung ist noch keine Abstimmung. Sobald genug Relevanz gesammelt wurde, können konkrete Lösungsoptionen von Bürgern priorisiert werden.
               </p>
-              <div className="flex flex-col gap-2 mb-4">
-                {['Mehr Kontrollen & Ordnungsamt', 'Separate Fahrradstraße', 'Markierungen & Beschilderung', 'Kombiniertes Maßnahmenpaket'].map(opt => (
-                  <div key={opt} className="flex items-center gap-3 bg-white rounded-xl px-4 py-2.5 border border-blue-100 text-sm text-gray-600">
-                    <Circle size={14} className="text-blue-300 shrink-0" />
-                    {opt}
-                  </div>
-                ))}
-              </div>
               {remaining > 0 && (
                 <div className="text-sm font-semibold text-blue-600">
-                  Noch {remaining} Unterstützungen bis zur Bürgerpriorisierung
+                  Noch {remaining} Relevanzpunkte bis zur Bürgerpriorisierung
                 </div>
               )}
             </div>
@@ -451,48 +502,6 @@ export default function ForderungDetail() {
 
         </div>
       </main>
-
-      {/* Beitrag Modal */}
-      {showContribModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowContribModal(false)} />
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg p-8">
-            <button onClick={() => setShowContribModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700">
-              <X size={18} />
-            </button>
-            <h2 className="text-lg font-bold text-gray-900 mb-1">Beitrag hinzufügen</h2>
-            <p className="text-sm text-gray-500 mb-5">Wähle den Typ deines Beitrags und formuliere ihn sachlich.</p>
-
-            <div className="flex gap-2 mb-5">
-              {(['unterstützend', 'gegenargument', 'alternative'] as ContributionType[]).map(t => (
-                <button key={t} onClick={() => setNewContribType(t)}
-                  className={`flex-1 py-2 rounded-xl text-xs font-medium border transition-colors ${newContribType === t ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'}`}>
-                  {t === 'unterstützend' ? 'Unterstützend' : t === 'gegenargument' ? 'Gegenargument' : 'Alternative'}
-                </button>
-              ))}
-            </div>
-
-            <textarea
-              value={newContribText}
-              onChange={e => setNewContribText(e.target.value)}
-              placeholder={
-                newContribType === 'unterstützend' ? 'Warum findest du diese Forderung wichtig?' :
-                newContribType === 'gegenargument' ? 'Was siehst du kritisch an dieser Forderung oder Lösung?' :
-                'Welchen alternativen Lösungsweg schlägst du vor?'
-              }
-              rows={4}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none mb-4"
-            />
-            <button
-              disabled={newContribText.trim().length < 10 || submittingContrib}
-              className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-40"
-              onClick={submitContrib}
-            >
-              {submittingContrib ? 'Einreichen…' : 'Beitrag einreichen'}
-            </button>
-          </div>
-        </div>
-      )}
     </>
   )
 }

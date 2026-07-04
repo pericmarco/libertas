@@ -75,7 +75,6 @@ export default function NeueFordering() {
       addressees: addressees.length > 0 ? addressees : null,
       district_id: profile?.district_id ?? null,
       user_id: userData.user.id,
-      supports: 0,
       status: 'eingereicht',
     }).select('id').single()
 
