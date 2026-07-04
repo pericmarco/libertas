@@ -10,10 +10,17 @@ function isPublicPath(pathname: string) {
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-    {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!url || !key) {
+    console.error('Supabase env vars missing in proxy — skipping auth check to avoid taking the whole site down')
+    return supabaseResponse
+  }
+
+  let user = null
+  try {
+    const supabase = createServerClient(url, key, {
       cookies: {
         getAll() {
           return request.cookies.getAll()
@@ -26,12 +33,14 @@ export async function updateSession(request: NextRequest) {
           )
         },
       },
-    }
-  )
+    })
 
-  // Do not run any logic between createServerClient and getUser — this call
-  // refreshes the auth session cookie when the access token has expired.
-  const { data: { user } } = await supabase.auth.getUser()
+    // Do not run any logic between createServerClient and getUser — this call
+    // refreshes the auth session cookie when the access token has expired.
+    user = (await supabase.auth.getUser()).data.user
+  } catch (err) {
+    console.error('Proxy auth check failed, treating as unauthenticated:', err)
+  }
 
   if (!user && !isPublicPath(request.nextUrl.pathname)) {
     const loginUrl = request.nextUrl.clone()
