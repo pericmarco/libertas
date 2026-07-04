@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, Vote, Megaphone, Users, LogOut, BarChart2 } from 'lucide-react'
+import { LayoutDashboard, Vote, Megaphone, Users, LogOut, BarChart2, User as UserIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
@@ -14,6 +14,7 @@ const links = [
   { href: '/abstimmungen',    label: 'Priorisierung', icon: Vote },
   { href: '/politiker',       label: 'Politiker',    icon: Users },
   { href: '/repraesentation', label: 'Score',        icon: BarChart2 },
+  { href: '/profil',          label: 'Profil',       icon: UserIcon },
 ]
 
 export default function Navbar() {
@@ -90,7 +91,7 @@ export default function Navbar() {
 
       {/* Mobile Bottom Navigation */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 pb-safe">
-        <div className="grid grid-cols-5 h-16">
+        <div className="grid grid-cols-6 h-16">
           {links.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
