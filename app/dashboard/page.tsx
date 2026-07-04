@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { MapPin, TrendingUp, Users, CheckCircle, Newspaper, ExternalLink } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { REGION_NAME } from '@/lib/constants'
+import ElectionsCard from '@/components/ElectionsCard'
 import Link from 'next/link'
 
 export default async function Dashboard() {
@@ -27,10 +28,12 @@ export default async function Dashboard() {
     { data: topics },
     { count: demandsUmgesetzt },
     { data: news },
+    { data: elections },
   ] = await Promise.all([
     supabase.from('topics').select('*').order('created_at', { ascending: false }),
     supabase.from('demands').select('*', { count: 'exact', head: true }).eq('status', 'umgesetzt'),
     supabase.from('news').select('*').in('district_id', districtIds).order('published_at', { ascending: false }).limit(4),
+    supabase.from('elections').select('id, title, election_date, expected_year, description'),
   ])
 
   const stats = [
@@ -51,7 +54,7 @@ export default async function Dashboard() {
               <span>Köln Innenstadt</span>
             </div>
             <h1 className="text-3xl font-bold text-gray-900">Dein Dashboard</h1>
-            <p className="text-gray-500 mt-1">Aktuelle politische Themen in deinem Wahlkreis</p>
+            <p className="text-gray-500 mt-1">Aktuelle politische Themen in deinem Stadtbezirk</p>
           </div>
 
           {/* Stats */}
@@ -71,13 +74,16 @@ export default async function Dashboard() {
             ))}
           </div>
 
-{/* Aktuelle News */}
+          {/* Anstehende Wahlen */}
+          <ElectionsCard elections={elections ?? []} />
+
+          {/* Aktuelle News */}
           <Card className="mb-6">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
                   <Newspaper size={16} className="text-gray-400" />
-                  Aktuelles aus dem Wahlkreis
+                  Aktuelles aus Köln Innenstadt
                 </CardTitle>
               </div>
             </CardHeader>
