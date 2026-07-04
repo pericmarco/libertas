@@ -2,19 +2,19 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, Vote, Megaphone, Users, LogOut, BarChart2, User as UserIcon } from 'lucide-react'
+import { LayoutDashboard, Vote, Megaphone, Users, LogOut, TrendingUp, User as UserIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 
 const links = [
-  { href: '/dashboard',       label: 'Dashboard',    icon: LayoutDashboard },
-  { href: '/forderungen',     label: 'Forderungen',  icon: Megaphone },
-  { href: '/abstimmungen',    label: 'Priorisierung', icon: Vote },
-  { href: '/politiker',       label: 'Politiker',    icon: Users },
-  { href: '/repraesentation', label: 'Score',        icon: BarChart2 },
-  { href: '/profil',          label: 'Profil',       icon: UserIcon },
+  { href: '/dashboard',    label: 'Dashboard',     icon: LayoutDashboard },
+  { href: '/forderungen',  label: 'Forderungen',   icon: Megaphone },
+  { href: '/abstimmungen', label: 'Priorisierung', icon: Vote },
+  { href: '/politiker',    label: 'Politiker',     icon: Users },
+  { href: '/wirkung',      label: 'Wirkung',       icon: TrendingUp },
+  { href: '/profil',       label: 'Profil',        icon: UserIcon },
 ]
 
 export default function Navbar() {

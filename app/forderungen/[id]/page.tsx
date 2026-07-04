@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
-import { ChevronLeft, ThumbsUp, MessageSquare, Lightbulb, ShieldCheck, CheckCircle, Circle, AlertCircle, Heart, Info } from 'lucide-react'
+import { ChevronLeft, ThumbsUp, MessageSquare, Lightbulb, ShieldCheck, CheckCircle, Circle, AlertCircle, Heart } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import RepScoreBadge from '@/components/RepScoreBadge'
+import { computeRepScoreForUsers } from '@/lib/repScore'
 
 const RELEVANCE_THRESHOLD = 50
 
@@ -82,6 +84,7 @@ export default function ForderungDetail() {
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
   const [activeContribType, setActiveContribType] = useState<PositionType>('unterstützend')
+  const [rep, setRep] = useState<{ score: number; participants: number }>({ score: 0, participants: 0 })
 
   // Positions-Editor
   const [selectedType, setSelectedType] = useState<PositionType | null>(null)
@@ -131,6 +134,12 @@ export default function ForderungDetail() {
     }
     load()
   }, [id])
+
+  // Repräsentativitäts-Score der Beteiligten-Kohorte, neu berechnet wenn sich Positionen ändern
+  useEffect(() => {
+    const supabase = createClient()
+    computeRepScoreForUsers(supabase, arguments_.map(a => a.user_id)).then(setRep)
+  }, [arguments_])
 
   const ownPosition = arguments_.find(a => a.user_id === userId) ?? null
 
@@ -284,10 +293,8 @@ export default function ForderungDetail() {
                 <div className="text-4xl font-bold text-gray-900">{relevance}</div>
                 <div className="text-sm text-gray-500 mt-0.5">von {RELEVANCE_THRESHOLD} Relevanzpunkten</div>
               </div>
-              <div className="text-right max-w-[55%]">
-                <div className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-50 rounded-full px-3 py-1.5">
-                  <Info size={13} /> Relevanz-Score
-                </div>
+              <div className="text-right">
+                <RepScoreBadge score={rep.score} participants={rep.participants} />
               </div>
             </div>
             <div className="w-full bg-gray-100 rounded-full h-2 mb-3 overflow-hidden">

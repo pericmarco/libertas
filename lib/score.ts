@@ -1,14 +1,17 @@
-type Profile = { age_group: string | null; gender: string | null }
+type ScoreProfile = { age_group: string | null; gender: string | null; stadtteil: string | null }
 type Demographic = { category: string; label: string; percentage: number }
 
-export function calcRepScore(profiles: Profile[], demographics: Demographic[]): number {
-  const withData = profiles.filter(p => p.age_group && p.gender)
+// Repräsentativitäts-Score einer Beteiligungs-Kohorte gegenüber der
+// Bevölkerungsstruktur von Köln Innenstadt — nach Altersgruppe,
+// Geschlecht und Stadtteil.
+export function calcRepScore(profiles: ScoreProfile[], demographics: Demographic[]): number {
+  const withData = profiles.filter(p => p.age_group && p.gender && p.stadtteil)
   if (withData.length === 0) return 0
 
   let totalDeviation = 0
   let checks = 0
 
-  for (const category of ['age_group', 'gender'] as const) {
+  for (const category of ['age_group', 'gender', 'stadtteil'] as const) {
     const targets = demographics.filter(d => d.category === category)
     const total = withData.length
 
