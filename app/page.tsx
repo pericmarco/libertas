@@ -152,6 +152,8 @@ export default function Home() {
           <div className="flex gap-6">
             <Link href="/login" className="hover:text-gray-600 transition-colors">Anmelden</Link>
             <Link href="/register" className="hover:text-gray-600 transition-colors">Registrieren</Link>
+            <Link href="/impressum" className="hover:text-gray-600 transition-colors">Impressum</Link>
+            <Link href="/datenschutz" className="hover:text-gray-600 transition-colors">Datenschutz</Link>
           </div>
         </div>
       </footer>
