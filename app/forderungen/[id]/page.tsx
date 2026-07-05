@@ -459,11 +459,26 @@ export default function ForderungDetail() {
             <p className="text-xs text-gray-400 mt-4 leading-relaxed">
               Du kannst pro Forderung eine Position wählen. Wenn du deine Meinung änderst, ersetzt eine neue Position die vorherige — es zählt immer nur eine Stimme pro Person.
             </p>
+
+            {/* Diskussion direkt an der Position verankert — hier schreibt man, dort liest man */}
+            <button
+              onClick={() => setDiscussionOpen(true)}
+              className="mt-4 w-full flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 hover:bg-blue-50 hover:border-blue-200 px-4 py-3 transition-colors"
+            >
+              <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <MessageSquare size={15} className="text-blue-500" />
+                Diskussion ansehen
+              </span>
+              <span className="flex items-center gap-1.5 text-xs text-gray-400">
+                {textArgs.length} {textArgs.length === 1 ? 'Beitrag' : 'Beiträge'}
+                <ChevronRight size={14} className="text-gray-300" />
+              </span>
+            </button>
           </div>
           )}
 
-          {/* Diskussion — kompakte Zeile, öffnet als Vollbild-Ansicht */}
-          {!isMangel && (
+          {/* Bei zurückgezogenen Forderungen (Positions-Karte ausgeblendet) bleibt die Diskussion lesbar */}
+          {!isMangel && isZurueckgezogen && (
             <button
               onClick={() => setDiscussionOpen(true)}
               className="w-full bg-white rounded-2xl border border-gray-100 hover:border-blue-200 px-6 py-4 mb-4 flex items-center justify-between transition-colors"
@@ -501,7 +516,7 @@ export default function ForderungDetail() {
                 </div>
               </div>
             </div>
-            <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 pb-24 flex flex-col gap-3">
+            <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 pb-44 flex flex-col gap-3">
               {visibleContribs.length === 0 ? (
                 <div className="text-sm text-gray-400 py-10 text-center">Noch keine Beiträge in dieser Kategorie.</div>
               ) : visibleContribs.map(c => {
@@ -539,6 +554,63 @@ export default function ForderungDetail() {
                 )
               })}
             </div>
+
+            {/* Feste Schreibleiste: direkt aus der Diskussion heraus Position beziehen */}
+            {!isZurueckgezogen && (
+              <div className="fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-gray-100">
+                <div className="max-w-2xl mx-auto px-4 sm:px-6 py-3">
+                  {!userId ? (
+                    <button
+                      onClick={() => router.push('/login')}
+                      className="w-full py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors"
+                    >
+                      Anmelden zum Mitdiskutieren
+                    </button>
+                  ) : (
+                    <>
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {(Object.keys(POSITION_META) as PositionType[]).map(type => (
+                          <button
+                            key={type}
+                            onClick={() => { setSelectedType(type); setPosError(''); if (ownPosition?.type === type) setDraftText(ownPosition.text ?? ''); else setDraftText('') }}
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                              selectedType === type ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
+                            }`}
+                          >
+                            {POSITION_META[type].label}{ownPosition?.type === type ? ' ✓' : ''}
+                          </button>
+                        ))}
+                      </div>
+                      {selectedType ? (
+                        <div className="flex gap-2">
+                          <textarea
+                            value={draftText}
+                            onChange={e => { setDraftText(e.target.value); setPosError('') }}
+                            rows={1}
+                            placeholder={
+                              selectedType === 'unterstützend' ? 'Warum findest du diese Forderung wichtig? (optional)' :
+                              selectedType === 'gegenargument' ? 'Was siehst du kritisch? (optional)' :
+                              'Beschreibe deinen alternativen Lösungsweg (erforderlich)'
+                            }
+                            className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                          />
+                          <button
+                            onClick={savePosition}
+                            disabled={!canSave || savingPos}
+                            className="px-4 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-40 shrink-0"
+                          >
+                            {savingPos ? '…' : ownPosition ? 'Aktualisieren' : 'Senden'}
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-400">Wähle eine Position, um deinen Beitrag zu schreiben — dein Beitrag zählt als Engagement zur Forderung.</p>
+                      )}
+                      {posError && <div className="text-xs text-red-600 mt-1.5">{posError}</div>}
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
           )}
 
