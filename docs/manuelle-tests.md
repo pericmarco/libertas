@@ -24,6 +24,25 @@ lassen, sondern einen echten eingeloggten Nutzer im Browser brauchen.
   Sobald eine Forderung 50+ Relevanzpunkte hat: erscheint der gelbe
   Banner + die Flamme-Markierung im Admin-Bereich?
 
+- [ ] **Einreichungs-Wizard: Bürgeranliegen komplett durchspielen**
+  Wiederkehrendes Problem einreichen (z. B. das Haltestellen-Beispiel):
+  alle 8 Schritte, Zurück-Button, Tags aus mehreren Bereichen, Vorschau
+  mit Stift-Korrektur. Erwartung: erscheint in der Liste, Themenbereich-
+  Filter findet sie in allen zugehörigen Bereichen, Detailseite zeigt
+  "Weitere Details anzeigen" mit allen Angaben.
+
+- [ ] **Einreichungs-Wizard: Mängelmeldung einreichen**
+  Konkreten Schaden melden (z. B. kaputte Laterne). Erwartung: Rückmelde-
+  Schritt zeigt nur den Hinweis "geht ans Lybertas-Team", Meldung
+  erscheint NICHT in der öffentlichen Liste, aber im Admin-Bereich mit
+  orangem Mängelmeldung-Badge; Detailseite (per Link) ohne Positionen,
+  mit Weiterleitungs-Verlauf.
+
+- [ ] **Rate-Limit testen (optional, mit Test-Account)**
+  Als normaler Bürger 4 Anliegen an einem Tag einreichen — das vierte
+  muss mit freundlicher Meldung abgelehnt werden. (Admins sind ausgenommen,
+  also nicht mit euren Konten testbar.)
+
 ## Erledigt
 
 - [x] Registrierung → E-Mail-Bestätigung → Onboarding speichert Name,
