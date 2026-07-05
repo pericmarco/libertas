@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
@@ -14,6 +14,15 @@ const ADDRESSEES_OPTIONS = [
   'Stadt Köln', 'Ordnungsamt', 'Bezirksvertretung', 'Stadtrat',
   'Fraktionen', 'Parteien', 'Verwaltung', 'Ausschüsse', 'Unsicher',
 ]
+
+// Adressat-Wizard: Thema → wahrscheinlich zuständige Stellen
+const WIZARD_TOPICS: Record<string, string[]> = {
+  'Ordnung, Sauberkeit & Sicherheit':   ['Ordnungsamt', 'Stadt Köln'],
+  'Verkehr, Bau & Stadtplanung':        ['Stadt Köln', 'Verwaltung'],
+  'Soziales, Bildung & Kultur':         ['Stadt Köln', 'Ausschüsse'],
+  'Politische Grundsatzentscheidung':   ['Stadtrat', 'Fraktionen'],
+  'Sonstiges / weiß nicht':             ['Stadt Köln'],
+}
 
 type DemandType = 'forderung' | 'maengel' | null
 
@@ -29,6 +38,39 @@ export default function NeueFordering() {
   const [addressees, setAddressees] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  // Duplikatprüfung: ähnliche bestehende Forderungen beim Tippen des Titels
+  const [similar, setSimilar] = useState<{ id: string; title: string; relevance_score: number }[]>([])
+
+  // Adressat-Wizard
+  const [wizardOpen, setWizardOpen] = useState(false)
+  const [wTopic, setWTopic] = useState('')
+  const [wScope, setWScope] = useState('')
+
+  useEffect(() => {
+    const q = title.trim()
+    if (q.length < 8) { setSimilar([]); return }
+    const t = setTimeout(async () => {
+      const supabase = createClient()
+      const { data } = await supabase.rpc('similar_demands', { q })
+      setSimilar(data ?? [])
+    }, 500)
+    return () => clearTimeout(t)
+  }, [title])
+
+  const wizardSuggestion = wTopic
+    ? [...new Set([
+        ...(WIZARD_TOPICS[wTopic] ?? []),
+        ...(wScope === 'stadtteil' ? ['Bezirksvertretung'] : []),
+      ])]
+    : []
+
+  function applyWizard() {
+    setAddressees(prev => [...new Set([...prev.filter(a => a !== 'Unsicher'), ...wizardSuggestion])])
+    setWizardOpen(false)
+    setWTopic('')
+    setWScope('')
+  }
 
   function toggleAddressee(a: string) {
     setAddressees(prev =>
@@ -224,6 +266,29 @@ export default function NeueFordering() {
                       className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <p className="text-xs text-gray-400 mt-2">Formuliere kurz und verständlich, worum es geht.</p>
+
+                    {similar.length > 0 && (
+                      <div className="mt-3 bg-blue-50 border border-blue-100 rounded-xl p-4">
+                        <div className="text-xs font-semibold text-blue-700 mb-2">
+                          Ähnliche Forderungen gibt es schon — vielleicht lieber unterstützen statt doppelt einreichen?
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          {similar.map(sd => (
+                            <a
+                              key={sd.id}
+                              href={`/forderungen/${sd.id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center justify-between gap-2 text-sm text-blue-700 hover:underline"
+                            >
+                              <span className="truncate">{sd.title}</span>
+                              <span className="text-xs text-blue-400 shrink-0">{sd.relevance_score} Punkte →</span>
+                            </a>
+                          ))}
+                        </div>
+                        <p className="text-[11px] text-blue-400 mt-2">Du kannst deine Forderung trotzdem einreichen, wenn dein Anliegen ein anderes ist.</p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Ort */}
@@ -318,7 +383,74 @@ export default function NeueFordering() {
                         </button>
                       ))}
                     </div>
-                    <p className="text-xs text-gray-400">Du musst nicht genau wissen, wer zuständig ist. Lybertas kann später helfen, die passenden Adressaten zuzuordnen.</p>
+                    {!wizardOpen ? (
+                      <button
+                        type="button"
+                        onClick={() => setWizardOpen(true)}
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        Unsicher, wer zuständig ist? Beantworte zwei kurze Fragen →
+                      </button>
+                    ) : (
+                      <div className="mt-1 bg-gray-50 border border-gray-100 rounded-xl p-4">
+                        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Zuständigkeits-Hilfe</div>
+
+                        <div className="mb-4">
+                          <div className="text-sm font-medium text-gray-700 mb-2">Worum geht es hauptsächlich?</div>
+                          <div className="flex flex-wrap gap-2">
+                            {Object.keys(WIZARD_TOPICS).map(t => (
+                              <button
+                                key={t}
+                                type="button"
+                                onClick={() => setWTopic(t)}
+                                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                                  wTopic === t ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
+                                }`}
+                              >
+                                {t}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="mb-4">
+                          <div className="text-sm font-medium text-gray-700 mb-2">Betrifft es einen bestimmten Stadtteil oder die ganze Stadt?</div>
+                          <div className="flex flex-wrap gap-2">
+                            {[['stadtteil', 'Einen bestimmten Stadtteil'], ['stadt', 'Die ganze Stadt']].map(([val, label]) => (
+                              <button
+                                key={val}
+                                type="button"
+                                onClick={() => setWScope(val)}
+                                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                                  wScope === val ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
+                                }`}
+                              >
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {wizardSuggestion.length > 0 && (
+                          <div className="bg-white border border-blue-100 rounded-xl p-3">
+                            <div className="text-xs text-gray-500 mb-2">Wahrscheinlich zuständig:</div>
+                            <div className="flex flex-wrap gap-1.5 mb-3">
+                              {wizardSuggestion.map(a => (
+                                <span key={a} className="text-xs font-medium px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100">{a}</span>
+                              ))}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={applyWizard}
+                              className="px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                              Vorschlag übernehmen
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <p className="text-xs text-gray-400 mt-2">Du musst nicht genau wissen, wer zuständig ist — das Lybertas-Team prüft die Adressierung vor der Weiterleitung.</p>
                   </div>
 
                   {/* Submit */}
