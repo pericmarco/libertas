@@ -49,6 +49,36 @@ export default function NeueFordering() {
   const isFormVisible = demandType !== null
   const canSubmit = title.trim().length >= 5 && category && problem.trim().length >= 10
 
+  // Auf Mobile direkt nach der Typ-Auswahl sichtbar, auf Desktop in der rechten Spalte
+  const qualityHints = (
+    <div className="bg-white rounded-2xl border border-gray-100 p-5">
+      <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Was macht eine gute Forderung aus?</div>
+      <div className="space-y-2.5 mb-4">
+        {[
+          'Sie beschreibt ein strukturelles Problem.',
+          'Sie nennt einen konkreten Ort oder Stadtteil.',
+          'Sie schlägt eine nachvollziehbare Veränderung vor.',
+        ].map((point, i) => (
+          <div key={i} className="flex items-start gap-2.5 text-sm text-gray-600">
+            <CheckCircle size={14} className="text-blue-500 shrink-0 mt-0.5" />
+            {point}
+          </div>
+        ))}
+      </div>
+
+      <div className="border-t border-gray-100 pt-4 space-y-2">
+        <div className="bg-red-50 rounded-xl px-3 py-2.5 text-xs leading-relaxed">
+          <span className="font-semibold text-red-600">Schwach: </span>
+          <span className="text-gray-600">„Am Neumarkt ist alles schlimm."</span>
+        </div>
+        <div className="bg-green-50 rounded-xl px-3 py-2.5 text-xs leading-relaxed">
+          <span className="font-semibold text-green-600">Besser: </span>
+          <span className="text-gray-600">„Der Neumarkt wird abends von vielen Menschen als unsicher wahrgenommen. Die Stadt soll ein Konzept aus Ordnungsamt, Streetwork und besserer Beleuchtung prüfen."</span>
+        </div>
+      </div>
+    </div>
+  )
+
   async function handleSubmit() {
     if (!canSubmit || submitting) return
     setError('')
@@ -181,6 +211,9 @@ export default function NeueFordering() {
                   </div>
                 )}
               </div>
+
+              {/* Tipps auf Mobile direkt vor den Eingabefeldern statt ganz unten */}
+              {isFormVisible && <div className="lg:hidden">{qualityHints}</div>}
 
               {/* Step 2: Form fields */}
               {isFormVisible && (
@@ -377,7 +410,7 @@ export default function NeueFordering() {
 
                     <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-200">
                       <div className="flex items-center gap-1 text-xs text-gray-400">
-                        <span className="font-semibold text-gray-600">0</span> Unterstützungen
+                        <span className="font-semibold text-gray-600">0</span> Relevanzpunkte
                       </div>
                     </div>
                   </div>
@@ -386,33 +419,8 @@ export default function NeueFordering() {
                 </div>
               )}
 
-              {/* Quality hints */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Was macht eine gute Forderung aus?</div>
-                <div className="space-y-2.5 mb-4">
-                  {[
-                    'Sie beschreibt ein strukturelles Problem.',
-                    'Sie nennt einen konkreten Ort oder Stadtteil.',
-                    'Sie schlägt eine nachvollziehbare Veränderung vor.',
-                  ].map((point, i) => (
-                    <div key={i} className="flex items-start gap-2.5 text-sm text-gray-600">
-                      <CheckCircle size={14} className="text-blue-500 shrink-0 mt-0.5" />
-                      {point}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="border-t border-gray-100 pt-4 space-y-2">
-                  <div className="bg-red-50 rounded-xl px-3 py-2.5 text-xs leading-relaxed">
-                    <span className="font-semibold text-red-600">Schwach: </span>
-                    <span className="text-gray-500">„Am Neumarkt ist alles schlimm."</span>
-                  </div>
-                  <div className="bg-green-50 rounded-xl px-3 py-2.5 text-xs leading-relaxed">
-                    <span className="font-semibold text-green-600">Besser: </span>
-                    <span className="text-gray-500">„Der Neumarkt wird abends von vielen Menschen als unsicher wahrgenommen. Die Stadt soll ein Konzept aus Ordnungsamt, Streetwork und besserer Beleuchtung prüfen."</span>
-                  </div>
-                </div>
-              </div>
+              {/* Quality hints (Desktop; auf Mobile oben im Formular-Flow) */}
+              <div className="hidden lg:block">{qualityHints}</div>
 
             </div>
           </div>

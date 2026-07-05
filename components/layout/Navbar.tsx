@@ -104,7 +104,7 @@ export default function Navbar() {
               )}
             >
               <Icon size={20} strokeWidth={pathname === href ? 2.5 : 1.8} />
-              <span className="text-[10px] font-medium">{label}</span>
+              <span className="text-[10px] font-medium max-w-full truncate px-0.5">{label}</span>
             </Link>
           ))}
         </div>

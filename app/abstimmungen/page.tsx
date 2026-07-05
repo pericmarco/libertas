@@ -120,7 +120,7 @@ export default function Abstimmungen() {
               className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'partner' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
               <ShieldCheck size={14} />
-              Sponsor Surveys
+              Stadtumfragen
             </button>
             <button
               onClick={() => setTab('buerger')}
@@ -133,7 +133,7 @@ export default function Abstimmungen() {
           {tab === 'partner' && (
             <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 mb-6 text-sm text-blue-700">
               <ShieldCheck size={16} className="shrink-0 mt-0.5" />
-              <span>Sponsor Surveys werden von Organisationen wie Städten, Kommunen, Parteien oder Verbänden in Auftrag gegeben, um ein Meinungsbild zu aktuellen Themen einzuholen. Der Absender ist immer sichtbar.</span>
+              <span>Stadtumfragen werden von Städten, Kommunen, Parteien oder Verbänden in Auftrag gegeben, um ein Meinungsbild zu aktuellen Themen einzuholen. Der Absender ist immer sichtbar.</span>
             </div>
           )}
 
@@ -155,21 +155,22 @@ export default function Abstimmungen() {
                 return (
                   <Card key={vote.id}>
                     <CardHeader>
-                      <div className="flex items-start justify-between gap-4">
+                      {/* Auf Mobile stapeln Titel und Badge, ab sm nebeneinander — sonst quetscht das Badge den Titel */}
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                         <div>
                           {vote.is_partner_vote && vote.partner_name && (
                             <div className="flex items-center gap-1.5 text-xs text-blue-600 font-medium mb-1">
                               <ShieldCheck size={12} />
-                              Sponsor Survey · {vote.partner_name}
+                              Stadtumfrage · {vote.partner_name}
                             </div>
                           )}
                           <CardTitle className="text-lg font-semibold leading-snug">{vote.title}</CardTitle>
                         </div>
                         {endsAt && (
-                          <Badge className="shrink-0 bg-blue-50 text-blue-700 hover:bg-blue-50">Läuft bis {endsAt}</Badge>
+                          <Badge className="self-start shrink-0 bg-blue-50 text-blue-700 hover:bg-blue-50">Läuft bis {endsAt}</Badge>
                         )}
                       </div>
-                      {vote.description && <p className="text-sm text-gray-500 mt-1">{vote.description}</p>}
+                      {vote.description && <p className="text-sm text-gray-700 mt-1 leading-relaxed">{vote.description}</p>}
                     </CardHeader>
                     <CardContent>
                       <div className="mb-5"><RepScoreBadge score={rep.score} participants={rep.participants} /></div>
@@ -212,7 +213,7 @@ export default function Abstimmungen() {
                                   }
                                   <div>
                                     <div className="text-sm font-semibold text-gray-800">{opt.label}</div>
-                                    {opt.description && <div className="text-xs text-gray-400 leading-relaxed mt-0.5">{opt.description}</div>}
+                                    {opt.description && <div className="text-sm text-gray-600 leading-relaxed mt-0.5">{opt.description}</div>}
                                   </div>
                                 </div>
                               </button>
@@ -255,11 +256,11 @@ export default function Abstimmungen() {
             <div className="text-center py-20">
               <div className="text-4xl mb-4">{tab === 'partner' ? '📊' : '🗳️'}</div>
               <div className="font-semibold text-gray-700 mb-2">
-                {tab === 'partner' ? 'Keine Sponsor Surveys aktiv' : 'Noch keine Bürgerabstimmungen'}
+                {tab === 'partner' ? 'Keine Stadtumfragen aktiv' : 'Noch keine Bürgerabstimmungen'}
               </div>
-              <div className="text-sm text-gray-400 max-w-sm mx-auto">
+              <div className="text-sm text-gray-500 max-w-sm mx-auto">
                 {tab === 'partner'
-                  ? 'Sponsor Surveys werden von Organisationen eingestellt.'
+                  ? 'Stadtumfragen werden von Städten und Organisationen eingestellt.'
                   : 'Forderungen mit genug Relevanz können später zur Bürgerabstimmung werden.'}
               </div>
             </div>
