@@ -254,6 +254,12 @@ export default function Profil() {
             </div>
           </form>
 
+          {/* Rechtliches — auch für eingeloggte Nutzer erreichbar */}
+          <div className="flex gap-5 justify-center text-xs text-gray-400 mt-10 pb-4">
+            <a href="/impressum" className="hover:text-gray-600 transition-colors">Impressum</a>
+            <a href="/datenschutz" className="hover:text-gray-600 transition-colors">Datenschutz</a>
+          </div>
+
         </div>
       </main>
     </>

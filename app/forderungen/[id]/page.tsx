@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
-import { ChevronLeft, ThumbsUp, MessageSquare, Lightbulb, ShieldCheck, CheckCircle, Circle, AlertCircle, Heart } from 'lucide-react'
+import { ChevronLeft, ThumbsUp, MessageSquare, Lightbulb, ShieldCheck, CheckCircle, Circle, AlertCircle, Heart, Undo2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import RepScoreBadge from '@/components/RepScoreBadge'
 import { computeRepScoreForUsers } from '@/lib/repScore'
@@ -299,12 +299,16 @@ export default function ForderungDetail() {
               </div>
             )}
             {isOwner && !isZurueckgezogen && (
-              <button
-                onClick={withdrawDemand}
-                className="mt-3 text-xs text-gray-400 hover:text-red-600 transition-colors underline-offset-2 hover:underline"
-              >
-                Forderung zurückziehen
-              </button>
+              <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between gap-3">
+                <span className="text-xs text-gray-400">Das ist deine Forderung.</span>
+                <button
+                  onClick={withdrawDemand}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:border-red-300 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
+                >
+                  <Undo2 size={14} />
+                  Forderung zurückziehen
+                </button>
+              </div>
             )}
           </div>
 

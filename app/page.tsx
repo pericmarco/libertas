@@ -142,14 +142,14 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="py-8 px-6 border-t border-gray-100">
-        <div className="max-w-6xl mx-auto flex items-center justify-between text-sm text-gray-400">
+        <div className="max-w-6xl mx-auto flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between text-sm text-gray-400">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center">
               <span className="text-white font-bold text-xs">L</span>
             </div>
             <span>Lybertas · Köln 2026</span>
           </div>
-          <div className="flex gap-6">
+          <div className="flex flex-wrap gap-x-6 gap-y-2">
             <Link href="/login" className="hover:text-gray-600 transition-colors">Anmelden</Link>
             <Link href="/register" className="hover:text-gray-600 transition-colors">Registrieren</Link>
             <Link href="/impressum" className="hover:text-gray-600 transition-colors">Impressum</Link>
