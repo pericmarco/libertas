@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
-import { ChevronLeft, ThumbsUp, MessageSquare, Lightbulb, ShieldCheck, CheckCircle, Circle, AlertCircle, Heart, Undo2, ChevronDown, Wrench } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ThumbsUp, MessageSquare, Lightbulb, ShieldCheck, CheckCircle, Circle, AlertCircle, Heart, Undo2, ChevronDown, Wrench, Info, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import RepScoreBadge from '@/components/RepScoreBadge'
 import { computeRepScoreForUsers } from '@/lib/repScore'
@@ -112,6 +112,14 @@ export default function ForderungDetail() {
   const [activeContribType, setActiveContribType] = useState<PositionType>('unterstützend')
   const [rep, setRep] = useState<{ score: number; participants: number }>({ score: 0, participants: 0 })
   const [showDetails, setShowDetails] = useState(false)
+  const [showResponses, setShowResponses] = useState(false)
+  const [discussionOpen, setDiscussionOpen] = useState(false)
+
+  // Hintergrund nicht scrollen, solange die Vollbild-Diskussion offen ist
+  useEffect(() => {
+    document.body.style.overflow = discussionOpen ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [discussionOpen])
 
   // Positions-Editor
   const [selectedType, setSelectedType] = useState<PositionType | null>(null)
@@ -339,8 +347,17 @@ export default function ForderungDetail() {
                 Sie steht nicht zur öffentlichen Abstimmung.
               </div>
             ) : (
-              <div className="text-xs text-gray-400 bg-gray-50 rounded-xl px-3 py-2 leading-relaxed">
-                Diese Forderung beschreibt ein lokales Anliegen für Köln Innenstadt.
+              <div className="mt-1">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                  <span className="text-xs text-gray-500">
+                    <span className="font-bold text-gray-900">{relevance}</span> / {RELEVANCE_THRESHOLD} Relevanzpunkte
+                    {remaining > 0 && <span className="text-gray-400"> · noch {remaining} bis zur Bürgerpriorisierung</span>}
+                  </span>
+                  <RepScoreBadge score={rep.score} participants={rep.participants} />
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                  <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${progress}%` }} />
+                </div>
               </div>
             )}
             {isZurueckgezogen && (
@@ -377,61 +394,7 @@ export default function ForderungDetail() {
             </div>
           </div>
 
-          {/* 3. Adressaten — nur wenn vom Lybertas-Team zugeordnet */}
-          {demand.addressees && demand.addressees.length > 0 && (
-            <div className="bg-white rounded-2xl border border-gray-100 px-6 py-4 mb-4">
-              <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Adressiert an</div>
-              <div className="flex flex-wrap gap-2">
-                {demand.addressees.map(a => (
-                  <span key={a} className="text-xs font-medium px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">{a}</span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Zweistufige Ansicht: weitere Details ausklappbar */}
-          {detailRows.length > 1 && (
-            <div className="bg-white rounded-2xl border border-gray-100 mb-4 overflow-hidden">
-              <button onClick={() => setShowDetails(!showDetails)} className="w-full flex items-center justify-between px-6 py-4 text-left">
-                <span className="text-sm font-medium text-gray-600">Weitere Details {showDetails ? 'ausblenden' : 'anzeigen'}</span>
-                <ChevronDown size={16} className={`text-gray-300 transition-transform ${showDetails ? 'rotate-180' : ''}`} />
-              </button>
-              {showDetails && (
-                <div className="px-6 pb-4 divide-y divide-gray-50">
-                  {detailRows.map(([label, value]) => (
-                    <div key={label} className="py-2.5 flex items-start justify-between gap-4">
-                      <span className="text-xs text-gray-400 shrink-0">{label}</span>
-                      <span className="text-sm text-gray-700 text-right">{value}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* 4. Relevanz-Score (nur Anzeige, nicht bei Mängelmeldungen) */}
-          {!isMangel && (
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <div className="text-4xl font-bold text-gray-900">{relevance}</div>
-                <div className="text-sm text-gray-500 mt-0.5">von {RELEVANCE_THRESHOLD} Relevanzpunkten</div>
-              </div>
-              <div className="text-right">
-                <RepScoreBadge score={rep.score} participants={rep.participants} />
-              </div>
-            </div>
-            <div className="w-full bg-gray-100 rounded-full h-2 mb-3 overflow-hidden">
-              <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${progress}%` }} />
-            </div>
-            <p className="text-xs text-gray-400 leading-relaxed">
-              Der Relevanz-Score zählt das gesamte Engagement rund um diese Forderung — Unterstützung, Gegenargumente und Alternativen zusammen.
-              {remaining > 0 && ` Noch ${remaining} Relevanzpunkte bis zur möglichen Bürgerpriorisierung.`}
-            </p>
-          </div>
-          )}
-
-          {/* 5. Deine Position (nicht bei zurückgezogenen Forderungen oder Mängelmeldungen) */}
+          {/* Deine Position (nicht bei zurückgezogenen Forderungen oder Mängelmeldungen) */}
           {!isZurueckgezogen && !isMangel && (
           <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
             <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Deine Position zu dieser Forderung</div>
@@ -499,11 +462,33 @@ export default function ForderungDetail() {
           </div>
           )}
 
-          {/* 6. Bürgerbeiträge mit Like-System (nicht bei Mängelmeldungen) */}
+          {/* Diskussion — kompakte Zeile, öffnet als Vollbild-Ansicht */}
           {!isMangel && (
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
-            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Beiträge aus der Bürgerschaft</div>
-            <div className="flex gap-1 p-1 bg-gray-100 rounded-xl w-fit mb-5">
+            <button
+              onClick={() => setDiscussionOpen(true)}
+              className="w-full bg-white rounded-2xl border border-gray-100 hover:border-blue-200 px-6 py-4 mb-4 flex items-center justify-between transition-colors"
+            >
+              <span className="flex items-center gap-2.5 text-sm font-semibold text-gray-800">
+                <MessageSquare size={16} className="text-blue-500" />
+                Diskussion
+                <span className="text-xs font-medium text-gray-400">{textArgs.length} {textArgs.length === 1 ? 'Beitrag' : 'Beiträge'}</span>
+              </span>
+              <ChevronRight size={16} className="text-gray-300" />
+            </button>
+          )}
+
+          {/* Vollbild-Diskussion zum Durchscrollen */}
+          {!isMangel && discussionOpen && (
+          <div className="fixed inset-0 z-50 bg-gray-50 overflow-y-auto">
+            <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
+              <div className="max-w-2xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+                <div className="text-sm font-semibold text-gray-900 truncate">Diskussion · {demand.title}</div>
+                <button onClick={() => setDiscussionOpen(false)} className="text-gray-400 hover:text-gray-700 shrink-0" aria-label="Diskussion schließen">
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="max-w-2xl mx-auto px-4 sm:px-6 pb-3">
+                <div className="flex gap-1 p-1 bg-gray-100 rounded-xl w-fit">
               {(['unterstützend', 'gegenargument', 'alternative'] as PositionType[]).map(tab => (
                 <button
                   key={tab}
@@ -513,10 +498,12 @@ export default function ForderungDetail() {
                   {POSITION_META[tab].label} ({contribCounts[tab]})
                 </button>
               ))}
+                </div>
+              </div>
             </div>
-            <div className="flex flex-col gap-3">
+            <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 pb-24 flex flex-col gap-3">
               {visibleContribs.length === 0 ? (
-                <div className="text-sm text-gray-400 py-4 text-center">Noch keine Beiträge in dieser Kategorie.</div>
+                <div className="text-sm text-gray-400 py-10 text-center">Noch keine Beiträge in dieser Kategorie.</div>
               ) : visibleContribs.map(c => {
                 const meta = POSITION_META[c.type as PositionType]
                 const isOwn = c.user_id === userId
@@ -555,17 +542,20 @@ export default function ForderungDetail() {
           </div>
           )}
 
-          {/* 7. Antworten von Verwaltung & Politik (nicht bei Mängelmeldungen) */}
-          {!isMangel && (
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Antworten von Verwaltung & Politik</div>
-              <ShieldCheck size={13} className="text-blue-400" />
-            </div>
-            <div className="flex flex-col gap-4">
-              {displayResponses.length === 0 ? (
-                <div className="text-sm text-gray-400 py-4 text-center">Noch keine Rückmeldungen aus Politik oder Verwaltung.</div>
-              ) : displayResponses.map(r => {
+          {/* Antworten von Stadt & Politik — nur wenn vorhanden, ausklappbar */}
+          {!isMangel && displayResponses.length > 0 && (
+          <div className="bg-white rounded-2xl border border-gray-100 mb-4 overflow-hidden">
+            <button onClick={() => setShowResponses(!showResponses)} className="w-full flex items-center justify-between px-6 py-4 text-left">
+              <span className="flex items-center gap-2.5 text-sm font-semibold text-gray-800">
+                <ShieldCheck size={16} className="text-blue-500" />
+                Antworten von Stadt & Politik
+                <span className="text-xs font-medium text-gray-400">{displayResponses.length}</span>
+              </span>
+              <ChevronDown size={16} className={`text-gray-300 transition-transform ${showResponses ? 'rotate-180' : ''}`} />
+            </button>
+            {showResponses && (
+            <div className="px-6 pb-5 flex flex-col gap-4">
+              {displayResponses.map(r => {
                 const pos = POSITION_STYLES[r.position]
                 return (
                   <div key={r.id} className="border border-gray-200 rounded-xl p-4 bg-gray-50">
@@ -596,12 +586,42 @@ export default function ForderungDetail() {
                 )
               })}
             </div>
+            )}
           </div>
           )}
 
-          {/* 8. Prozessstatus */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
-            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Aktueller Prozessstand</div>
+          {/* Details & Verlauf — Strukturdaten, Adressaten und Prozessstand gebündelt */}
+          <div className="bg-white rounded-2xl border border-gray-100 mb-4 overflow-hidden">
+            <button onClick={() => setShowDetails(!showDetails)} className="w-full flex items-center justify-between px-6 py-4 text-left">
+              <span className="flex items-center gap-2.5 text-sm font-semibold text-gray-800">
+                <Info size={16} className="text-blue-500" />
+                Details & Verlauf
+              </span>
+              <ChevronDown size={16} className={`text-gray-300 transition-transform ${showDetails ? 'rotate-180' : ''}`} />
+            </button>
+            {showDetails && (
+            <div className="px-6 pb-5">
+            {demand.addressees && demand.addressees.length > 0 && (
+              <div className="mb-4">
+                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Adressiert an</div>
+                <div className="flex flex-wrap gap-2">
+                  {demand.addressees.map(a => (
+                    <span key={a} className="text-xs font-medium px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">{a}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {detailRows.length > 0 && (
+              <div className="divide-y divide-gray-50 mb-4">
+                {detailRows.map(([label, value]) => (
+                  <div key={label} className="py-2.5 flex items-start justify-between gap-4">
+                    <span className="text-xs text-gray-400 shrink-0">{label}</span>
+                    <span className="text-sm text-gray-700 text-right">{value}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Aktueller Prozessstand</div>
             {isZurueckgezogen ? (
               <div className="flex items-center gap-3 text-gray-600 bg-gray-100 rounded-xl px-4 py-3 text-sm font-medium">
                 <AlertCircle size={16} /> Vom Autor zurückgezogen
@@ -632,22 +652,9 @@ export default function ForderungDetail() {
                 })}
               </div>
             )}
-          </div>
-
-          {/* 9. Bürgerpriorisierung Vorschau (nicht bei Mängelmeldungen) */}
-          {!isAbgelehnt && !isZurueckgezogen && !isMangel && (
-            <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6">
-              <div className="text-xs font-semibold text-blue-400 uppercase tracking-wide mb-2">Mögliche spätere Bürgerpriorisierung</div>
-              <p className="text-sm text-blue-700 mb-4 leading-relaxed">
-                Diese Forderung ist noch keine Abstimmung. Sobald genug Relevanz gesammelt wurde, können konkrete Lösungsoptionen von Bürgern priorisiert werden.
-              </p>
-              {remaining > 0 && (
-                <div className="text-sm font-semibold text-blue-600">
-                  Noch {remaining} Relevanzpunkte bis zur Bürgerpriorisierung
-                </div>
-              )}
             </div>
-          )}
+            )}
+          </div>
 
         </div>
       </main>
