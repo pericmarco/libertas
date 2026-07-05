@@ -1,7 +1,11 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const PUBLIC_PATHS = ['/', '/login', '/register', '/impressum', '/datenschutz']
+const PUBLIC_PATHS = [
+  '/', '/login', '/register', '/impressum', '/datenschutz',
+  // PWA-Assets müssen ohne Login ladbar sein
+  '/manifest.webmanifest', '/icon', '/apple-icon',
+]
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.includes(pathname) || pathname.startsWith('/auth/callback')
