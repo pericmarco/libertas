@@ -18,6 +18,9 @@ const MOD_STATUS: Record<string, { label: string; badge: string }> = {
 
 const PUBLIC_STATUS = ['eingereicht', 'geprüft', 'bearbeitet', 'umgesetzt', 'abgelehnt', 'zurückgezogen']
 
+// Diese Moderationsstatus gelten als "erledigt" und verschwinden aus der Offen-Ansicht
+const DONE_MOD_STATUSES = ['freigegeben', 'weitergeleitet', 'zurueckgestellt']
+
 const ROLES: Record<string, { label: string; badge: string }> = {
   citizen:    { label: 'Bürger',   badge: 'bg-gray-100 text-gray-600' },
   city:       { label: 'Stadt',    badge: 'bg-emerald-100 text-emerald-700' },
@@ -52,6 +55,7 @@ export default function Admin() {
   const [districts, setDistricts] = useState<Record<string, string>>({})
   const [search, setSearch] = useState('')
   const [modFilter, setModFilter] = useState<string>('alle')
+  const [view, setView] = useState<'offen' | 'erledigt' | 'alle'>('offen')
   const [expanded, setExpanded] = useState<string | null>(null)
   const [edit, setEdit] = useState<{ title: string; description: string; solution: string; status: string; modStatus: string; note: string }>({ title: '', description: '', solution: '', status: 'eingereicht', modStatus: 'neu', note: '' })
   const [saving, setSaving] = useState(false)
@@ -125,6 +129,21 @@ export default function Admin() {
     setFeedback('Gespeichert')
   }
 
+  // Schnell-Änderung des Moderationsstatus direkt an der Zeile, speichert sofort
+  async function quickSetModStatus(demandId: string, status: string) {
+    const supabase = createClient()
+    const existingNote = moderation[demandId]?.note ?? null
+    const { error } = await supabase.from('demand_moderation').upsert({
+      demand_id: demandId,
+      status,
+      note: existingNote,
+      updated_at: new Date().toISOString(),
+    })
+    if (error) { setFeedback('Fehler: ' + error.message); return }
+    setModeration(prev => ({ ...prev, [demandId]: { demand_id: demandId, status, note: existingNote } }))
+    if (expanded === demandId) setEdit(p => ({ ...p, modStatus: status }))
+  }
+
   async function deleteDemand(demandId: string) {
     if (!window.confirm('Forderung endgültig löschen? Alle Positionen und Beiträge dazu werden mit entfernt. Für ein weiches Entfernen lieber Status "zurückgestellt" nutzen.')) return
     const supabase = createClient()
@@ -172,7 +191,13 @@ export default function Admin() {
 
   const thresholdReached = demands.filter(d => d.relevance_score >= RELEVANCE_THRESHOLD && d.status !== 'zurückgezogen')
 
+  const isDone = (d: Demand) => DONE_MOD_STATUSES.includes(moderation[d.id]?.status ?? 'neu')
+  const openCount = demands.filter(d => !isDone(d)).length
+  const doneCount = demands.length - openCount
+
   const filtered = demands.filter(d => {
+    if (view === 'offen' && isDone(d)) return false
+    if (view === 'erledigt' && !isDone(d)) return false
     if (modFilter !== 'alle' && (moderation[d.id]?.status ?? 'neu') !== modFilter) return false
     if (search && !d.title.toLowerCase().includes(search.toLowerCase())) return false
     return true
@@ -216,6 +241,20 @@ export default function Admin() {
                 </div>
               )}
 
+              {/* Offen/Erledigt: freigegebene, weitergeleitete und zurückgestellte
+                  Forderungen verschwinden aus der Arbeitsansicht */}
+              <div className="flex gap-1 p-1 bg-gray-100 rounded-xl w-fit mb-4">
+                {([['offen', `Offen (${openCount})`], ['erledigt', `Erledigt (${doneCount})`], ['alle', 'Alle']] as const).map(([v, label]) => (
+                  <button
+                    key={v}
+                    onClick={() => setView(v)}
+                    className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors ${view === v ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
               {/* Suche + Moderationsfilter */}
               <div className="flex flex-col sm:flex-row gap-3 mb-5">
                 <div className="relative flex-1">
@@ -253,32 +292,42 @@ export default function Admin() {
                   const isOpen = expanded === d.id
                   return (
                     <div key={d.id} className={`bg-white rounded-2xl border p-5 ${overThreshold ? 'border-amber-300' : 'border-gray-100'}`}>
-                      <button onClick={() => openEditor(d)} className="w-full text-left">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
-                              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${modInfo.badge}`}>{modInfo.label}</span>
-                              <span className="text-xs text-gray-400">{d.status}</span>
-                              {d.category && <span className="text-xs text-gray-400">· {d.category}</span>}
-                              {d.district_id && <span className="text-xs text-gray-400">· {districts[d.district_id]}</span>}
-                              {overThreshold && (
-                                <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                                  <Flame size={11} /> {d.relevance_score} Punkte — Schwelle erreicht
-                                </span>
-                              )}
-                            </div>
-                            <div className="font-semibold text-gray-900 leading-snug">{d.title}</div>
-                            <div className="text-xs text-gray-400 mt-1">
-                              {author?.username ? `@${author.username}` : author?.full_name ?? 'Unbekannt'} · {new Date(d.created_at).toLocaleDateString('de-DE')} · {d.relevance_score} Relevanzpunkte
-                              {d.addressees && d.addressees.length > 0 && ` · an: ${d.addressees.join(', ')}`}
-                            </div>
-                            {mod?.note && !isOpen && (
-                              <div className="text-xs text-orange-500 mt-1 truncate">Notiz: {mod.note}</div>
+                      <div className="flex items-start justify-between gap-3">
+                        <button onClick={() => openEditor(d)} className="min-w-0 flex-1 text-left">
+                          <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+                            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${modInfo.badge}`}>{modInfo.label}</span>
+                            <span className="text-xs text-gray-400">{d.status}</span>
+                            {d.category && <span className="text-xs text-gray-400">· {d.category}</span>}
+                            {d.district_id && <span className="text-xs text-gray-400">· {districts[d.district_id]}</span>}
+                            {overThreshold && (
+                              <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                                <Flame size={11} /> {d.relevance_score} Punkte — Schwelle erreicht
+                              </span>
                             )}
                           </div>
-                          <ChevronDown size={16} className={`text-gray-300 shrink-0 mt-1 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                          <div className="font-semibold text-gray-900 leading-snug">{d.title}</div>
+                          <div className="text-xs text-gray-400 mt-1">
+                            {author?.username ? `@${author.username}` : author?.full_name ?? 'Unbekannt'} · {new Date(d.created_at).toLocaleDateString('de-DE')} · {d.relevance_score} Relevanzpunkte
+                            {d.addressees && d.addressees.length > 0 && ` · an: ${d.addressees.join(', ')}`}
+                          </div>
+                          {mod?.note && !isOpen && (
+                            <div className="text-xs text-orange-500 mt-1 truncate">Notiz: {mod.note}</div>
+                          )}
+                        </button>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {/* Schnell-Status ohne Aufklappen — speichert sofort */}
+                          <select
+                            value={mod?.status ?? 'neu'}
+                            onChange={e => quickSetModStatus(d.id, e.target.value)}
+                            className="px-2 py-1.5 border border-gray-200 rounded-lg text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            {Object.entries(MOD_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                          </select>
+                          <button onClick={() => openEditor(d)} aria-label="Details öffnen">
+                            <ChevronDown size={16} className={`text-gray-300 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                          </button>
                         </div>
-                      </button>
+                      </div>
 
                       {isOpen && (
                         <div className="mt-4 pt-4 border-t border-gray-100 flex flex-col gap-3">
