@@ -65,12 +65,6 @@ const POSITION_META: Record<PositionType, { icon: typeof ThumbsUp; label: string
   alternative:   { icon: Lightbulb,     label: 'Alternative',      desc: 'Ich schlage einen anderen Weg vor. Text erforderlich.',  badge: 'bg-blue-100 text-blue-700',   box: 'bg-blue-50 border-blue-100' },
 }
 
-// Demo-Daten — Antworten von Politik/Verwaltung kommen in einer späteren Phase aus echten Einträgen
-const DEMO_RESPONSES = [
-  { id: '1', author: 'Stadt Köln', role: 'Verwaltung', position: 'prüft', text: 'Das Anliegen wird fachlich geprüft. Die Zuständigkeiten zwischen Stadtplanungsamt und Bezirksvertretung werden aktuell geklärt.', created_at: '2026-05-15' },
-  { id: '2', author: 'SPD Köln', role: 'Fraktion', position: 'unterstützt', text: 'Wir unterstützen die Forderung und haben sie in unserer letzten Fraktionssitzung besprochen. Ein Antrag wird vorbereitet.', created_at: '2026-05-18' },
-]
-
 type Demand = {
   id: string
   title: string
@@ -270,7 +264,7 @@ export default function ForderungDetail() {
   const progress = Math.min((relevance / RELEVANCE_THRESHOLD) * 100, 100)
   const remaining = Math.max(RELEVANCE_THRESHOLD - relevance, 0)
 
-  const displayResponses = responses.length > 0 ? responses : DEMO_RESPONSES
+  const displayResponses = responses
 
   // Zweistufige Ansicht: Strukturdaten aus dem Einreichungs-Wizard
   const detailRows: [string, string][] = ([
