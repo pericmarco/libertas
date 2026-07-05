@@ -122,8 +122,9 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Mobile bottom padding so content isn't hidden behind nav */}
-      <div className="md:hidden h-16" />
+      {/* Der Platz für die Bottom-Nav wird global in globals.css reserviert
+          (main.pt-16 bekommt auf Mobile padding-bottom) — ein Spacer hier
+          würde oben statt unten landen, da die Navbar vor <main> gerendert wird. */}
     </>
   )
 }

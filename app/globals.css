@@ -128,3 +128,13 @@
     @apply font-sans;
   }
 }
+/* Mobile: Platz für die fixe Bottom-Navigation freihalten.
+   Alle internen Seiten nutzen <main class="pt-16 …"> (Platz für den
+   fixen Top-Header) — genau diese bekommen unten den Ausgleich für
+   die 64px hohe Bottom-Nav plus etwas Luft. Die Landingpage (ohne
+   pt-16) hat keine Bottom-Nav und bleibt unberührt. */
+@media (max-width: 767px) {
+  main.pt-16 {
+    padding-bottom: 6rem;
+  }
+}
