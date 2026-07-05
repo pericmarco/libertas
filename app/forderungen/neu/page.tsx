@@ -124,7 +124,7 @@ export default function NeueForderung() {
       case 3: return tags.length >= 1 && tags.length <= MAX_TAGS
       case 4: return problem.trim().length >= 20 && (art !== 'wiederkehrend' || !!frequency)
       case 5: return change.trim().length >= 15
-      case 6: return !!feedback
+      case 6: return art === 'mangel' || !!feedback
       default: return true
     }
   }
@@ -179,7 +179,7 @@ export default function NeueForderung() {
       affected_groups: groups.length > 0 ? groups : null,
       impacts: impacts.length > 0 ? impacts : null,
       solution_direction: direction || null,
-      feedback_wanted: feedback,
+      feedback_wanted: art === 'mangel' ? 'stadt' : feedback,
       district_id: needsDistrict ? districtId : null,
       user_id: userData.user.id,
       status: 'eingereicht',
@@ -528,8 +528,21 @@ export default function NeueForderung() {
             </div>
           )}
 
-          {/* ── Schritt 7: Rückmeldung ── */}
-          {step === 6 && (
+          {/* ── Schritt 7: Rückmeldung (entfällt bei Mängelmeldungen) ── */}
+          {step === 6 && art === 'mangel' && (
+            <div className="bg-white rounded-2xl border border-gray-100 p-6">
+              <div className="flex items-start gap-3 text-sm text-gray-600 leading-relaxed">
+                <Info size={16} className="text-blue-500 shrink-0 mt-0.5" />
+                <div>
+                  <div className="font-semibold text-gray-900 mb-1">Deine Mängelmeldung geht direkt an das Lybertas-Team.</div>
+                  Wir prüfen sie und leiten sie an die zuständige Stelle der Stadt weiter. Sie erscheint nicht in der
+                  öffentlichen Forderungsliste und wird nicht zur Abstimmung gestellt — du kannst ihren Stand jederzeit
+                  über den Link nach dem Einreichen verfolgen.
+                </div>
+              </div>
+            </div>
+          )}
+          {step === 6 && art !== 'mangel' && (
             <div className="flex flex-col gap-3">
               <div className="text-base font-semibold text-gray-900 mb-1">Von wem wünschst du dir eine Rückmeldung?</div>
               {FEEDBACK_OPTIONS.map(o => (
@@ -564,7 +577,7 @@ export default function NeueForderung() {
                   ['Auswirkungen', impacts.join(', '), 4],
                   ['Gewünschte Veränderung', change.trim(), 5],
                   ['Lösungsrichtung', direction, 5],
-                  ['Rückmeldung gewünscht von', FEEDBACK_LABELS[feedback] ?? '', 6],
+                  ['Rückmeldung gewünscht von', art === 'mangel' ? 'Lybertas-Team → Stadt / Verwaltung' : FEEDBACK_LABELS[feedback] ?? '', 6],
                 ] as [string, string, number][]).filter(([, v]) => v).map(([label, value, editStep]) => (
                   <div key={label} className="flex items-start justify-between gap-3 px-5 py-3">
                     <div className="min-w-0">
@@ -578,7 +591,9 @@ export default function NeueForderung() {
                 ))}
               </div>
               <p className="text-xs text-gray-400">
-                Mit dem Einreichen wird dein Anliegen für andere Bürger sichtbar. Andere können es unterstützen, Gegenargumente hinzufügen oder Alternativen vorschlagen.
+                {art === 'mangel'
+                  ? 'Deine Mängelmeldung geht an das Lybertas-Team und wird an die zuständige Stelle weitergeleitet. Sie erscheint nicht in der öffentlichen Forderungsliste.'
+                  : 'Mit dem Einreichen wird dein Anliegen für andere Bürger sichtbar. Andere können es unterstützen, Gegenargumente hinzufügen oder Alternativen vorschlagen.'}
               </p>
             </div>
           )}

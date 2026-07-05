@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import Navbar from '@/components/layout/Navbar'
 import { createClient } from '@/lib/supabase/client'
-import { ShieldCheck, Search, ChevronDown, Trash2, AlertTriangle, Flame } from 'lucide-react'
+import { ShieldCheck, Search, ChevronDown, Trash2, AlertTriangle, Flame, Wrench } from 'lucide-react'
+import { ART_LABELS, SCOPE_LABELS, FEEDBACK_LABELS, themenForTags } from '@/lib/einreichung'
 
 const RELEVANCE_THRESHOLD = 50
 
@@ -34,8 +35,16 @@ type Demand = {
   description: string | null
   solution: string | null
   location: string | null
+  location_scope: string | null
   addressees: string[] | null
   category: string | null
+  tags: string[] | null
+  submission_type: string | null
+  frequency: string | null
+  affected_groups: string[] | null
+  impacts: string[] | null
+  solution_direction: string | null
+  feedback_wanted: string | null
   district_id: string | null
   user_id: string | null
   relevance_score: number
@@ -281,6 +290,11 @@ export default function Admin() {
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+                              {d.submission_type === 'mangel' && (
+                                <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">
+                                  <Wrench size={11} /> Mängelmeldung
+                                </span>
+                              )}
                               <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${modInfo.badge}`}>{modInfo.label}</span>
                               <span className="text-xs text-gray-400">{d.status}</span>
                               {d.category && <span className="text-xs text-gray-400">· {d.category}</span>}
@@ -306,6 +320,28 @@ export default function Admin() {
 
                       {isOpen && (
                         <div className="mt-4 pt-4 border-t border-gray-100 flex flex-col gap-3">
+                          {/* Strukturdaten aus dem Einreichungs-Wizard (read-only) */}
+                          {(d.submission_type || d.location || d.tags?.length || d.frequency || d.feedback_wanted) && (
+                            <div className="bg-gray-50 rounded-xl px-4 py-3 flex flex-col gap-1">
+                              {([
+                                ['Art', d.submission_type ? ART_LABELS[d.submission_type] : ''],
+                                ['Ort', d.location ?? ''],
+                                ['Ortsebene', d.location_scope ? SCOPE_LABELS[d.location_scope] : ''],
+                                ['Themenbereiche', d.tags?.length ? themenForTags(d.tags).join(', ') : ''],
+                                ['Tags', d.tags?.join(', ') ?? ''],
+                                ['Häufigkeit', d.frequency ?? ''],
+                                ['Betroffene', d.affected_groups?.join(', ') ?? ''],
+                                ['Auswirkungen', d.impacts?.join(', ') ?? ''],
+                                ['Lösungsrichtung', d.solution_direction ?? ''],
+                                ['Rückmeldung gewünscht', d.feedback_wanted ? FEEDBACK_LABELS[d.feedback_wanted] : ''],
+                              ] as [string, string][]).filter(([, v]) => v).map(([label, value]) => (
+                                <div key={label} className="flex gap-2 text-xs">
+                                  <span className="text-gray-400 shrink-0 w-36">{label}</span>
+                                  <span className="text-gray-700">{value}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                           <div>
                             <label className="block text-xs font-medium text-gray-500 mb-1">Titel</label>
                             <input value={edit.title} onChange={e => setEdit(p => ({ ...p, title: e.target.value }))}

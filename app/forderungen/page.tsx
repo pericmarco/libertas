@@ -6,8 +6,22 @@ import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import { ThumbsUp, Plus, MessageSquare, ChevronRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { THEMENBEREICHE, themenForTags } from '@/lib/einreichung'
 
 const RELEVANCE_THRESHOLD = 50
+
+// Alt-Forderungen (vor dem Tag-System) tragen nur eine Kategorie —
+// fürs Filtern auf die neuen Themenbereiche abbilden
+const OLD_CATEGORY_TO_BEREICH: Record<string, string> = {
+  'Verkehr': 'Verkehr & Mobilität',
+  'Sicherheit': 'Sicherheit & Ordnung',
+  'Umwelt': 'Umwelt & Sauberkeit',
+  'Wohnen': 'Wohnen',
+  'Soziales': 'Soziales & Zusammenleben',
+  'Bildung': 'Bildung & Betreuung',
+  'Stadtentwicklung': 'Stadtentwicklung & öffentlicher Raum',
+  'Sonstiges': 'Sonstiges',
+}
 
 const statusColors: Record<string, string> = {
   eingereicht: 'bg-gray-100 text-gray-500',
@@ -35,8 +49,15 @@ type Demand = {
   title: string
   description: string | null
   category: string
+  tags: string[] | null
   relevance_score: number
   status: string
+}
+
+function areasForDemand(d: Demand): string[] {
+  if (d.tags && d.tags.length > 0) return themenForTags(d.tags)
+  if (d.category) return [OLD_CATEGORY_TO_BEREICH[d.category] ?? d.category]
+  return []
 }
 
 export default function Forderungen() {
@@ -57,8 +78,10 @@ export default function Forderungen() {
       setUserId(uid)
 
       const [{ data: demandsData }, { data: argsData }] = await Promise.all([
-        supabase.from('demands').select('id, title, description, category, relevance_score, status')
+        supabase.from('demands').select('id, title, description, category, tags, relevance_score, status')
           .neq('status', 'zurückgezogen')
+          // Mängelmeldungen gehen ans Lybertas-Team, nicht in die öffentliche Liste
+          .or('submission_type.is.null,submission_type.neq.mangel')
           .order('relevance_score', { ascending: false }),
         supabase.from('demand_arguments').select('demand_id, user_id, text'),
       ])
@@ -117,8 +140,12 @@ export default function Forderungen() {
     }
   }
 
-  const categories = [...new Set(demands.map(d => d.category))].filter(Boolean)
-  const filtered = demands.filter(d => activeCategory === null || d.category === activeCategory)
+  // Themenbereich-Filter: eine Forderung erscheint in jedem Bereich,
+  // zu dem mindestens ein gewählter Tag gehört
+  const categories = Object.keys(THEMENBEREICHE).filter(b =>
+    demands.some(d => areasForDemand(d).includes(b))
+  )
+  const filtered = demands.filter(d => activeCategory === null || areasForDemand(d).includes(activeCategory))
 
   return (
     <>
@@ -182,8 +209,13 @@ export default function Forderungen() {
                     onClick={() => router.push(`/forderungen/${d.id}`)}
                     className="bg-white rounded-2xl border border-gray-100 hover:border-blue-200 hover:shadow-sm transition-all cursor-pointer p-5"
                   >
-                    <div className="flex items-center gap-2 mb-2">
-                      {d.category && <span className="text-xs font-medium text-gray-500">{d.category}</span>}
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      {areasForDemand(d).slice(0, 2).map(a => (
+                        <span key={a} className="text-xs font-medium text-gray-500">{a}</span>
+                      ))}
+                      {areasForDemand(d).length > 2 && (
+                        <span className="text-xs text-gray-400">+{areasForDemand(d).length - 2}</span>
+                      )}
                       <span className="text-gray-200 text-xs">·</span>
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[d.status] ?? 'bg-gray-100 text-gray-500'}`}>
                         {statusLabels[d.status] ?? d.status}

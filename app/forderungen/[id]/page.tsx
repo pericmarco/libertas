@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
-import { ChevronLeft, ThumbsUp, MessageSquare, Lightbulb, ShieldCheck, CheckCircle, Circle, AlertCircle, Heart, Undo2 } from 'lucide-react'
+import { ChevronLeft, ThumbsUp, MessageSquare, Lightbulb, ShieldCheck, CheckCircle, Circle, AlertCircle, Heart, Undo2, ChevronDown, Wrench } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import RepScoreBadge from '@/components/RepScoreBadge'
 import { computeRepScoreForUsers } from '@/lib/repScore'
+import { ART_LABELS, SCOPE_LABELS, FEEDBACK_LABELS, themenForTags } from '@/lib/einreichung'
 
 const RELEVANCE_THRESHOLD = 50
 
@@ -25,6 +26,21 @@ const STATUS_TO_STEP: Record<string, number> = {
   geprüft:     1,
   bearbeitet:  4,
   umgesetzt:   5,
+}
+
+// Mängelmeldungen durchlaufen einen einfacheren, transaktionalen Prozess
+const MANGEL_STEPS = [
+  { label: 'Eingereicht' },
+  { label: 'Vom Lybertas-Team geprüft' },
+  { label: 'An zuständige Stelle weitergeleitet' },
+  { label: 'Erledigt' },
+]
+
+const MANGEL_STATUS_TO_STEP: Record<string, number> = {
+  eingereicht: 0,
+  geprüft:     1,
+  bearbeitet:  2,
+  umgesetzt:   3,
 }
 
 const POSITION_STYLES: Record<string, { bg: string; label: string }> = {
@@ -50,8 +66,6 @@ const POSITION_META: Record<PositionType, { icon: typeof ThumbsUp; label: string
 }
 
 // Demo-Daten — Antworten von Politik/Verwaltung kommen in einer späteren Phase aus echten Einträgen
-const DEMO_ADDRESSEES = ['Stadt Köln', 'Stadtplanungsamt', 'Bezirksvertretung Innenstadt', 'Fraktionen im Stadtrat']
-const DEMO_SOLUTION = 'Die Stadt soll ein strukturiertes Konzept für sichere Radinfrastruktur in Köln Innenstadt entwickeln. Das Konzept soll fehlende Markierungen ergänzen, Konfliktpunkte mit dem Autoverkehr entschärfen und regelmäßige Kontrollen von zugeparkten Radwegen sicherstellen.'
 const DEMO_RESPONSES = [
   { id: '1', author: 'Stadt Köln', role: 'Verwaltung', position: 'prüft', text: 'Das Anliegen wird fachlich geprüft. Die Zuständigkeiten zwischen Stadtplanungsamt und Bezirksvertretung werden aktuell geklärt.', created_at: '2026-05-15' },
   { id: '2', author: 'SPD Köln', role: 'Fraktion', position: 'unterstützt', text: 'Wir unterstützen die Forderung und haben sie in unserer letzten Fraktionssitzung besprochen. Ein Antrag wird vorbereitet.', created_at: '2026-05-18' },
@@ -64,6 +78,15 @@ type Demand = {
   solution: string | null
   addressees: string[] | null
   category: string | null
+  tags: string[] | null
+  submission_type: string | null
+  location: string | null
+  location_scope: string | null
+  frequency: string | null
+  affected_groups: string[] | null
+  impacts: string[] | null
+  solution_direction: string | null
+  feedback_wanted: string | null
   relevance_score: number
   status: string
   user_id: string | null
@@ -94,6 +117,7 @@ export default function ForderungDetail() {
   const [userId, setUserId] = useState<string | null>(null)
   const [activeContribType, setActiveContribType] = useState<PositionType>('unterstützend')
   const [rep, setRep] = useState<{ score: number; participants: number }>({ score: 0, participants: 0 })
+  const [showDetails, setShowDetails] = useState(false)
 
   // Positions-Editor
   const [selectedType, setSelectedType] = useState<PositionType | null>(null)
@@ -237,6 +261,9 @@ export default function ForderungDetail() {
   const isAbgelehnt = demand.status === 'abgelehnt'
   const isZurueckgezogen = demand.status === 'zurückgezogen'
   const isOwner = !!userId && demand.user_id === userId
+  // Mängelmeldungen gehen ans Lybertas-Team — keine öffentliche Abstimmungs-Mechanik
+  const isMangel = demand.submission_type === 'mangel'
+  const themen = demand.tags && demand.tags.length > 0 ? themenForTags(demand.tags) : []
 
   // Relevanz = Anzahl der Positionen (ein Like + Text zählt als ein Engagement)
   const relevance = arguments_.length
@@ -244,8 +271,19 @@ export default function ForderungDetail() {
   const remaining = Math.max(RELEVANCE_THRESHOLD - relevance, 0)
 
   const displayResponses = responses.length > 0 ? responses : DEMO_RESPONSES
-  const displaySolution = demand.solution ?? DEMO_SOLUTION
-  const displayAddressees = demand.addressees ?? DEMO_ADDRESSEES
+
+  // Zweistufige Ansicht: Strukturdaten aus dem Einreichungs-Wizard
+  const detailRows: [string, string][] = ([
+    ['Art des Anliegens', demand.submission_type ? ART_LABELS[demand.submission_type] : ''],
+    ['Ort', demand.location ?? ''],
+    ['Ortsebene', demand.location_scope ? SCOPE_LABELS[demand.location_scope] : ''],
+    ['Häufigkeit', demand.frequency ?? ''],
+    ['Besonders betroffen', demand.affected_groups?.join(', ') ?? ''],
+    ['Auswirkungen', demand.impacts?.join(', ') ?? ''],
+    ['Lösungsrichtung', demand.solution_direction ?? ''],
+    ['Rückmeldung gewünscht von', demand.feedback_wanted ? FEEDBACK_LABELS[demand.feedback_wanted] : ''],
+    ['Eingereicht am', new Date(demand.created_at).toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' })],
+  ] as [string, string][]).filter(([, v]) => v)
 
   // Nur Beiträge MIT Text werden als Bürgerbeiträge angezeigt, sortiert nach Likes
   const textArgs = arguments_.filter(a => a.text && a.text.trim().length > 0)
@@ -275,23 +313,42 @@ export default function ForderungDetail() {
           {/* 1. Titel & Einordnung */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
             <div className="flex flex-wrap items-center gap-2 mb-3">
-              {demand.category && (
-                <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">{demand.category}</span>
-              )}
-              <span className="text-xs text-gray-400">Köln Innenstadt</span>
+              {themen.length > 0
+                ? themen.map(t => (
+                    <span key={t} className="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">{t}</span>
+                  ))
+                : demand.category && (
+                    <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">{demand.category}</span>
+                  )}
+              <span className="text-xs text-gray-400">{demand.location || 'Köln Innenstadt'}</span>
               {demand.user_id && usernames[demand.user_id] && (
                 <span className="text-xs text-gray-400">von @{usernames[demand.user_id]}</span>
               )}
-              {!isAbgelehnt && (
+              {!isAbgelehnt && !isMangel && (
                 <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-blue-50 text-blue-600">
                   {PROCESS_STEPS[currentStep]?.label}
                 </span>
               )}
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-3">{demand.title}</h1>
-            <div className="text-xs text-gray-400 bg-gray-50 rounded-xl px-3 py-2 leading-relaxed">
-              Diese Forderung beschreibt ein lokales Anliegen für Köln Innenstadt.
-            </div>
+            {demand.tags && demand.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {demand.tags.map(t => (
+                  <span key={t} className="text-[11px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100">{t}</span>
+                ))}
+              </div>
+            )}
+            {isMangel ? (
+              <div className="flex items-start gap-2.5 text-sm text-orange-700 bg-orange-50 border border-orange-100 rounded-xl px-4 py-3 leading-relaxed">
+                <Wrench size={15} className="shrink-0 mt-0.5" />
+                Mängelmeldung — geht an das Lybertas-Team und wird an die zuständige Stelle der Stadt weitergeleitet.
+                Sie steht nicht zur öffentlichen Abstimmung.
+              </div>
+            ) : (
+              <div className="text-xs text-gray-400 bg-gray-50 rounded-xl px-3 py-2 leading-relaxed">
+                Diese Forderung beschreibt ein lokales Anliegen für Köln Innenstadt.
+              </div>
+            )}
             {isZurueckgezogen && (
               <div className="flex items-center gap-2 mt-3 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl px-4 py-3">
                 <AlertCircle size={15} className="shrink-0" />
@@ -320,23 +377,46 @@ export default function ForderungDetail() {
                 <p className="text-sm text-gray-700 leading-relaxed">{demand.description ?? 'Keine Beschreibung hinterlegt.'}</p>
               </div>
               <div className="md:border-l md:pl-5 border-gray-100">
-                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Gewünschte Lösung</div>
-                <p className="text-sm text-gray-700 leading-relaxed">{displaySolution}</p>
+                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Gewünschte Veränderung</div>
+                <p className="text-sm text-gray-700 leading-relaxed">{demand.solution ?? 'Keine Angabe.'}</p>
               </div>
             </div>
           </div>
 
-          {/* 3. Adressaten */}
-          <div className="bg-white rounded-2xl border border-gray-100 px-6 py-4 mb-4">
-            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Adressiert an</div>
-            <div className="flex flex-wrap gap-2">
-              {displayAddressees.map(a => (
-                <span key={a} className="text-xs font-medium px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">{a}</span>
-              ))}
+          {/* 3. Adressaten — nur wenn vom Lybertas-Team zugeordnet */}
+          {demand.addressees && demand.addressees.length > 0 && (
+            <div className="bg-white rounded-2xl border border-gray-100 px-6 py-4 mb-4">
+              <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Adressiert an</div>
+              <div className="flex flex-wrap gap-2">
+                {demand.addressees.map(a => (
+                  <span key={a} className="text-xs font-medium px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">{a}</span>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* 4. Relevanz-Score (nur Anzeige) */}
+          {/* Zweistufige Ansicht: weitere Details ausklappbar */}
+          {detailRows.length > 1 && (
+            <div className="bg-white rounded-2xl border border-gray-100 mb-4 overflow-hidden">
+              <button onClick={() => setShowDetails(!showDetails)} className="w-full flex items-center justify-between px-6 py-4 text-left">
+                <span className="text-sm font-medium text-gray-600">Weitere Details {showDetails ? 'ausblenden' : 'anzeigen'}</span>
+                <ChevronDown size={16} className={`text-gray-300 transition-transform ${showDetails ? 'rotate-180' : ''}`} />
+              </button>
+              {showDetails && (
+                <div className="px-6 pb-4 divide-y divide-gray-50">
+                  {detailRows.map(([label, value]) => (
+                    <div key={label} className="py-2.5 flex items-start justify-between gap-4">
+                      <span className="text-xs text-gray-400 shrink-0">{label}</span>
+                      <span className="text-sm text-gray-700 text-right">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 4. Relevanz-Score (nur Anzeige, nicht bei Mängelmeldungen) */}
+          {!isMangel && (
           <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -355,9 +435,10 @@ export default function ForderungDetail() {
               {remaining > 0 && ` Noch ${remaining} Relevanzpunkte bis zur möglichen Bürgerpriorisierung.`}
             </p>
           </div>
+          )}
 
-          {/* 5. Deine Position (nicht mehr möglich bei zurückgezogenen Forderungen) */}
-          {!isZurueckgezogen && (
+          {/* 5. Deine Position (nicht bei zurückgezogenen Forderungen oder Mängelmeldungen) */}
+          {!isZurueckgezogen && !isMangel && (
           <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
             <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Deine Position zu dieser Forderung</div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
@@ -424,7 +505,8 @@ export default function ForderungDetail() {
           </div>
           )}
 
-          {/* 6. Bürgerbeiträge mit Like-System */}
+          {/* 6. Bürgerbeiträge mit Like-System (nicht bei Mängelmeldungen) */}
+          {!isMangel && (
           <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
             <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Beiträge aus der Bürgerschaft</div>
             <div className="flex gap-1 p-1 bg-gray-100 rounded-xl w-fit mb-5">
@@ -477,8 +559,10 @@ export default function ForderungDetail() {
               })}
             </div>
           </div>
+          )}
 
-          {/* 7. Antworten von Verwaltung & Politik */}
+          {/* 7. Antworten von Verwaltung & Politik (nicht bei Mängelmeldungen) */}
+          {!isMangel && (
           <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
             <div className="flex items-center gap-2 mb-4">
               <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Antworten von Verwaltung & Politik</div>
@@ -519,6 +603,7 @@ export default function ForderungDetail() {
               })}
             </div>
           </div>
+          )}
 
           {/* 8. Prozessstatus */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
@@ -533,9 +618,10 @@ export default function ForderungDetail() {
               </div>
             ) : (
               <div className="flex flex-col gap-2.5">
-                {PROCESS_STEPS.map((step, i) => {
-                  const done = i < currentStep
-                  const active = i === currentStep
+                {(isMangel ? MANGEL_STEPS : PROCESS_STEPS).map((step, i) => {
+                  const stepIndex = isMangel ? (MANGEL_STATUS_TO_STEP[demand.status] ?? 0) : currentStep
+                  const done = i < stepIndex
+                  const active = i === stepIndex
                   return (
                     <div key={i} className="flex items-center gap-3">
                       {done
@@ -554,8 +640,8 @@ export default function ForderungDetail() {
             )}
           </div>
 
-          {/* 9. Bürgerpriorisierung Vorschau */}
-          {!isAbgelehnt && !isZurueckgezogen && (
+          {/* 9. Bürgerpriorisierung Vorschau (nicht bei Mängelmeldungen) */}
+          {!isAbgelehnt && !isZurueckgezogen && !isMangel && (
             <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6">
               <div className="text-xs font-semibold text-blue-400 uppercase tracking-wide mb-2">Mögliche spätere Bürgerpriorisierung</div>
               <p className="text-sm text-blue-700 mb-4 leading-relaxed">
