@@ -34,33 +34,39 @@ export default function Register() {
     setLoading(true)
     setError('')
 
+    // Nutzername ist optional — wer keinen wählt, bleibt bei Beiträgen anonym
+    // und kann ihn jederzeit im Profil nachtragen
     const name = username.trim()
-    if (!USERNAME_REGEX.test(name)) {
-      setError('Nutzername: 3–24 Zeichen, nur Buchstaben, Zahlen, Punkt und Unterstrich.')
-      setLoading(false)
-      return
-    }
-    if (containsBlocked(name)) {
-      setError('Dieser Nutzername ist nicht zulässig. Bitte wähle einen anderen.')
-      setLoading(false)
-      return
+    if (name) {
+      if (!USERNAME_REGEX.test(name)) {
+        setError('Nutzername: 3–24 Zeichen, nur Buchstaben, Zahlen, Punkt und Unterstrich.')
+        setLoading(false)
+        return
+      }
+      if (containsBlocked(name)) {
+        setError('Dieser Nutzername ist nicht zulässig. Bitte wähle einen anderen.')
+        setLoading(false)
+        return
+      }
     }
 
     const supabase = createClient()
 
-    const { data: taken } = await supabase
-      .from('profiles').select('id').ilike('username', name).limit(1)
-    if (taken && taken.length > 0) {
-      setError('Dieser Nutzername ist bereits vergeben.')
-      setLoading(false)
-      return
+    if (name) {
+      const { data: taken } = await supabase
+        .from('profiles').select('id').ilike('username', name).limit(1)
+      if (taken && taken.length > 0) {
+        setError('Dieser Nutzername ist bereits vergeben.')
+        setLoading(false)
+        return
+      }
     }
 
     const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: fullName, username: name, district_id: districtId || null },
+        data: { full_name: fullName, username: name || null, district_id: districtId || null },
       },
     })
 
@@ -121,18 +127,16 @@ export default function Register() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Nutzername</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Nutzername <span className="text-gray-400 font-normal">(optional)</span></label>
               <input
                 type="text"
                 placeholder="z. B. koelner_jeck"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
-                required
-                minLength={3}
                 maxLength={24}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-              <p className="text-xs text-gray-400 mt-1.5">Unter diesem Namen erscheinen deine Beiträge. Dein echter Name bleibt privat.</p>
+              <p className="text-xs text-gray-400 mt-1.5">Unter diesem Namen erscheinen deine Beiträge. Ohne Nutzernamen bleibst du anonym. Dein echter Name bleibt immer privat.</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">E-Mail</label>
