@@ -37,6 +37,12 @@ const POSITION_STYLES: Record<string, { bg: string; label: string }> = {
 
 type PositionType = 'unterstützend' | 'gegenargument' | 'alternative'
 
+const ROLE_BADGES: Record<string, { label: string; badge: string }> = {
+  admin:      { label: 'Lybertas-Team', badge: 'bg-blue-600 text-white' },
+  city:       { label: 'Stadt',         badge: 'bg-emerald-100 text-emerald-700' },
+  politician: { label: 'Politik',       badge: 'bg-purple-100 text-purple-700' },
+}
+
 const POSITION_META: Record<PositionType, { icon: typeof ThumbsUp; label: string; desc: string; badge: string; box: string }> = {
   unterstützend: { icon: ThumbsUp,      label: 'Unterstützung',    desc: 'Ich finde diese Forderung wichtig. Begründung optional.', badge: 'bg-green-100 text-green-700', box: 'bg-green-50 border-green-100' },
   gegenargument: { icon: MessageSquare, label: 'Gegenargument',    desc: 'Ich sehe das anders. Begründung optional.',              badge: 'bg-red-100 text-red-600',     box: 'bg-red-50 border-red-100' },
@@ -83,6 +89,7 @@ export default function ForderungDetail() {
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({})
   const [userLikes, setUserLikes] = useState<Set<string>>(new Set())
   const [usernames, setUsernames] = useState<Record<string, string>>({})
+  const [roles, setRoles] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
   const [activeContribType, setActiveContribType] = useState<PositionType>('unterstützend')
@@ -119,11 +126,12 @@ export default function ForderungDetail() {
         setDraftText(own.text ?? '')
       }
 
-      // Nutzernamen der Beteiligten laden (Beiträge + Forderungs-Autor)
+      // Nutzernamen + Rollen der Beteiligten laden (Beiträge + Forderungs-Autor)
       const authorIds = [...new Set([...args.map(a => a.user_id), demandData?.user_id].filter(Boolean))] as string[]
       if (authorIds.length > 0) {
-        const { data: profs } = await supabase.from('profiles').select('id, username').in('id', authorIds)
+        const { data: profs } = await supabase.from('profiles').select('id, username, role').in('id', authorIds)
         setUsernames(Object.fromEntries((profs ?? []).filter(p => p.username).map(p => [p.id, p.username as string])))
+        setRoles(Object.fromEntries((profs ?? []).map(p => [p.id, p.role as string])))
       }
 
       // Likes für die Beiträge dieser Forderung laden
@@ -453,6 +461,11 @@ export default function ForderungDetail() {
                         {likes}
                       </button>
                       {usernames[c.user_id] && <span className="text-xs text-gray-400">@{usernames[c.user_id]}</span>}
+                      {ROLE_BADGES[roles[c.user_id]] && (
+                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${ROLE_BADGES[roles[c.user_id]].badge}`}>
+                          {ROLE_BADGES[roles[c.user_id]].label}
+                        </span>
+                      )}
                       {isOwn && <span className="text-xs text-blue-400 font-medium">Dein Beitrag</span>}
                     </div>
                   </div>

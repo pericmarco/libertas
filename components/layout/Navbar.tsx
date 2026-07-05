@@ -2,13 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, Vote, Megaphone, Users, LogOut, TrendingUp, User as UserIcon } from 'lucide-react'
+import { LayoutDashboard, Vote, Megaphone, Users, LogOut, TrendingUp, User as UserIcon, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 
-const links = [
+const baseLinks = [
   { href: '/dashboard',    label: 'Dashboard',     icon: LayoutDashboard },
   { href: '/forderungen',  label: 'Forderungen',   icon: Megaphone },
   { href: '/abstimmungen', label: 'Priorisierung', icon: Vote },
@@ -17,21 +17,33 @@ const links = [
   { href: '/profil',       label: 'Profil',        icon: UserIcon },
 ]
 
+const adminLink = { href: '/admin', label: 'Admin', icon: ShieldCheck }
+
 export default function Navbar() {
   const pathname = usePathname()
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => setUser(data.user))
+    supabase.auth.getUser().then(async ({ data }) => {
+      setUser(data.user)
+      if (data.user) {
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single()
+        setIsAdmin(profile?.role === 'admin')
+      }
+    })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
+      if (!session?.user) setIsAdmin(false)
     })
 
     return () => subscription.unsubscribe()
   }, [])
+
+  const links = isAdmin ? [...baseLinks, adminLink] : baseLinks
 
   async function handleLogout() {
     const supabase = createClient()
@@ -91,7 +103,7 @@ export default function Navbar() {
 
       {/* Mobile Bottom Navigation */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 pb-safe">
-        <div className="grid grid-cols-6 h-16">
+        <div className={cn('grid h-16', isAdmin ? 'grid-cols-7' : 'grid-cols-6')}>
           {links.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
