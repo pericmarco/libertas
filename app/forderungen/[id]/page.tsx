@@ -60,6 +60,7 @@ type Demand = {
   category: string | null
   relevance_score: number
   status: string
+  user_id: string | null
   created_at: string
 }
 
@@ -173,6 +174,16 @@ export default function ForderungDetail() {
     setDraftText('')
   }
 
+  async function withdrawDemand() {
+    if (!userId || !demand || demand.user_id !== userId) return
+    if (!window.confirm('Forderung wirklich zurückziehen? Sie ist danach für andere Bürger nicht mehr sichtbar.')) return
+    const supabase = createClient()
+    const { error } = await supabase.rpc('withdraw_demand', { d_id: id })
+    if (!error) {
+      setDemand(prev => prev ? { ...prev, status: 'zurückgezogen' } : prev)
+    }
+  }
+
   async function toggleLike(argId: string) {
     if (!userId) { router.push('/login'); return }
     const supabase = createClient()
@@ -208,6 +219,8 @@ export default function ForderungDetail() {
 
   const currentStep = STATUS_TO_STEP[demand.status] ?? 0
   const isAbgelehnt = demand.status === 'abgelehnt'
+  const isZurueckgezogen = demand.status === 'zurückgezogen'
+  const isOwner = !!userId && demand.user_id === userId
 
   // Relevanz = Anzahl der Positionen (ein Like + Text zählt als ein Engagement)
   const relevance = arguments_.length
@@ -260,6 +273,20 @@ export default function ForderungDetail() {
             <div className="text-xs text-gray-400 bg-gray-50 rounded-xl px-3 py-2 leading-relaxed">
               Diese Forderung beschreibt ein lokales Anliegen für Köln Innenstadt.
             </div>
+            {isZurueckgezogen && (
+              <div className="flex items-center gap-2 mt-3 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl px-4 py-3">
+                <AlertCircle size={15} className="shrink-0" />
+                Diese Forderung wurde vom Autor zurückgezogen und ist nicht mehr öffentlich gelistet.
+              </div>
+            )}
+            {isOwner && !isZurueckgezogen && (
+              <button
+                onClick={withdrawDemand}
+                className="mt-3 text-xs text-gray-400 hover:text-red-600 transition-colors underline-offset-2 hover:underline"
+              >
+                Forderung zurückziehen
+              </button>
+            )}
           </div>
 
           {/* 2. Problem + Lösung */}
@@ -306,7 +333,8 @@ export default function ForderungDetail() {
             </p>
           </div>
 
-          {/* 5. Deine Position */}
+          {/* 5. Deine Position (nicht mehr möglich bei zurückgezogenen Forderungen) */}
+          {!isZurueckgezogen && (
           <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
             <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Deine Position zu dieser Forderung</div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
@@ -371,6 +399,7 @@ export default function ForderungDetail() {
               Du kannst pro Forderung eine Position wählen. Wenn du deine Meinung änderst, ersetzt eine neue Position die vorherige — es zählt immer nur eine Stimme pro Person.
             </p>
           </div>
+          )}
 
           {/* 6. Bürgerbeiträge mit Like-System */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
@@ -465,7 +494,11 @@ export default function ForderungDetail() {
           {/* 8. Prozessstatus */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
             <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Aktueller Prozessstand</div>
-            {isAbgelehnt ? (
+            {isZurueckgezogen ? (
+              <div className="flex items-center gap-3 text-gray-600 bg-gray-100 rounded-xl px-4 py-3 text-sm font-medium">
+                <AlertCircle size={16} /> Vom Autor zurückgezogen
+              </div>
+            ) : isAbgelehnt ? (
               <div className="flex items-center gap-3 text-red-600 bg-red-50 rounded-xl px-4 py-3 text-sm font-medium">
                 <AlertCircle size={16} /> Diese Forderung wurde nicht weiterverfolgt
               </div>
@@ -493,7 +526,7 @@ export default function ForderungDetail() {
           </div>
 
           {/* 9. Bürgerpriorisierung Vorschau */}
-          {!isAbgelehnt && (
+          {!isAbgelehnt && !isZurueckgezogen && (
             <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6">
               <div className="text-xs font-semibold text-blue-400 uppercase tracking-wide mb-2">Mögliche spätere Bürgerpriorisierung</div>
               <p className="text-sm text-blue-700 mb-4 leading-relaxed">

@@ -57,7 +57,9 @@ export default function Forderungen() {
       setUserId(uid)
 
       const [{ data: demandsData }, { data: argsData }] = await Promise.all([
-        supabase.from('demands').select('id, title, description, category, relevance_score, status').order('relevance_score', { ascending: false }),
+        supabase.from('demands').select('id, title, description, category, relevance_score, status')
+          .neq('status', 'zurückgezogen')
+          .order('relevance_score', { ascending: false }),
         supabase.from('demand_arguments').select('demand_id, user_id, text'),
       ])
 

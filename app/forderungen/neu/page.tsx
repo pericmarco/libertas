@@ -102,6 +102,7 @@ export default function NeueFordering() {
       description: problem.trim(),
       solution: solution.trim() || null,
       category,
+      location: location.trim() || null,
       addressees: addressees.length > 0 ? addressees : null,
       district_id: profile?.district_id ?? null,
       user_id: userData.user.id,
