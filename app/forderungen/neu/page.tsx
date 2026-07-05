@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import { ChevronLeft, Info, CheckCircle, Circle, MapPin, Tag, AlignLeft, Lightbulb, Users, Eye } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { containsBlocked } from '@/lib/constants'
 
 const CATEGORIES = ['Sicherheit', 'Verkehr', 'Wohnen', 'Umwelt', 'Soziales', 'Bildung', 'Stadtentwicklung', 'Sonstiges']
 
@@ -13,17 +14,6 @@ const ADDRESSEES_OPTIONS = [
   'Stadt Köln', 'Ordnungsamt', 'Bezirksvertretung', 'Stadtrat',
   'Fraktionen', 'Parteien', 'Verwaltung', 'Ausschüsse', 'Unsicher',
 ]
-
-const BLOCKED_WORDS = [
-  'idiot', 'idioten', 'depp', 'vollidiot', 'scheiß', 'scheiss',
-  'wichser', 'arschloch', 'nazi', 'hitler', 'heil', 'kanake', 'nigger',
-  'neger', 'judensau', 'behindi', 'mongo', 'verrecke', 'krepier', 'stirb',
-]
-
-function containsBlocked(text: string) {
-  const lower = text.toLowerCase()
-  return BLOCKED_WORDS.some(w => lower.includes(w))
-}
 
 type DemandType = 'forderung' | 'maengel' | null
 

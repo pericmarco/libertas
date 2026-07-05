@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Navbar from '@/components/layout/Navbar'
 import { createClient } from '@/lib/supabase/client'
-import { AGE_GROUPS, GENDERS, REGION_NAME } from '@/lib/constants'
+import { AGE_GROUPS, GENDERS, REGION_NAME, USERNAME_REGEX, containsBlocked } from '@/lib/constants'
 import { ShieldCheck, CheckCircle2 } from 'lucide-react'
 
 type District = { id: string; name: string }
@@ -12,6 +12,7 @@ export default function Profil() {
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<string>('citizen')
   const [fullName, setFullName] = useState('')
+  const [username, setUsername] = useState('')
   const [ageGroup, setAgeGroup] = useState('')
   const [gender, setGender] = useState('')
   const [districtId, setDistrictId] = useState('')
@@ -29,12 +30,13 @@ export default function Profil() {
       setEmail(userData.user.email ?? '')
 
       const [{ data: profile }, { data: region }] = await Promise.all([
-        supabase.from('profiles').select('full_name, role, age_group, gender, district_id').eq('id', userData.user.id).single(),
+        supabase.from('profiles').select('full_name, username, role, age_group, gender, district_id').eq('id', userData.user.id).single(),
         supabase.from('regions').select('id').eq('name', REGION_NAME).single(),
       ])
 
       if (profile) {
         setFullName(profile.full_name ?? '')
+        setUsername(profile.username ?? '')
         setRole(profile.role ?? 'citizen')
         if (profile.age_group && AGE_GROUPS.includes(profile.age_group)) setAgeGroup(profile.age_group)
         if (profile.gender) setGender(profile.gender)
@@ -56,17 +58,31 @@ export default function Profil() {
     setError('')
     setSaved(false)
 
+    const name = username.trim()
+    if (name && !USERNAME_REGEX.test(name)) {
+      setError('Nutzername: 3–24 Zeichen, nur Buchstaben, Zahlen, Punkt und Unterstrich.')
+      setSaving(false)
+      return
+    }
+    if (name && containsBlocked(name)) {
+      setError('Dieser Nutzername ist nicht zulässig. Bitte wähle einen anderen.')
+      setSaving(false)
+      return
+    }
+
     const supabase = createClient()
     const { data: userData } = await supabase.auth.getUser()
     if (!userData.user) return
 
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ full_name: fullName || null, age_group: ageGroup, gender, district_id: districtId })
+      .update({ full_name: fullName || null, username: name || null, age_group: ageGroup, gender, district_id: districtId })
       .eq('id', userData.user.id)
 
     if (updateError) {
-      setError(updateError.message)
+      setError(updateError.message.includes('duplicate key')
+        ? 'Dieser Nutzername ist bereits vergeben.'
+        : updateError.message)
       setSaving(false)
       return
     }
@@ -125,6 +141,20 @@ export default function Profil() {
                     placeholder="Dein Name"
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
+                  <p className="text-xs text-gray-400 mt-1.5">Dein echter Name — bleibt privat und wird nicht öffentlich angezeigt.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Nutzername</label>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={e => { setUsername(e.target.value); setSaved(false) }}
+                    placeholder="z. B. koelner_jeck"
+                    minLength={3}
+                    maxLength={24}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <p className="text-xs text-gray-400 mt-1.5">Unter diesem Namen erscheinen deine Beiträge öffentlich.</p>
                 </div>
                 {role !== 'citizen' && (
                   <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5">

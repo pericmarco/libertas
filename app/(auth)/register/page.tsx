@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { REGION_NAME } from '@/lib/constants'
+import { REGION_NAME, USERNAME_REGEX, containsBlocked } from '@/lib/constants'
 
 type District = { id: string; name: string; city: string }
 
 export default function Register() {
   const [fullName, setFullName] = useState('')
+  const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [districtId, setDistrictId] = useState('')
@@ -33,13 +34,33 @@ export default function Register() {
     setLoading(true)
     setError('')
 
+    const name = username.trim()
+    if (!USERNAME_REGEX.test(name)) {
+      setError('Nutzername: 3–24 Zeichen, nur Buchstaben, Zahlen, Punkt und Unterstrich.')
+      setLoading(false)
+      return
+    }
+    if (containsBlocked(name)) {
+      setError('Dieser Nutzername ist nicht zulässig. Bitte wähle einen anderen.')
+      setLoading(false)
+      return
+    }
+
     const supabase = createClient()
+
+    const { data: taken } = await supabase
+      .from('profiles').select('id').ilike('username', name).limit(1)
+    if (taken && taken.length > 0) {
+      setError('Dieser Nutzername ist bereits vergeben.')
+      setLoading(false)
+      return
+    }
 
     const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: fullName, district_id: districtId || null },
+        data: { full_name: fullName, username: name, district_id: districtId || null },
       },
     })
 
@@ -98,6 +119,20 @@ export default function Register() {
                 required
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Nutzername</label>
+              <input
+                type="text"
+                placeholder="z. B. koelner_jeck"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                required
+                minLength={3}
+                maxLength={24}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <p className="text-xs text-gray-400 mt-1.5">Unter diesem Namen erscheinen deine Beiträge. Dein echter Name bleibt privat.</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">E-Mail</label>

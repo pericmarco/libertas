@@ -82,6 +82,7 @@ export default function ForderungDetail() {
   const [responses, setResponses] = useState<Response[]>([])
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({})
   const [userLikes, setUserLikes] = useState<Set<string>>(new Set())
+  const [usernames, setUsernames] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
   const [activeContribType, setActiveContribType] = useState<PositionType>('unterstützend')
@@ -116,6 +117,13 @@ export default function ForderungDetail() {
       if (own) {
         setSelectedType(own.type as PositionType)
         setDraftText(own.text ?? '')
+      }
+
+      // Nutzernamen der Beteiligten laden (Beiträge + Forderungs-Autor)
+      const authorIds = [...new Set([...args.map(a => a.user_id), demandData?.user_id].filter(Boolean))] as string[]
+      if (authorIds.length > 0) {
+        const { data: profs } = await supabase.from('profiles').select('id, username').in('id', authorIds)
+        setUsernames(Object.fromEntries((profs ?? []).filter(p => p.username).map(p => [p.id, p.username as string])))
       }
 
       // Likes für die Beiträge dieser Forderung laden
@@ -263,6 +271,9 @@ export default function ForderungDetail() {
                 <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">{demand.category}</span>
               )}
               <span className="text-xs text-gray-400">Köln Innenstadt</span>
+              {demand.user_id && usernames[demand.user_id] && (
+                <span className="text-xs text-gray-400">von @{usernames[demand.user_id]}</span>
+              )}
               {!isAbgelehnt && (
                 <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-blue-50 text-blue-600">
                   {PROCESS_STEPS[currentStep]?.label}
@@ -441,7 +452,8 @@ export default function ForderungDetail() {
                         <Heart size={12} className={liked && !isOwn ? 'fill-white' : ''} />
                         {likes}
                       </button>
-                      {isOwn && <span className="text-xs text-gray-400">Dein Beitrag</span>}
+                      {usernames[c.user_id] && <span className="text-xs text-gray-400">@{usernames[c.user_id]}</span>}
+                      {isOwn && <span className="text-xs text-blue-400 font-medium">Dein Beitrag</span>}
                     </div>
                   </div>
                 )
