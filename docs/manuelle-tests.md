@@ -5,13 +5,24 @@ lassen, sondern einen echten eingeloggten Nutzer im Browser brauchen.
 
 ## Offen
 
-- [ ] **Schutz gegen Selbst-Beförderung zum Admin**
-  Ein normaler Nutzer (role = citizen) darf sich nicht selbst zum Admin
-  machen können. Test: Als eingeloggter Nicht-Admin im Browser versuchen,
-  über die App-Konsole ein `supabase.from('profiles').update({ role: 'admin' })`
-  auf die eigene Zeile abzusetzen. Erwartung: role bleibt danach `citizen`
-  (der Trigger `protect_profile_role` setzt sie still zurück).
-  Danach in der DB prüfen: `SELECT role FROM profiles WHERE id = <user>;`
+- [ ] **Admin-Bereich: Moderations-Workflow einmal durchspielen**
+  Als Admin unter /admin eine Forderung aufklappen, Titel/Problem anpassen,
+  Moderationsstatus + interne Notiz setzen, speichern. Erwartung: Änderungen
+  sichtbar, Notiz erscheint NICHT auf der öffentlichen Detailseite.
+
+- [ ] **Admin-Bereich: Rollenvergabe per Klick**
+  Im Nutzer-Tab einem Test-Account die Rolle "Stadt" geben. Erwartung:
+  Rolle ändert sich, Badge erscheint an dessen Beiträgen. Danach zurück
+  auf "Bürger" setzen.
+
+- [ ] **Nicht-Admin sieht /admin nicht**
+  Als normaler Bürger-Account /admin direkt per URL aufrufen. Erwartung:
+  "Kein Zugriff"-Meldung, keine Daten sichtbar. (RLS-Schutz der Daten ist
+  bereits automatisiert verifiziert, hier geht's um die UI.)
+
+- [ ] **Schwellenwert-Hinweis**
+  Sobald eine Forderung 50+ Relevanzpunkte hat: erscheint der gelbe
+  Banner + die Flamme-Markierung im Admin-Bereich?
 
 ## Erledigt
 
@@ -19,3 +30,7 @@ lassen, sondern einen echten eingeloggten Nutzer im Browser brauchen.
   Altersgruppe, Geschlecht, Stadtteil (getestet mit Tobias & Marco, 2026-07)
 - [x] Routen-Schutz: interne Seiten ohne Login leiten auf /login um
 - [x] Likes/Unterstützen-Toggle (nach DELETE-Policy-Fix)
+- [x] Schutz gegen Selbst-Beförderung zum Admin — live verifiziert per
+  simuliertem authenticated-Kontext im SQL-Editor (role blieb admin trotz
+  Update-Versuch, 2026-07). Hinweis: seit Migration 014 dürfen Admins
+  Rollen ändern, normale Nutzer bleiben blockiert.
