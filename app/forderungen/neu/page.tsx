@@ -4,49 +4,73 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
-import { ChevronLeft, Info, CheckCircle, Circle, MapPin, Tag, AlignLeft, Lightbulb, Users, Eye } from 'lucide-react'
+import { ChevronLeft, ChevronDown, CheckCircle, Circle, Info, Pencil } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { containsBlocked } from '@/lib/constants'
+import { containsBlocked, REGION_NAME } from '@/lib/constants'
+import {
+  type Anliegenart, ART_OPTIONS, ART_LABELS, ORTSTYPEN, SCOPE_LABELS,
+  THEMENBEREICHE, themenForTags, MAX_TAGS, FREQUENZEN, GRUPPEN,
+  AUSWIRKUNGEN, LOESUNGSRICHTUNGEN, FEEDBACK_OPTIONS, FEEDBACK_LABELS,
+} from '@/lib/einreichung'
 
-const CATEGORIES = ['Sicherheit', 'Verkehr', 'Wohnen', 'Umwelt', 'Soziales', 'Bildung', 'Stadtentwicklung', 'Sonstiges']
+type District = { id: string; name: string }
 
-const ADDRESSEES_OPTIONS = [
-  'Stadt Köln', 'Ordnungsamt', 'Bezirksvertretung', 'Stadtrat',
-  'Fraktionen', 'Parteien', 'Verwaltung', 'Ausschüsse', 'Unsicher',
-]
+const STEPS = ['Art', 'Ort', 'Titel', 'Themen', 'Problem', 'Veränderung', 'Rückmeldung', 'Vorschau']
 
-// Adressat-Wizard: Thema → wahrscheinlich zuständige Stellen
-const WIZARD_TOPICS: Record<string, string[]> = {
-  'Ordnung, Sauberkeit & Sicherheit':   ['Ordnungsamt', 'Stadt Köln'],
-  'Verkehr, Bau & Stadtplanung':        ['Stadt Köln', 'Verwaltung'],
-  'Soziales, Bildung & Kultur':         ['Stadt Köln', 'Ausschüsse'],
-  'Politische Grundsatzentscheidung':   ['Stadtrat', 'Fraktionen'],
-  'Sonstiges / weiß nicht':             ['Stadt Köln'],
-}
-
-type DemandType = 'forderung' | 'maengel' | null
-
-export default function NeueFordering() {
+export default function NeueForderung() {
   const router = useRouter()
 
-  const [demandType, setDemandType] = useState<DemandType>(null)
+  const [step, setStep] = useState(0)
+  const [districts, setDistricts] = useState<District[]>([])
+
+  // Schritt 1: Art
+  const [art, setArt] = useState<Anliegenart | null>(null)
+
+  // Schritt 2: Ort
+  const [scope, setScope] = useState('')
+  const [districtId, setDistrictId] = useState('')
+  const [ortstyp, setOrtstyp] = useState('')
+  const [ortText, setOrtText] = useState('')
+  const [ortZusatz, setOrtZusatz] = useState('')
+  const [mehrereOrteText, setMehrereOrteText] = useState('')
+
+  // Schritt 3: Titel
   const [title, setTitle] = useState('')
-  const [location, setLocation] = useState('')
-  const [category, setCategory] = useState('')
+  const [similar, setSimilar] = useState<{ id: string; title: string; relevance_score: number }[]>([])
+
+  // Schritt 4: Tags
+  const [tags, setTags] = useState<string[]>([])
+  const [openBereich, setOpenBereich] = useState<string | null>(null)
+
+  // Schritt 5: Problem
   const [problem, setProblem] = useState('')
-  const [solution, setSolution] = useState('')
-  const [addressees, setAddressees] = useState<string[]>([])
+  const [frequency, setFrequency] = useState('')
+  const [zusatzOpen, setZusatzOpen] = useState(false)
+  const [groups, setGroups] = useState<string[]>([])
+  const [impacts, setImpacts] = useState<string[]>([])
+
+  // Schritt 6: Veränderung
+  const [change, setChange] = useState('')
+  const [direction, setDirection] = useState('')
+
+  // Schritt 7: Rückmeldung
+  const [feedback, setFeedback] = useState('')
+
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
-  // Duplikatprüfung: ähnliche bestehende Forderungen beim Tippen des Titels
-  const [similar, setSimilar] = useState<{ id: string; title: string; relevance_score: number }[]>([])
+  useEffect(() => {
+    const supabase = createClient()
+    async function load() {
+      const { data: region } = await supabase.from('regions').select('id').eq('name', REGION_NAME).single()
+      if (!region) return
+      const { data } = await supabase.from('districts').select('id, name').eq('region_id', region.id)
+      if (data) setDistricts(data)
+    }
+    load()
+  }, [])
 
-  // Adressat-Wizard
-  const [wizardOpen, setWizardOpen] = useState(false)
-  const [wTopic, setWTopic] = useState('')
-  const [wScope, setWScope] = useState('')
-
+  // Duplikatprüfung beim Tippen des Titels
   useEffect(() => {
     const q = title.trim()
     if (q.length < 8) { setSimilar([]); return }
@@ -58,65 +82,80 @@ export default function NeueFordering() {
     return () => clearTimeout(t)
   }, [title])
 
-  const wizardSuggestion = wTopic
-    ? [...new Set([
-        ...(WIZARD_TOPICS[wTopic] ?? []),
-        ...(wScope === 'stadtteil' ? ['Bezirksvertretung'] : []),
-      ])]
-    : []
+  // Ortsebenen je Anliegenart (Mangel = immer konkreter Ort)
+  const scopeOptions =
+    art === 'wiederkehrend' ? ['ort', 'stadtteil', 'mehrere_orte', 'ganz_koeln', 'unsicher'] :
+    art === 'vorschlag'     ? ['ort', 'stadtteil', 'mehrere_stadtteile', 'ganz_koeln', 'unsicher'] :
+    []
+  const effectiveScope = art === 'mangel' ? 'ort' : scope
+  const needsKonkreterOrt = effectiveScope === 'ort'
+  const needsDistrict = ['ort', 'stadtteil', 'mehrere_orte'].includes(effectiveScope)
 
-  function applyWizard() {
-    setAddressees(prev => [...new Set([...prev.filter(a => a !== 'Unsicher'), ...wizardSuggestion])])
-    setWizardOpen(false)
-    setWTopic('')
-    setWScope('')
+  const districtName = districts.find(d => d.id === districtId)?.name ?? ''
+  const ortstypInfo = ORTSTYPEN.find(o => o.value === ortstyp)
+  const themen = themenForTags(tags)
+
+  // Weiche Titel-Hinweise (blockieren nicht)
+  const titleTrimmed = title.trim()
+  const titleHint =
+    titleTrimmed.length > 0 && titleTrimmed.length < 15
+      ? 'Dein Titel wirkt noch sehr allgemein. Ein konkreter Titel hilft anderen, dein Anliegen schneller zu verstehen.'
+      : /!{2,}/.test(titleTrimmed) || /\b(unfassbar|skandal|endlich handeln|frechheit)\b/i.test(titleTrimmed)
+      ? 'Dein Titel wirkt sehr emotional. Sachliche Titel werden von anderen eher unterstützt.'
+      : ''
+
+  const problemHint = problem.trim().length > 0 && problem.trim().length < 60
+    ? 'Je konkreter die Beschreibung, desto besser kann dein Anliegen geprüft werden — ein bis zwei Sätze mehr helfen.'
+    : ''
+  const changeHint = change.trim().length > 0 && change.trim().length < 40
+    ? 'Beschreibe die gewünschte Veränderung ruhig etwas ausführlicher.'
+    : ''
+
+  function canProceed(s: number): boolean {
+    switch (s) {
+      case 0: return art !== null
+      case 1:
+        if (art === 'mangel') return !!districtId && !!ortstyp && ortText.trim().length > 0
+        if (!scope) return false
+        if (scope === 'ort') return !!districtId && !!ortstyp && ortText.trim().length > 0
+        if (scope === 'stadtteil' || scope === 'mehrere_orte') return !!districtId
+        return true
+      case 2: return titleTrimmed.length >= 5 && titleTrimmed.length <= 90
+      case 3: return tags.length >= 1 && tags.length <= MAX_TAGS
+      case 4: return problem.trim().length >= 20 && (art !== 'wiederkehrend' || !!frequency)
+      case 5: return change.trim().length >= 15
+      case 6: return !!feedback
+      default: return true
+    }
   }
 
-  function toggleAddressee(a: string) {
-    setAddressees(prev =>
-      prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a]
-    )
+  function toggleTag(tag: string) {
+    setTags(prev => prev.includes(tag)
+      ? prev.filter(t => t !== tag)
+      : prev.length >= MAX_TAGS ? prev : [...prev, tag])
   }
 
-  const isFormVisible = demandType !== null
-  const canSubmit = title.trim().length >= 5 && category && problem.trim().length >= 10
+  function toggleIn(list: string[], set: (v: string[]) => void, value: string) {
+    set(list.includes(value) ? list.filter(v => v !== value) : [...list, value])
+  }
 
-  // Auf Mobile direkt nach der Typ-Auswahl sichtbar, auf Desktop in der rechten Spalte
-  const qualityHints = (
-    <div className="bg-white rounded-2xl border border-gray-100 p-5">
-      <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Was macht eine gute Forderung aus?</div>
-      <div className="space-y-2.5 mb-4">
-        {[
-          'Sie beschreibt ein strukturelles Problem.',
-          'Sie nennt einen konkreten Ort oder Stadtteil.',
-          'Sie schlägt eine nachvollziehbare Veränderung vor.',
-        ].map((point, i) => (
-          <div key={i} className="flex items-start gap-2.5 text-sm text-gray-600">
-            <CheckCircle size={14} className="text-blue-500 shrink-0 mt-0.5" />
-            {point}
-          </div>
-        ))}
-      </div>
-
-      <div className="border-t border-gray-100 pt-4 space-y-2">
-        <div className="bg-red-50 rounded-xl px-3 py-2.5 text-xs leading-relaxed">
-          <span className="font-semibold text-red-600">Schwach: </span>
-          <span className="text-gray-600">„Am Neumarkt ist alles schlimm."</span>
-        </div>
-        <div className="bg-green-50 rounded-xl px-3 py-2.5 text-xs leading-relaxed">
-          <span className="font-semibold text-green-600">Besser: </span>
-          <span className="text-gray-600">„Der Neumarkt wird abends von vielen Menschen als unsicher wahrgenommen. Die Stadt soll ein Konzept aus Ordnungsamt, Streetwork und besserer Beleuchtung prüfen."</span>
-        </div>
-      </div>
-    </div>
-  )
+  // Kompakte Ortszusammenfassung für Statuszeile + Speicherung
+  function ortSummary(): string {
+    if (effectiveScope === 'ort' && ortstypInfo) {
+      return `${ortstypInfo.label}: ${ortText.trim()}${ortZusatz.trim() ? `, ${ortZusatz.trim()}` : ''} (${districtName})`
+    }
+    if (effectiveScope === 'stadtteil') return districtName
+    if (effectiveScope === 'mehrere_orte') return `Mehrere Orte in ${districtName}${mehrereOrteText.trim() ? `: ${mehrereOrteText.trim()}` : ''}`
+    if (effectiveScope === 'mehrere_stadtteile') return 'Mehrere Stadtteile'
+    if (effectiveScope === 'ganz_koeln') return 'Ganz Köln'
+    return 'Ort unklar'
+  }
 
   async function handleSubmit() {
-    if (!canSubmit || submitting) return
     setError('')
 
-    if (containsBlocked(title) || containsBlocked(problem) || containsBlocked(solution)) {
-      setError('Deine Forderung enthält unzulässige Ausdrücke. Bitte formuliere sie sachlich.')
+    if (containsBlocked(title) || containsBlocked(problem) || containsBlocked(change)) {
+      setError('Bitte formuliere dein Anliegen sachlich, damit es veröffentlicht und von anderen besser unterstützt werden kann.')
       return
     }
 
@@ -124,19 +163,24 @@ export default function NeueFordering() {
     const { data: userData } = await supabase.auth.getUser()
     if (!userData.user) { router.push('/login'); return }
 
-    const { data: profile } = await supabase
-      .from('profiles').select('district_id').eq('id', userData.user.id).single()
-
     setSubmitting(true)
 
     const { data, error: dbError } = await supabase.from('demands').insert({
-      title: title.trim(),
+      title: titleTrimmed,
       description: problem.trim(),
-      solution: solution.trim() || null,
-      category,
-      location: location.trim() || null,
-      addressees: addressees.length > 0 ? addressees : null,
-      district_id: profile?.district_id ?? null,
+      solution: change.trim(),
+      category: themen[0] ?? 'Sonstiges',
+      tags,
+      submission_type: art,
+      location_scope: effectiveScope,
+      location_type: needsKonkreterOrt ? ortstyp : null,
+      location: ortSummary(),
+      frequency: frequency || null,
+      affected_groups: groups.length > 0 ? groups : null,
+      impacts: impacts.length > 0 ? impacts : null,
+      solution_direction: direction || null,
+      feedback_wanted: feedback,
+      district_id: needsDistrict ? districtId : null,
       user_id: userData.user.id,
       status: 'eingereicht',
     }).select('id').single()
@@ -144,409 +188,432 @@ export default function NeueFordering() {
     setSubmitting(false)
 
     if (dbError) {
-      setError('Fehler beim Einreichen. Bitte nochmal versuchen.')
+      if (dbError.message.includes('RATE_LIMIT_DAY')) {
+        setError('Du hast heute bereits 3 Anliegen eingereicht. Bitte versuche es morgen wieder.')
+      } else if (dbError.message.includes('RATE_LIMIT_WEEK')) {
+        setError('Du hast diese Woche bereits 10 Anliegen eingereicht. Bitte versuche es nächste Woche wieder.')
+      } else {
+        setError('Fehler beim Einreichen. Bitte nochmal versuchen.')
+      }
       return
     }
 
     router.push(`/forderungen/${data.id}`)
   }
 
-  const previewTitle = title || 'Titel deiner Forderung'
-  const previewLocation = location || 'Köln Innenstadt'
-  const previewCategory = category || null
-  const previewProblem = problem ? (problem.length > 80 ? problem.slice(0, 80) + '…' : problem) : null
-  const previewSolution = solution ? (solution.length > 80 ? solution.slice(0, 80) + '…' : solution) : null
+  // Statuszeile der bisherigen Antworten
+  const statusParts: string[] = []
+  if (step > 0 && art) statusParts.push(ART_LABELS[art])
+  if (step > 1) statusParts.push(ortSummary())
+  if (step > 3 && themen.length > 0) statusParts.push(themen.join(', '))
+
+  const bigCard = (selected: boolean) =>
+    `w-full text-left p-5 rounded-2xl border-2 transition-all ${
+      selected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white hover:border-blue-300'
+    }`
+
+  const chip = (selected: boolean, disabled = false) =>
+    `px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
+      selected ? 'bg-blue-600 text-white border-blue-600'
+      : disabled ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed'
+      : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600'
+    }`
 
   return (
     <>
       <Navbar />
       <main className="pt-16 min-h-screen bg-gray-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
 
-          <Link href="/forderungen" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 transition-colors mb-6">
+          <Link href="/forderungen" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 transition-colors mb-5">
             <ChevronLeft size={15} /> Alle Forderungen
           </Link>
 
-          {/* Header */}
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Anliegen einreichen</h1>
-            <p className="text-gray-500 mt-1">Bring ein Thema aus deinem Stadtteil sichtbar auf den Tisch von Stadt und Verwaltung.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">Anliegen einreichen</h1>
+          <p className="text-gray-500 text-sm mb-5">
+            Schritt {Math.min(step + 1, STEPS.length)} von {STEPS.length} · {STEPS[step]}
+          </p>
+
+          {/* Fortschritt */}
+          <div className="w-full bg-gray-100 rounded-full h-1.5 mb-4 overflow-hidden">
+            <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
           </div>
 
-          {/* Info-Banner */}
-          <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 mb-8 text-sm text-blue-700 leading-relaxed">
-            <Info size={16} className="shrink-0 mt-0.5" />
-            <span>
-              Lybertas bündelt beides an einem Ort: strukturelle Anliegen für deinen Stadtteil und konkrete Mängel vor Ort. Alles wird gesammelt und an die richtige Stelle bei Stadt und Verwaltung weitergegeben.
-            </span>
-          </div>
+          {/* Statuszeile bisheriger Antworten */}
+          {statusParts.length > 0 && step < 7 && (
+            <div className="text-xs text-gray-400 mb-5 truncate">{statusParts.join(' · ')}</div>
+          )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8 items-start">
-
-            {/* LEFT: Form */}
-            <div className="space-y-4">
-
-              {/* Step 1: Type selector */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Was möchtest du einreichen?</div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <button
-                    onClick={() => setDemandType('forderung')}
-                    className={`text-left p-4 rounded-xl border-2 transition-all ${
-                      demandType === 'forderung'
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 mb-1.5">
-                      {demandType === 'forderung'
-                        ? <CheckCircle size={16} className="text-blue-600" />
-                        : <Circle size={16} className="text-gray-300" />
-                      }
-                      <span className="text-sm font-semibold text-gray-900">Bürgeranliegen</span>
-                    </div>
-                    <p className="text-xs text-gray-500 leading-relaxed">
-                      Für strukturelle Probleme, wiederkehrende Themen oder Verbesserungsvorschläge in deinem Stadtteil.
-                    </p>
-                  </button>
-
-                  <button
-                    onClick={() => setDemandType('maengel')}
-                    className={`text-left p-4 rounded-xl border-2 transition-all ${
-                      demandType === 'maengel'
-                        ? 'border-orange-400 bg-orange-50'
-                        : 'border-gray-200 hover:border-orange-300 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 mb-1.5">
-                      {demandType === 'maengel'
-                        ? <CheckCircle size={16} className="text-orange-500" />
-                        : <Circle size={16} className="text-gray-300" />
-                      }
-                      <span className="text-sm font-semibold text-gray-900">Mängelmeldung</span>
-                    </div>
-                    <p className="text-xs text-gray-500 leading-relaxed">
-                      Für einzelne Schäden wie kaputte Laternen, Müll oder Schlaglöcher.
-                    </p>
-                  </button>
-                </div>
-
-                {demandType === 'maengel' && (
-                  <div className="mt-4 bg-orange-50 border border-orange-100 rounded-xl px-4 py-3 text-sm text-orange-700 leading-relaxed">
-                    <strong>Konkrete Mängel vor Ort kannst du hier direkt melden.</strong>
-                    <div className="mt-2 text-xs space-y-1">
-                      <div>🔧 „Laterne kaputt" → Mängelmeldung</div>
-                      <div>📣 „Unser Viertel ist dauerhaft schlecht beleuchtet" → Bürgeranliegen</div>
-                    </div>
-                    <p className="mt-2 text-xs text-orange-600">
-                      Steckt hinter dem Mangel ein größeres, wiederkehrendes Problem, formuliere es als Bürgeranliegen — so bekommt es mehr Gewicht.
-                    </p>
+          {/* ── Schritt 1: Art ── */}
+          {step === 0 && (
+            <div className="flex flex-col gap-3">
+              <div className="text-base font-semibold text-gray-900 mb-1">Was beschreibt dein Anliegen am besten?</div>
+              {ART_OPTIONS.map(o => (
+                <button key={o.value} onClick={() => setArt(o.value)} className={bigCard(art === o.value)}>
+                  <div className="flex items-center gap-2 mb-1">
+                    {art === o.value ? <CheckCircle size={17} className="text-blue-600 shrink-0" /> : <Circle size={17} className="text-gray-300 shrink-0" />}
+                    <span className="font-semibold text-gray-900">{o.label}</span>
                   </div>
+                  <p className="text-sm text-gray-500 leading-relaxed pl-6">{o.desc}</p>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* ── Schritt 2: Ort ── */}
+          {step === 1 && (
+            <div className="flex flex-col gap-4">
+              {art !== 'mangel' && (
+                <div>
+                  <div className="text-base font-semibold text-gray-900 mb-3">
+                    {art === 'wiederkehrend' ? 'Wo tritt das Problem auf?' : 'Auf welchen Bereich bezieht sich dein Vorschlag?'}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {scopeOptions.map(s => (
+                      <button key={s} onClick={() => setScope(s)} className={bigCard(scope === s)}>
+                        <div className="flex items-center gap-2">
+                          {scope === s ? <CheckCircle size={16} className="text-blue-600 shrink-0" /> : <Circle size={16} className="text-gray-300 shrink-0" />}
+                          <span className="text-sm font-semibold text-gray-900">{SCOPE_LABELS[s]}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {art === 'mangel' && (
+                <div className="flex items-start gap-2.5 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 text-sm text-blue-700 leading-relaxed">
+                  <Info size={15} className="shrink-0 mt-0.5" />
+                  Bitte gib den Ort so genau wie möglich an, damit der Zustand gefunden und geprüft werden kann.
+                </div>
+              )}
+
+              {needsDistrict && (art === 'mangel' || scope) && (
+                <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Stadtteil *</label>
+                  <select
+                    value={districtId}
+                    onChange={e => setDistrictId(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Stadtteil wählen…</option>
+                    {districts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  </select>
+                </div>
+              )}
+
+              {needsKonkreterOrt && (art === 'mangel' || scope === 'ort') && (
+                <div className="bg-white rounded-2xl border border-gray-100 p-5 flex flex-col gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Um was für einen Ort geht es? *</label>
+                    <div className="flex flex-wrap gap-2">
+                      {ORTSTYPEN.map(o => (
+                        <button key={o.value} onClick={() => setOrtstyp(o.value)} className={chip(ortstyp === o.value)}>
+                          {o.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {ortstypInfo && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">{ortstypInfo.frage} *</label>
+                      <input
+                        value={ortText}
+                        onChange={e => setOrtText(e.target.value)}
+                        placeholder={ortstyp === 'haltestelle' ? 'z. B. Christophstraße/MediaPark' : ''}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      {ortstyp === 'strasse' && (
+                        <input
+                          value={ortZusatz}
+                          onChange={e => setOrtZusatz(e.target.value)}
+                          placeholder="Hausnummer oder nähere Beschreibung (optional)"
+                          className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2"
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {scope === 'mehrere_orte' && districtId && (
+                <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Welche Orte sind ungefähr betroffen? (optional)</label>
+                  <input
+                    value={mehrereOrteText}
+                    onChange={e => setMehrereOrteText(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Schritt 3: Titel ── */}
+          {step === 2 && (
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 flex flex-col gap-3">
+              <div>
+                <label className="block text-base font-semibold text-gray-900 mb-2">Titel deines Anliegens *</label>
+                <input
+                  value={title}
+                  onChange={e => setTitle(e.target.value)}
+                  maxLength={90}
+                  placeholder='z. B. "Dauerhafte Geruchsbelästigung an der Haltestelle Christophstraße lösen"'
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-xs text-gray-400 mt-2">
+                  Ein guter Titel nennt kurz Problem, Ort und Ziel. Vermeide reine Empörung wie „Unfassbar!!!" oder „Endlich handeln".
+                </p>
+              </div>
+
+              {titleHint && (
+                <div className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-4 py-2.5">{titleHint}</div>
+              )}
+
+              <div className="text-xs text-gray-400">
+                <span className="font-medium text-gray-500">Beispiele:</span> Mehr Sicherheit am Neumarkt schaffen · Regelmäßige Vermüllung am MediaPark reduzieren · Bessere Beleuchtung am Ebertplatz prüfen
+              </div>
+
+              {similar.length > 0 && (
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                  <div className="text-xs font-semibold text-blue-700 mb-2">
+                    Ähnliche Forderungen gibt es schon — vielleicht lieber unterstützen statt doppelt einreichen?
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    {similar.map(sd => (
+                      <a key={sd.id} href={`/forderungen/${sd.id}`} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center justify-between gap-2 text-sm text-blue-700 hover:underline">
+                        <span className="truncate">{sd.title}</span>
+                        <span className="text-xs text-blue-400 shrink-0">{sd.relevance_score} Punkte →</span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Schritt 4: Themen & Tags ── */}
+          {step === 3 && (
+            <div className="flex flex-col gap-3">
+              <div>
+                <div className="text-base font-semibold text-gray-900">Welche Themen berührt dein Anliegen?</div>
+                <p className="text-sm text-gray-500 mt-1">
+                  Gehe die Themenbereiche durch und wähle die Schlagworte, die am besten passen — mindestens eins, höchstens {MAX_TAGS}.
+                </p>
+              </div>
+
+              {Object.entries(THEMENBEREICHE).map(([bereich, bereichTags]) => {
+                const isOpen = openBereich === bereich
+                const selectedCount = bereichTags.filter(t => tags.includes(t)).length
+                return (
+                  <div key={bereich} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                    <button
+                      onClick={() => setOpenBereich(isOpen ? null : bereich)}
+                      className="w-full flex items-center justify-between px-5 py-4 text-left"
+                    >
+                      <span className="font-semibold text-gray-900 text-sm">
+                        {bereich}
+                        {selectedCount > 0 && <span className="ml-2 text-xs font-medium text-blue-600">{selectedCount} gewählt</span>}
+                      </span>
+                      <ChevronDown size={16} className={`text-gray-300 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                    {isOpen && (
+                      <div className="px-5 pb-4 flex flex-wrap gap-2">
+                        {bereichTags.map(t => (
+                          <button key={t} onClick={() => toggleTag(t)} className={chip(tags.includes(t), !tags.includes(t) && tags.length >= MAX_TAGS)}>
+                            {t}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+
+              {tags.length > 0 && (
+                <div className="text-xs text-gray-500">
+                  Gewählt: {tags.join(', ')} → Themenbereiche: <span className="font-medium text-gray-700">{themen.join(', ')}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Schritt 5: Problem ── */}
+          {step === 4 && (
+            <div className="flex flex-col gap-4">
+              <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                <label className="block text-base font-semibold text-gray-900 mb-2">Beschreibe das Problem *</label>
+                <textarea
+                  value={problem}
+                  onChange={e => setProblem(e.target.value)}
+                  rows={5}
+                  placeholder="Was passiert? Warum ist es problematisch? Wen betrifft es?"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                />
+                <p className="text-xs text-gray-400 mt-2">Beschreibe das Problem möglichst konkret. Es reicht, wenn du die Situation verständlich erklärst.</p>
+                {problemHint && (
+                  <div className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-4 py-2.5 mt-2">{problemHint}</div>
                 )}
               </div>
 
-              {/* Tipps auf Mobile direkt vor den Eingabefeldern statt ganz unten */}
-              {isFormVisible && <div className="lg:hidden">{qualityHints}</div>}
-
-              {/* Step 2: Form fields */}
-              {isFormVisible && (
-                <>
-                  {/* Titel */}
-                  <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <AlignLeft size={15} className="text-blue-500" />
-                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Titel der Forderung</span>
-                    </div>
-                    <input
-                      type="text"
-                      value={title}
-                      onChange={e => setTitle(e.target.value)}
-                      placeholder="z. B. Mehr Sicherheit am Neumarkt"
-                      maxLength={100}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <p className="text-xs text-gray-400 mt-2">Formuliere kurz und verständlich, worum es geht.</p>
-
-                    {similar.length > 0 && (
-                      <div className="mt-3 bg-blue-50 border border-blue-100 rounded-xl p-4">
-                        <div className="text-xs font-semibold text-blue-700 mb-2">
-                          Ähnliche Forderungen gibt es schon — vielleicht lieber unterstützen statt doppelt einreichen?
-                        </div>
-                        <div className="flex flex-col gap-1.5">
-                          {similar.map(sd => (
-                            <a
-                              key={sd.id}
-                              href={`/forderungen/${sd.id}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center justify-between gap-2 text-sm text-blue-700 hover:underline"
-                            >
-                              <span className="truncate">{sd.title}</span>
-                              <span className="text-xs text-blue-400 shrink-0">{sd.relevance_score} Punkte →</span>
-                            </a>
-                          ))}
-                        </div>
-                        <p className="text-[11px] text-blue-400 mt-2">Du kannst deine Forderung trotzdem einreichen, wenn dein Anliegen ein anderes ist.</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Ort */}
-                  <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <MapPin size={15} className="text-blue-500" />
-                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Ort oder Stadtteil</span>
-                    </div>
-                    <input
-                      type="text"
-                      value={location}
-                      onChange={e => setLocation(e.target.value)}
-                      placeholder="z. B. Köln Innenstadt, Neumarkt"
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <p className="text-xs text-gray-400 mt-2">Wo tritt das Problem auf?</p>
-                  </div>
-
-                  {/* Kategorie */}
-                  <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Tag size={15} className="text-blue-500" />
-                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Kategorie *</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {CATEGORIES.map(cat => (
-                        <button
-                          key={cat}
-                          onClick={() => setCategory(cat === category ? '' : cat)}
-                          className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
-                            category === cat
-                              ? 'bg-blue-600 text-white border-blue-600'
-                              : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600'
-                          }`}
-                        >
-                          {cat}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Problem */}
-                  <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <AlignLeft size={15} className="text-blue-500" />
-                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Was ist das Problem? *</span>
-                    </div>
-                    <textarea
-                      value={problem}
-                      onChange={e => setProblem(e.target.value)}
-                      placeholder="Beschreibe kurz, was aktuell nicht funktioniert oder viele Menschen betrifft."
-                      rows={4}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                    />
-                    <p className="text-xs text-gray-400 mt-2">Beschreibe das Problem möglichst konkret, aber nicht zu lang.</p>
-                  </div>
-
-                  {/* Lösung */}
-                  <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Lightbulb size={15} className="text-blue-500" />
-                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Was soll konkret passieren?</span>
-                    </div>
-                    <textarea
-                      value={solution}
-                      onChange={e => setSolution(e.target.value)}
-                      placeholder="Welche Veränderung wünschst du dir von Stadt, Verwaltung oder Politik?"
-                      rows={4}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                    />
-                    <p className="text-xs text-gray-400 mt-2">Eine gute Forderung beschreibt nicht nur das Problem, sondern auch eine mögliche Richtung für die Lösung.</p>
-                  </div>
-
-                  {/* Adressaten */}
-                  <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Users size={15} className="text-blue-500" />
-                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">An wen richtet sich die Forderung?</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {ADDRESSEES_OPTIONS.map(a => (
-                        <button
-                          key={a}
-                          onClick={() => toggleAddressee(a)}
-                          className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
-                            addressees.includes(a)
-                              ? 'bg-blue-600 text-white border-blue-600'
-                              : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600'
-                          }`}
-                        >
-                          {a}
-                        </button>
-                      ))}
-                    </div>
-                    {!wizardOpen ? (
-                      <button
-                        type="button"
-                        onClick={() => setWizardOpen(true)}
-                        className="text-xs text-blue-600 hover:underline"
-                      >
-                        Unsicher, wer zuständig ist? Beantworte zwei kurze Fragen →
-                      </button>
-                    ) : (
-                      <div className="mt-1 bg-gray-50 border border-gray-100 rounded-xl p-4">
-                        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Zuständigkeits-Hilfe</div>
-
-                        <div className="mb-4">
-                          <div className="text-sm font-medium text-gray-700 mb-2">Worum geht es hauptsächlich?</div>
-                          <div className="flex flex-wrap gap-2">
-                            {Object.keys(WIZARD_TOPICS).map(t => (
-                              <button
-                                key={t}
-                                type="button"
-                                onClick={() => setWTopic(t)}
-                                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                                  wTopic === t ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
-                                }`}
-                              >
-                                {t}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="mb-4">
-                          <div className="text-sm font-medium text-gray-700 mb-2">Betrifft es einen bestimmten Stadtteil oder die ganze Stadt?</div>
-                          <div className="flex flex-wrap gap-2">
-                            {[['stadtteil', 'Einen bestimmten Stadtteil'], ['stadt', 'Die ganze Stadt']].map(([val, label]) => (
-                              <button
-                                key={val}
-                                type="button"
-                                onClick={() => setWScope(val)}
-                                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                                  wScope === val ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
-                                }`}
-                              >
-                                {label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {wizardSuggestion.length > 0 && (
-                          <div className="bg-white border border-blue-100 rounded-xl p-3">
-                            <div className="text-xs text-gray-500 mb-2">Wahrscheinlich zuständig:</div>
-                            <div className="flex flex-wrap gap-1.5 mb-3">
-                              {wizardSuggestion.map(a => (
-                                <span key={a} className="text-xs font-medium px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100">{a}</span>
-                              ))}
-                            </div>
-                            <button
-                              type="button"
-                              onClick={applyWizard}
-                              className="px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors"
-                            >
-                              Vorschlag übernehmen
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    <p className="text-xs text-gray-400 mt-2">Du musst nicht genau wissen, wer zuständig ist — das Lybertas-Team prüft die Adressierung vor der Weiterleitung.</p>
-                  </div>
-
-                  {/* Submit */}
-                  <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                    <p className="text-sm text-gray-500 mb-5 leading-relaxed">
-                      Mit dem Einreichen wird deine Forderung für andere Bürger sichtbar. Andere können sie unterstützen, Gegenargumente hinzufügen oder alternative Lösungen vorschlagen.
-                    </p>
-                    {error && (
-                      <div className="text-sm text-red-600 bg-red-50 px-4 py-3 rounded-xl mb-4">{error}</div>
-                    )}
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <button
-                        onClick={handleSubmit}
-                        disabled={!canSubmit || submitting}
-                        className="flex-1 py-3.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-40 text-sm"
-                      >
-                        {submitting ? 'Wird eingereicht…' : 'Forderung veröffentlichen'}
-                      </button>
-                      <Link
-                        href="/forderungen"
-                        className="flex-1 sm:flex-none py-3.5 px-6 text-center bg-gray-100 text-gray-600 font-medium rounded-xl hover:bg-gray-200 transition-colors text-sm"
-                      >
-                        Abbrechen
-                      </Link>
-                    </div>
-                    {!canSubmit && (
-                      <p className="text-xs text-gray-400 mt-3">Bitte fülle Titel, Kategorie und Problembeschreibung aus.</p>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* RIGHT: Preview + Hints */}
-            <div className="space-y-4 lg:sticky lg:top-20">
-
-              {/* Live Preview */}
-              {isFormVisible && (
-                <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Eye size={14} className="text-gray-400" />
-                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Vorschau deiner Forderung</span>
-                  </div>
-
-                  <div className="rounded-xl border border-gray-200 p-4 bg-gray-50">
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      {previewCategory && (
-                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{previewCategory}</span>
-                      )}
-                      <span className="text-xs text-gray-400">{previewLocation}</span>
-                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-400">Entwurf</span>
-                    </div>
-
-                    <div className={`font-semibold mb-2 leading-snug ${title ? 'text-gray-900' : 'text-gray-300'}`}>
-                      {previewTitle}
-                    </div>
-
-                    {previewProblem && (
-                      <p className="text-xs text-gray-500 leading-relaxed mb-1">
-                        <span className="font-medium text-gray-600">Problem: </span>{previewProblem}
-                      </p>
-                    )}
-
-                    {previewSolution && (
-                      <p className="text-xs text-gray-500 leading-relaxed mb-2">
-                        <span className="font-medium text-gray-600">Lösung: </span>{previewSolution}
-                      </p>
-                    )}
-
-                    {addressees.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {addressees.slice(0, 3).map(a => (
-                          <span key={a} className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100">{a}</span>
-                        ))}
-                        {addressees.length > 3 && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">+{addressees.length - 3}</span>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-200">
-                      <div className="flex items-center gap-1 text-xs text-gray-400">
-                        <span className="font-semibold text-gray-600">0</span> Relevanzpunkte
-                      </div>
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-gray-400 mt-3 leading-relaxed">So sieht deine Forderung später für andere Bürger aus.</p>
+              <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Wie häufig tritt das Problem auf? {art === 'wiederkehrend' ? '*' : '(optional)'}
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {FREQUENZEN.map(f => (
+                    <button key={f} onClick={() => setFrequency(frequency === f ? '' : f)} className={chip(frequency === f)}>
+                      {f}
+                    </button>
+                  ))}
                 </div>
-              )}
+              </div>
 
-              {/* Quality hints (Desktop; auf Mobile oben im Formular-Flow) */}
-              <div className="hidden lg:block">{qualityHints}</div>
-
+              <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                <button onClick={() => setZusatzOpen(!zusatzOpen)} className="w-full flex items-center justify-between px-5 py-4 text-left">
+                  <span className="text-sm font-medium text-gray-600">Weitere Angaben, falls relevant (optional)</span>
+                  <ChevronDown size={16} className={`text-gray-300 transition-transform ${zusatzOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {zusatzOpen && (
+                  <div className="px-5 pb-5 flex flex-col gap-4">
+                    <div>
+                      <div className="text-sm font-medium text-gray-700 mb-2">Wer ist besonders betroffen?</div>
+                      <div className="flex flex-wrap gap-2">
+                        {GRUPPEN.map(g => (
+                          <button key={g} onClick={() => toggleIn(groups, setGroups, g)} className={chip(groups.includes(g))}>{g}</button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-gray-700 mb-2">Welche Auswirkung hat das Problem?</div>
+                      <div className="flex flex-wrap gap-2">
+                        {AUSWIRKUNGEN.map(a => (
+                          <button key={a} onClick={() => toggleIn(impacts, setImpacts, a)} className={chip(impacts.includes(a))}>{a}</button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
+          )}
+
+          {/* ── Schritt 6: Veränderung ── */}
+          {step === 5 && (
+            <div className="flex flex-col gap-4">
+              <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                <label className="block text-base font-semibold text-gray-900 mb-2">Was sollte sich ändern? *</label>
+                <textarea
+                  value={change}
+                  onChange={e => setChange(e.target.value)}
+                  rows={4}
+                  placeholder="Was wäre aus deiner Sicht eine gute Lösung oder welche Veränderung wünschst du dir?"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                />
+                <p className="text-xs text-gray-400 mt-2">Du musst keine perfekte Lösung kennen. Beschreibe einfach, was sich aus deiner Sicht ändern sollte.</p>
+                {changeHint && (
+                  <div className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-4 py-2.5 mt-2">{changeHint}</div>
+                )}
+              </div>
+
+              <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                <label className="block text-sm font-medium text-gray-700 mb-2">In welche Richtung geht die Lösung? (optional)</label>
+                <div className="flex flex-wrap gap-2">
+                  {LOESUNGSRICHTUNGEN.map(d => (
+                    <button key={d} onClick={() => setDirection(direction === d ? '' : d)} className={chip(direction === d)}>{d}</button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Schritt 7: Rückmeldung ── */}
+          {step === 6 && (
+            <div className="flex flex-col gap-3">
+              <div className="text-base font-semibold text-gray-900 mb-1">Von wem wünschst du dir eine Rückmeldung?</div>
+              {FEEDBACK_OPTIONS.map(o => (
+                <button key={o.value} onClick={() => setFeedback(o.value)} className={bigCard(feedback === o.value)}>
+                  <div className="flex items-center gap-2 mb-1">
+                    {feedback === o.value ? <CheckCircle size={17} className="text-blue-600 shrink-0" /> : <Circle size={17} className="text-gray-300 shrink-0" />}
+                    <span className="font-semibold text-gray-900">{o.label}</span>
+                  </div>
+                  <p className="text-sm text-gray-500 leading-relaxed pl-6">{o.desc}</p>
+                </button>
+              ))}
+              <p className="text-xs text-gray-400 mt-1">
+                Die konkrete Zuständigkeit ordnet das Lybertas-Team anschließend intern zu — du musst nicht wissen, welches Amt oder Gremium zuständig ist.
+              </p>
+            </div>
+          )}
+
+          {/* ── Schritt 8: Vorschau ── */}
+          {step === 7 && (
+            <div className="flex flex-col gap-3">
+              <div className="text-base font-semibold text-gray-900">So wird dein Anliegen eingereicht</div>
+              <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-50">
+                {([
+                  ['Titel', titleTrimmed, 2],
+                  ['Art des Anliegens', art ? ART_LABELS[art] : '', 0],
+                  ['Ort', ortSummary(), 1],
+                  ['Themenbereiche', themen.join(', '), 3],
+                  ['Schlagworte', tags.join(', '), 3],
+                  ['Problem', problem.trim(), 4],
+                  ['Häufigkeit', frequency, 4],
+                  ['Betroffene', groups.join(', '), 4],
+                  ['Auswirkungen', impacts.join(', '), 4],
+                  ['Gewünschte Veränderung', change.trim(), 5],
+                  ['Lösungsrichtung', direction, 5],
+                  ['Rückmeldung gewünscht von', FEEDBACK_LABELS[feedback] ?? '', 6],
+                ] as [string, string, number][]).filter(([, v]) => v).map(([label, value, editStep]) => (
+                  <div key={label} className="flex items-start justify-between gap-3 px-5 py-3">
+                    <div className="min-w-0">
+                      <div className="text-xs text-gray-400">{label}</div>
+                      <div className="text-sm text-gray-800 leading-relaxed">{value}</div>
+                    </div>
+                    <button onClick={() => setStep(editStep)} className="text-gray-300 hover:text-blue-600 shrink-0 mt-1" aria-label={`${label} bearbeiten`}>
+                      <Pencil size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-gray-400">
+                Mit dem Einreichen wird dein Anliegen für andere Bürger sichtbar. Andere können es unterstützen, Gegenargumente hinzufügen oder Alternativen vorschlagen.
+              </p>
+            </div>
+          )}
+
+          {error && (
+            <div className="text-sm text-red-600 bg-red-50 px-4 py-3 rounded-xl mt-4">{error}</div>
+          )}
+
+          {/* Navigation */}
+          <div className="flex items-center justify-between mt-6">
+            {step > 0 ? (
+              <button onClick={() => { setStep(step - 1); setError('') }} className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
+                <ChevronLeft size={15} /> Zurück
+              </button>
+            ) : <div />}
+
+            {step < 7 ? (
+              <button
+                onClick={() => canProceed(step) && setStep(step + 1)}
+                disabled={!canProceed(step)}
+                className="px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Weiter
+              </button>
+            ) : (
+              <button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-40"
+              >
+                {submitting ? 'Wird eingereicht…' : 'Anliegen einreichen'}
+              </button>
+            )}
           </div>
+
         </div>
       </main>
     </>
