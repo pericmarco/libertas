@@ -10,6 +10,7 @@ import { ShieldCheck, CheckCircle2, Circle, Plus, Trash2, X } from 'lucide-react
 import { createClient } from '@/lib/supabase/client'
 import RepScoreBadge from '@/components/RepScoreBadge'
 import { computeRepScoreForProfiles } from '@/lib/repScore'
+import { REGION_NAME } from '@/lib/constants'
 
 type Vote = {
   id: string
@@ -19,7 +20,10 @@ type Vote = {
   total_votes: number
   is_partner_vote: boolean
   partner_name: string | null
+  target_district_id: string | null
 }
+
+type District = { id: string; name: string }
 
 type VoteOption = {
   id: string
@@ -39,6 +43,8 @@ export default function Abstimmungen() {
   const [submitting, setSubmitting] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
   const [myRole, setMyRole] = useState<string>('citizen')
+  const [myDistrict, setMyDistrict] = useState<string | null>(null)
+  const [districts, setDistricts] = useState<District[]>([])
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
@@ -48,6 +54,7 @@ export default function Abstimmungen() {
   const [cDesc, setCDesc] = useState('')
   const [cSender, setCSender] = useState('Lybertas')
   const [cEndsAt, setCEndsAt] = useState('')
+  const [cTarget, setCTarget] = useState('')
   const [cOptions, setCOptions] = useState<{ label: string; description: string }[]>([
     { label: '', description: '' },
     { label: '', description: '' },
@@ -63,9 +70,16 @@ export default function Abstimmungen() {
       setUserId(uid)
 
       if (uid) {
-        const { data: me } = await supabase.from('profiles').select('role').eq('id', uid).single()
+        const { data: me } = await supabase.from('profiles').select('role, district_id').eq('id', uid).single()
         setMyRole(me?.role ?? 'citizen')
+        setMyDistrict(me?.district_id ?? null)
         if (me?.role === 'city') setCSender('Stadt Köln')
+      }
+
+      const { data: region } = await supabase.from('regions').select('id').eq('name', REGION_NAME).single()
+      if (region) {
+        const { data: districtData } = await supabase.from('districts').select('id, name').eq('region_id', region.id)
+        setDistricts(districtData ?? [])
       }
 
       const [{ data: votesData }, { data: optionsData }] = await Promise.all([
@@ -119,6 +133,7 @@ export default function Abstimmungen() {
       is_partner_vote: true,
       partner_name: cSender.trim() || 'Lybertas',
       ends_at: cEndsAt ? new Date(cEndsAt + 'T23:59:59').toISOString() : null,
+      target_district_id: cTarget || null,
     }).select('*').single()
 
     if (e1 || !v) { setCreateError(e1?.message ?? 'Fehler beim Anlegen.'); setCreating(false); return }
@@ -133,7 +148,7 @@ export default function Abstimmungen() {
     setVotes(prev => [v, ...prev])
     setOptions(prev => [...prev, ...(newOpts ?? [])])
     setShowCreate(false)
-    setCTitle(''); setCDesc(''); setCEndsAt('')
+    setCTitle(''); setCDesc(''); setCEndsAt(''); setCTarget('')
     setCOptions([{ label: '', description: '' }, { label: '', description: '' }])
   }
 
@@ -164,7 +179,15 @@ export default function Abstimmungen() {
     setSubmitting(null)
   }
 
-  const filtered = votes.filter(v => tab === 'partner' ? v.is_partner_vote : !v.is_partner_vote)
+  const districtName = (id: string | null) => districts.find(d => d.id === id)?.name ?? 'Stadtteil'
+
+  // Zielgruppen-Filter: Bürger sehen nur Umfragen ohne Targeting oder für den
+  // eigenen Stadtteil; Stadt/Admin sehen alles (mit Kennzeichnung)
+  const filtered = votes.filter(v => {
+    if (tab === 'partner' ? !v.is_partner_vote : v.is_partner_vote) return false
+    if (v.target_district_id && !canCreate && v.target_district_id !== myDistrict) return false
+    return true
+  })
 
   return (
     <>
@@ -227,7 +250,7 @@ export default function Abstimmungen() {
                       <textarea value={cDesc} onChange={e => setCDesc(e.target.value)} rows={2}
                         className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-xs font-medium text-gray-500 mb-1">Absender (öffentlich sichtbar)</label>
                         <input value={cSender} onChange={e => setCSender(e.target.value)}
@@ -237,6 +260,14 @@ export default function Abstimmungen() {
                         <label className="block text-xs font-medium text-gray-500 mb-1">Läuft bis (optional)</label>
                         <input type="date" value={cEndsAt} onChange={e => setCEndsAt(e.target.value)}
                           className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Zielgruppe</label>
+                        <select value={cTarget} onChange={e => setCTarget(e.target.value)}
+                          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                          <option value="">Alle Stadtteile</option>
+                          {districts.map(d => <option key={d.id} value={d.id}>Nur {d.name}</option>)}
+                        </select>
                       </div>
                     </div>
                     <div>
@@ -312,9 +343,14 @@ export default function Abstimmungen() {
                           )}
                           <CardTitle className="text-lg font-semibold leading-snug">{vote.title}</CardTitle>
                         </div>
-                        {endsAt && (
-                          <Badge className="self-start shrink-0 bg-blue-50 text-blue-700 hover:bg-blue-50">Läuft bis {endsAt}</Badge>
-                        )}
+                        <div className="flex flex-wrap gap-1.5 sm:flex-col sm:items-end shrink-0">
+                          {endsAt && (
+                            <Badge className="bg-blue-50 text-blue-700 hover:bg-blue-50">Läuft bis {endsAt}</Badge>
+                          )}
+                          {vote.target_district_id && (
+                            <Badge className="bg-purple-50 text-purple-700 hover:bg-purple-50">Nur {districtName(vote.target_district_id)}</Badge>
+                          )}
+                        </div>
                       </div>
                       {vote.description && <p className="text-sm text-gray-700 mt-1 leading-relaxed">{vote.description}</p>}
                     </CardHeader>
