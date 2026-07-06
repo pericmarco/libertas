@@ -242,7 +242,7 @@ export default function Profil() {
               <button
                 type="submit"
                 disabled={!complete || saving}
-                className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saving ? 'Speichern…' : 'Änderungen speichern'}
               </button>

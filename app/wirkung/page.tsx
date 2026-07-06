@@ -13,7 +13,7 @@ export default function Wirkung() {
             <p className="text-gray-500 mt-1">Was Beteiligung tatsächlich bewegt</p>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 text-center">
             <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
               <Sparkles size={24} className="text-blue-500" />
             </div>
@@ -28,12 +28,12 @@ export default function Wirkung() {
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <MessageSquareReply size={18} className="text-gray-400 mb-2" />
               <div className="text-sm font-semibold text-gray-800 mb-1">Reaktionen der Politik</div>
-              <div className="text-xs text-gray-400 leading-relaxed">Welche Anliegen haben eine offizielle Rückmeldung erhalten.</div>
+              <div className="text-xs text-gray-500 leading-relaxed">Welche Anliegen haben eine offizielle Rückmeldung erhalten.</div>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <TrendingUp size={18} className="text-gray-400 mb-2" />
               <div className="text-sm font-semibold text-gray-800 mb-1">Umgesetzte Forderungen</div>
-              <div className="text-xs text-gray-400 leading-relaxed">Welche Themen aus der Bürgerschaft tatsächlich Wirkung gezeigt haben.</div>
+              <div className="text-xs text-gray-500 leading-relaxed">Welche Themen aus der Bürgerschaft tatsächlich Wirkung gezeigt haben.</div>
             </div>
           </div>
 

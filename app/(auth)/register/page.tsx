@@ -113,7 +113,7 @@ export default function Register() {
           <p className="text-gray-500 mt-1">Werde Teil deiner lokalen Demokratie</p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 p-8">
+        <div className="bg-white rounded-2xl border border-gray-100 p-6">
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Vollständiger Name</label>
@@ -136,7 +136,7 @@ export default function Register() {
                 maxLength={24}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-              <p className="text-xs text-gray-400 mt-1.5">Unter diesem Namen erscheinen deine Beiträge. Ohne Nutzernamen bleibst du anonym. Dein echter Name bleibt immer privat.</p>
+              <p className="text-xs text-gray-500 mt-1.5">Unter diesem Namen erscheinen deine Beiträge. Ohne Nutzernamen bleibst du anonym. Dein echter Name bleibt immer privat.</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">E-Mail</label>

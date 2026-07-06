@@ -223,13 +223,13 @@ export default function NeueForderung() {
     <>
       <Navbar />
       <main className="pt-16 min-h-screen bg-gray-50">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10">
 
-          <Link href="/forderungen" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 transition-colors mb-5">
+          <Link href="/forderungen" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors mb-5">
             <ChevronLeft size={15} /> Alle Forderungen
           </Link>
 
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">Anliegen einreichen</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">Anliegen einreichen</h1>
           <p className="text-gray-500 text-sm mb-5">
             Schritt {Math.min(step + 1, STEPS.length)} von {STEPS.length} · {STEPS[step]}
           </p>
@@ -294,7 +294,7 @@ export default function NeueForderung() {
                   <select
                     value={districtId}
                     onChange={e => setDistrictId(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="">Stadtteil wählen…</option>
                     {districts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
@@ -321,14 +321,14 @@ export default function NeueForderung() {
                         value={ortText}
                         onChange={e => setOrtText(e.target.value)}
                         placeholder={ortstyp === 'haltestelle' ? 'z. B. Christophstraße/MediaPark' : ''}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                       {ortstyp === 'strasse' && (
                         <input
                           value={ortZusatz}
                           onChange={e => setOrtZusatz(e.target.value)}
                           placeholder="Hausnummer oder nähere Beschreibung (optional)"
-                          className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2"
+                          className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-2"
                         />
                       )}
                     </div>
@@ -342,7 +342,7 @@ export default function NeueForderung() {
                   <input
                     value={mehrereOrteText}
                     onChange={e => setMehrereOrteText(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               )}
@@ -359,7 +359,7 @@ export default function NeueForderung() {
                   onChange={e => setTitle(e.target.value)}
                   maxLength={90}
                   placeholder='z. B. "Dauerhafte Geruchsbelästigung an der Haltestelle Christophstraße lösen"'
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 <p className="text-xs text-gray-400 mt-2">
                   Ein guter Titel nennt kurz Problem, Ort und Ziel. Vermeide reine Empörung wie „Unfassbar!!!" oder „Endlich handeln".
@@ -449,7 +449,7 @@ export default function NeueForderung() {
                   onChange={e => setProblem(e.target.value)}
                   rows={5}
                   placeholder="Was passiert? Warum ist es problematisch? Wen betrifft es?"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 />
                 <p className="text-xs text-gray-400 mt-2">Beschreibe das Problem möglichst konkret. Es reicht, wenn du die Situation verständlich erklärst.</p>
                 {problemHint && (
@@ -509,7 +509,7 @@ export default function NeueForderung() {
                   onChange={e => setChange(e.target.value)}
                   rows={4}
                   placeholder="Was wäre aus deiner Sicht eine gute Lösung oder welche Veränderung wünschst du dir?"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 />
                 <p className="text-xs text-gray-400 mt-2">Du musst keine perfekte Lösung kennen. Beschreibe einfach, was sich aus deiner Sicht ändern sollte.</p>
                 {changeHint && (
@@ -614,7 +614,7 @@ export default function NeueForderung() {
               <button
                 onClick={() => canProceed(step) && setStep(step + 1)}
                 disabled={!canProceed(step)}
-                className="px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Weiter
               </button>
@@ -622,7 +622,7 @@ export default function NeueForderung() {
               <button
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-40"
+                className="px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
               >
                 {submitting ? 'Wird eingereicht…' : 'Anliegen einreichen'}
               </button>

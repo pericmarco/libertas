@@ -192,7 +192,7 @@ export default function Abstimmungen() {
   return (
     <>
       <Navbar />
-      <main className="pt-16 min-h-screen">
+      <main className="pt-16 min-h-screen bg-gray-50">
         <div className="max-w-6xl mx-auto px-6 py-10">
           <div className="mb-4">
             <h1 className="text-3xl font-bold text-gray-900">Priorisierung</h1>
@@ -243,28 +243,28 @@ export default function Abstimmungen() {
                     <div>
                       <label className="block text-xs font-medium text-gray-500 mb-1">Titel / Frage *</label>
                       <input value={cTitle} onChange={e => setCTitle(e.target.value)} placeholder="z. B. Welche Priorität soll … haben?"
-                        className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-500 mb-1">Kurzbeschreibung</label>
                       <textarea value={cDesc} onChange={e => setCDesc(e.target.value)} rows={2}
-                        className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+                        className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-xs font-medium text-gray-500 mb-1">Absender (öffentlich sichtbar)</label>
                         <input value={cSender} onChange={e => setCSender(e.target.value)}
-                          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-500 mb-1">Läuft bis (optional)</label>
                         <input type="date" value={cEndsAt} onChange={e => setCEndsAt(e.target.value)}
-                          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-500 mb-1">Zielgruppe</label>
                         <select value={cTarget} onChange={e => setCTarget(e.target.value)}
-                          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                           <option value="">Alle Stadtteile</option>
                           {districts.map(d => <option key={d.id} value={d.id}>Nur {d.name}</option>)}
                         </select>
@@ -278,10 +278,10 @@ export default function Abstimmungen() {
                             <div className="flex-1 flex flex-col gap-1.5">
                               <input value={opt.label} placeholder={`Option ${i + 1}`}
                                 onChange={e => setCOptions(prev => prev.map((o, j) => j === i ? { ...o, label: e.target.value } : o))}
-                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                               <input value={opt.description} placeholder="Erklärung (optional)"
                                 onChange={e => setCOptions(prev => prev.map((o, j) => j === i ? { ...o, description: e.target.value } : o))}
-                                className="w-full px-3 py-2 border border-gray-100 rounded-lg text-xs text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-xs text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                             </div>
                             {cOptions.length > 2 && (
                               <button onClick={() => setCOptions(prev => prev.filter((_, j) => j !== i))}
@@ -421,7 +421,7 @@ export default function Abstimmungen() {
                         ) : !userId ? (
                           <button
                             onClick={() => router.push('/login')}
-                            className="px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                            className="px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors"
                           >
                             Anmelden zum Abstimmen
                           </button>
@@ -429,7 +429,7 @@ export default function Abstimmungen() {
                           <button
                             onClick={() => chosen && castVote(vote.id, chosen)}
                             disabled={!chosen || submitting === vote.id}
-                            className="px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             {submitting === vote.id ? 'Wird gesendet…' : 'Jetzt abstimmen'}
                           </button>

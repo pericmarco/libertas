@@ -62,7 +62,7 @@ export default function Login() {
           <p className="text-gray-500 mt-1">Melde dich mit deinem Konto an</p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 p-8">
+        <div className="bg-white rounded-2xl border border-gray-100 p-6">
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">E-Mail</label>

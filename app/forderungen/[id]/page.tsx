@@ -306,9 +306,9 @@ export default function ForderungDetail() {
     <>
       <Navbar />
       <main className="pt-16 min-h-screen bg-gray-50">
-        <div className="max-w-3xl mx-auto px-6 py-8">
+        <div className="max-w-3xl mx-auto px-6 py-10">
 
-          <Link href="/forderungen" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 transition-colors mb-6">
+          <Link href="/forderungen" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors mb-6">
             <ChevronLeft size={15} /> Alle Forderungen
           </Link>
 
@@ -434,7 +434,7 @@ export default function ForderungDetail() {
                     selectedType === 'gegenargument' ? 'Was siehst du kritisch? (optional)' :
                     'Beschreibe deinen alternativen Lösungsweg (erforderlich)'
                   }
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none mb-2"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none mb-2"
                 />
                 {selectedType === 'alternative' && (
                   <p className="text-xs text-gray-400 mb-2">Eine Alternative braucht immer eine konkrete Beschreibung.</p>
@@ -592,7 +592,7 @@ export default function ForderungDetail() {
                               selectedType === 'gegenargument' ? 'Was siehst du kritisch? (optional)' :
                               'Beschreibe deinen alternativen Lösungsweg (erforderlich)'
                             }
-                            className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                            className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                           />
                           <button
                             onClick={savePosition}

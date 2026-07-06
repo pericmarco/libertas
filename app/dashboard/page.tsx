@@ -45,7 +45,7 @@ export default async function Dashboard() {
   return (
     <>
       <Navbar />
-      <main className="pt-16 min-h-screen">
+      <main className="pt-16 min-h-screen bg-gray-50">
         <div className="max-w-6xl mx-auto px-6 py-10">
 
           <div className="mb-8">

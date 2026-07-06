@@ -85,7 +85,7 @@ export default function Onboarding() {
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 p-8">
+        <div className="bg-white rounded-2xl border border-gray-100 p-6">
           <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 text-sm text-blue-700">
             <strong>Warum fragen wir das?</strong><br />
             Wir vergleichen die Teilnehmerstruktur mit den öffentlichen Bevölkerungsdaten deines Stadtteils — so entsteht der Repräsentations-Score. Deine Angaben sind anonym.
@@ -155,7 +155,7 @@ export default function Onboarding() {
             <button
               type="submit"
               disabled={!ageGroup || !gender || !districtId || loading}
-              className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Speichern…' : 'Weiter zum Dashboard'}
             </button>

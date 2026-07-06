@@ -160,7 +160,7 @@ export default function Admin() {
       <>
         <Navbar />
         <main className="pt-16 min-h-screen bg-gray-50">
-          <div className="max-w-5xl mx-auto px-6 py-10">
+          <div className="max-w-6xl mx-auto px-6 py-10">
             <div className="h-32 bg-white rounded-2xl animate-pulse" />
           </div>
         </main>
@@ -201,7 +201,7 @@ export default function Admin() {
     <>
       <Navbar />
       <main className="pt-16 min-h-screen bg-gray-50">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
 
           <div className="flex items-center gap-2 mb-1">
             <ShieldCheck size={20} className="text-blue-600" />
@@ -258,13 +258,13 @@ export default function Admin() {
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                     placeholder="Nach Titel suchen…"
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
                 <select
                   value={modFilter}
                   onChange={e => setModFilter(e.target.value)}
-                  className="px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="alle">Alle Moderationsstatus</option>
                   {Object.entries(MOD_STATUS).map(([k, v]) => (
@@ -345,32 +345,32 @@ export default function Admin() {
                           <div>
                             <label className="block text-xs font-medium text-gray-500 mb-1">Titel</label>
                             <input value={edit.title} onChange={e => setEdit(p => ({ ...p, title: e.target.value }))}
-                              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                               <label className="block text-xs font-medium text-gray-500 mb-1">Problem</label>
                               <textarea value={edit.description} onChange={e => setEdit(p => ({ ...p, description: e.target.value }))} rows={3}
-                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+                                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" />
                             </div>
                             <div>
                               <label className="block text-xs font-medium text-gray-500 mb-1">Lösung</label>
                               <textarea value={edit.solution} onChange={e => setEdit(p => ({ ...p, solution: e.target.value }))} rows={3}
-                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+                                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" />
                             </div>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                               <label className="block text-xs font-medium text-gray-500 mb-1">Öffentlicher Status</label>
                               <select value={edit.status} onChange={e => setEdit(p => ({ ...p, status: e.target.value }))}
-                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                 {PUBLIC_STATUS.map(s => <option key={s} value={s}>{s}</option>)}
                               </select>
                             </div>
                             <div>
                               <label className="block text-xs font-medium text-gray-500 mb-1">Moderationsstatus (intern)</label>
                               <select value={edit.modStatus} onChange={e => setEdit(p => ({ ...p, modStatus: e.target.value }))}
-                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                 {Object.entries(MOD_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                               </select>
                             </div>
@@ -379,7 +379,7 @@ export default function Admin() {
                             <label className="block text-xs font-medium text-gray-500 mb-1">Interne Notiz (nur für euch sichtbar)</label>
                             <textarea value={edit.note} onChange={e => setEdit(p => ({ ...p, note: e.target.value }))} rows={2}
                               placeholder="z. B. Adressat unklar — Nutzer kontaktieren, Formulierung überarbeiten…"
-                              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+                              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" />
                           </div>
                           {feedback && (
                             <div className={`text-sm px-3 py-2 rounded-lg ${feedback.startsWith('Fehler') ? 'text-red-600 bg-red-50' : 'text-green-600 bg-green-50'}`}>{feedback}</div>
@@ -421,7 +421,7 @@ export default function Admin() {
                     <select
                       value={p.role}
                       onChange={e => setRole(p.id, e.target.value)}
-                      className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       {Object.entries(ROLES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                     </select>

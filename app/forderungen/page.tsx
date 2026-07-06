@@ -224,7 +224,7 @@ export default function Forderungen() {
 
                     <div className="font-semibold text-gray-900 leading-snug mb-1.5">{d.title}</div>
 
-                    {snippet && <p className="text-sm text-gray-400 leading-relaxed mb-3 line-clamp-2">{snippet}</p>}
+                    {snippet && <p className="text-sm text-gray-500 leading-relaxed mb-3 line-clamp-2">{snippet}</p>}
 
                     <div className="flex items-center justify-between text-xs text-gray-400 mb-1.5">
                       <span>{d.relevance_score} / {RELEVANCE_THRESHOLD} Relevanzpunkte</span>

@@ -18,7 +18,7 @@ export default function Home() {
             <Link href="/login" className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
               Anmelden
             </Link>
-            <Link href="/register" className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+            <Link href="/register" className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors">
               Registrieren
             </Link>
           </div>
@@ -44,7 +44,7 @@ export default function Home() {
               Jetzt mitmachen
               <ChevronRight size={18} />
             </Link>
-            <Link href="/login" className="px-8 py-4 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors text-lg">
+            <Link href="/login" className="px-8 py-4 bg-white text-gray-700 border border-gray-200 rounded-xl font-semibold hover:bg-gray-50 transition-colors text-lg">
               Anmelden
             </Link>
           </div>
@@ -65,7 +65,7 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-2xl p-8 border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-2xl p-6 border border-gray-100">
               <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center mb-5">
                 <Megaphone size={22} />
               </div>
@@ -75,7 +75,7 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="bg-white rounded-2xl p-8 border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-2xl p-6 border border-gray-100">
               <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-5">
                 <Vote size={22} />
               </div>
@@ -85,7 +85,7 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="bg-white rounded-2xl p-8 border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-2xl p-6 border border-gray-100">
               <div className="w-12 h-12 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mb-5">
                 <BarChart2 size={22} />
               </div>

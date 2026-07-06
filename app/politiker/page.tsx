@@ -47,7 +47,7 @@ export default function Politiker() {
     return (
       <>
         <Navbar />
-        <main className="pt-16 min-h-screen">
+        <main className="pt-16 min-h-screen bg-gray-50">
           <div className="max-w-6xl mx-auto px-6 py-10">
             <button
               onClick={() => setSelectedParty(null)}
@@ -58,7 +58,7 @@ export default function Politiker() {
             </button>
 
             <div className="flex items-center gap-3 mb-8">
-              <div className={`px-4 py-1.5 rounded-lg text-sm font-bold ${colors.bg} ${colors.text}`}>
+              <div className={`px-4 py-1.5 rounded-full text-sm font-bold ${colors.bg} ${colors.text}`}>
                 {selectedParty}
               </div>
               <h1 className="text-2xl font-bold text-gray-900">Politiker in deinem Wahlkreis</h1>
@@ -66,7 +66,7 @@ export default function Politiker() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {partyPoliticians.map((p) => (
-                <Card key={p.id} className={`hover:shadow-md transition-shadow border ${colors.border}`}>
+                <Card key={p.id} className={`hover:shadow-sm transition-shadow border ${colors.border}`}>
                   <CardContent className="p-6">
                     <div className="flex items-center gap-4 mb-4">
                       <div className={`w-12 h-12 rounded-full ${colors.bg} flex items-center justify-center font-bold text-lg ${colors.text}`}>
@@ -94,7 +94,7 @@ export default function Politiker() {
 
                     <button
                       title="QR-Code für Plakat"
-                      className="w-full flex items-center justify-center gap-2 py-2 text-sm text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-colors"
+                      className="w-full flex items-center justify-center gap-2 py-2 text-sm text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 hover:text-gray-700 transition-colors"
                     >
                       <QrCode size={15} />
                       QR-Code für Plakat
@@ -112,7 +112,7 @@ export default function Politiker() {
   return (
     <>
       <Navbar />
-      <main className="pt-16 min-h-screen">
+      <main className="pt-16 min-h-screen bg-gray-50">
         <div className="max-w-6xl mx-auto px-6 py-10">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900">Politische Vertreter</h1>
@@ -128,9 +128,9 @@ export default function Politiker() {
                   <button
                     key={party}
                     onClick={() => setSelectedParty(party)}
-                    className={`p-6 rounded-2xl border ${colors.border} ${colors.card} text-left hover:shadow-md transition-all group`}
+                    className={`p-6 rounded-2xl border ${colors.border} ${colors.card} text-left hover:shadow-sm transition-all group`}
                   >
-                    <div className={`inline-block px-3 py-1 rounded-lg text-sm font-bold mb-3 ${colors.bg} ${colors.text}`}>
+                    <div className={`inline-block px-3 py-1 rounded-full text-sm font-bold mb-3 ${colors.bg} ${colors.text}`}>
                       {party}
                     </div>
                     <div className="text-gray-900 font-semibold">

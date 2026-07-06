@@ -112,7 +112,7 @@ export default function Navbar() {
                 'flex flex-col items-center justify-center gap-1 transition-colors',
                 pathname === href
                   ? 'text-blue-600'
-                  : 'text-gray-400 hover:text-gray-700'
+                  : 'text-gray-500 hover:text-gray-900'
               )}
             >
               <Icon size={20} strokeWidth={pathname === href ? 2.5 : 1.8} />
