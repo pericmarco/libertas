@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { LayoutDashboard, Vote, Megaphone, Users, LogOut, TrendingUp, User as UserIcon, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -58,9 +59,7 @@ export default function Navbar() {
       <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-6 h-full flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">L</span>
-            </div>
+            <Image src="/logo.png" alt="Lybertas Logo" width={32} height={32} className="w-8 h-8" priority />
             <span className="font-semibold text-gray-900">Lybertas</span>
           </Link>
 
