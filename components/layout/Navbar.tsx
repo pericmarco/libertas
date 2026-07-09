@@ -44,7 +44,12 @@ export default function Navbar() {
     return () => subscription.unsubscribe()
   }, [])
 
-  const links = isAdmin ? [...baseLinks, adminLink] : baseLinks
+  // Nicht angemeldete Besucher sehen nur die öffentlich zugänglichen Tabs —
+  // sonst würden die übrigen Tabs sie nur zum Login umleiten (Sackgasse).
+  const PUBLIC_NAV_HREFS = ['/forderungen', '/abstimmungen']
+  const links = user
+    ? (isAdmin ? [...baseLinks, adminLink] : baseLinks)
+    : baseLinks.filter(l => PUBLIC_NAV_HREFS.includes(l.href))
 
   async function handleLogout() {
     const supabase = createClient()
@@ -58,7 +63,7 @@ export default function Navbar() {
       {/* Desktop Top Navbar */}
       <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-6 h-full flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <Link href={user ? '/dashboard' : '/'} className="flex items-center gap-2">
             <Image src="/logo.svg" alt="Lybertas Logo" width={32} height={32} className="w-8 h-8" priority unoptimized />
             <span className="font-semibold text-gray-900">Lybertas</span>
           </Link>
@@ -102,7 +107,7 @@ export default function Navbar() {
 
       {/* Mobile Bottom Navigation */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 pb-safe">
-        <div className={cn('grid h-16', isAdmin ? 'grid-cols-7' : 'grid-cols-6')}>
+        <div className="grid h-16" style={{ gridTemplateColumns: `repeat(${links.length}, minmax(0, 1fr))` }}>
           {links.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}

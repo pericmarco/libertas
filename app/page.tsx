@@ -15,6 +15,9 @@ export default function Home() {
             <span className="font-semibold text-gray-900">Lybertas</span>
           </div>
           <div className="flex items-center gap-3">
+            <Link href="/forderungen" className="hidden sm:inline text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
+              Ansehen
+            </Link>
             <Link href="/login" className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
               Anmelden
             </Link>
@@ -44,10 +47,11 @@ export default function Home() {
               Jetzt mitmachen
               <ChevronRight size={18} />
             </Link>
-            <Link href="/login" className="px-8 py-4 bg-white text-gray-700 border border-gray-200 rounded-xl font-semibold hover:bg-gray-50 transition-colors text-lg">
-              Anmelden
+            <Link href="/forderungen" className="px-8 py-4 bg-white text-gray-700 border border-gray-200 rounded-xl font-semibold hover:bg-gray-50 transition-colors text-lg">
+              Ohne Anmeldung ansehen
             </Link>
           </div>
+          <p className="text-sm text-gray-400 mt-4">Schau dich erst um — Forderungen und Stadtumfragen sind auch ohne Konto einsehbar.</p>
           <div className="flex items-center justify-center gap-6 mt-6 text-sm font-medium text-gray-400">
             <span className="flex items-center gap-1.5"><CheckCircle size={14} className="text-blue-400" /> Transparenz</span>
             <span className="flex items-center gap-1.5"><CheckCircle size={14} className="text-blue-400" /> Beteiligung</span>
@@ -65,7 +69,7 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-2xl p-6 border border-gray-100">
+            <Link href="/forderungen" className="group bg-white rounded-2xl p-6 border border-gray-100 hover:border-blue-200 transition-colors">
               <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center mb-5">
                 <Megaphone size={22} />
               </div>
@@ -73,9 +77,12 @@ export default function Home() {
               <p className="text-gray-500 text-sm leading-relaxed">
                 Du siehst ein Problem in deinem Stadtteil? Reiche eine Forderung ein. Wenn genug Nachbarn sie unterstützen, wird sie zur offiziellen Abstimmung.
               </p>
-            </div>
+              <span className="inline-flex items-center gap-0.5 text-sm font-medium text-blue-600 mt-4">
+                Forderungen ansehen <ChevronRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </Link>
 
-            <div className="bg-white rounded-2xl p-6 border border-gray-100">
+            <Link href="/abstimmungen" className="group bg-white rounded-2xl p-6 border border-gray-100 hover:border-blue-200 transition-colors">
               <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-5">
                 <Vote size={22} />
               </div>
@@ -83,7 +90,10 @@ export default function Home() {
               <p className="text-gray-500 text-sm leading-relaxed">
                 Stimme über lokale Themen ab. Deine Stimme trägt zum Repräsentations-Score bei — so sehen Politiker wie ernst sie die Ergebnisse nehmen müssen.
               </p>
-            </div>
+              <span className="inline-flex items-center gap-0.5 text-sm font-medium text-blue-600 mt-4">
+                Stadtumfragen ansehen <ChevronRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </Link>
 
             <div className="bg-white rounded-2xl p-6 border border-gray-100">
               <div className="w-12 h-12 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mb-5">
