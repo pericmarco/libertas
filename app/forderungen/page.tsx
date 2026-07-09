@@ -4,11 +4,14 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
-import { ThumbsUp, Plus, MessageSquare, ChevronRight } from 'lucide-react'
+import { Plus, ChevronRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { THEMENBEREICHE, themenForTags } from '@/lib/einreichung'
+import DemandCard, { type Demand } from '@/components/DemandCard'
 
-const RELEVANCE_THRESHOLD = 50
+// Wie viele Karten pro Kategorie-Reihe in der "Alle"-Ansicht gezeigt werden,
+// bevor "Alle anzeigen" in die Kategorie-Ansicht führt.
+const ROW_LIMIT = 10
 
 // Alt-Forderungen (vor dem Tag-System) tragen nur eine Kategorie —
 // fürs Filtern auf die neuen Themenbereiche abbilden
@@ -23,41 +26,15 @@ const OLD_CATEGORY_TO_BEREICH: Record<string, string> = {
   'Sonstiges': 'Sonstiges',
 }
 
-const statusColors: Record<string, string> = {
-  eingereicht: 'bg-gray-100 text-gray-500',
-  geprüft:     'bg-yellow-100 text-yellow-700',
-  bearbeitet:  'bg-blue-100 text-blue-700',
-  umgesetzt:   'bg-green-100 text-green-700',
-  abgelehnt:   'bg-red-100 text-red-600',
-}
-
-const statusLabels: Record<string, string> = {
-  eingereicht: 'Eingereicht',
-  geprüft:     'Geprüft',
-  bearbeitet:  'In Bearbeitung',
-  umgesetzt:   'Umgesetzt',
-  abgelehnt:   'Abgelehnt',
-}
-
-const POSITION_LABEL: Record<string, string> = {
-  gegenargument: 'Gegenargument',
-  alternative:   'Alternative',
-}
-
-type Demand = {
-  id: string
-  title: string
-  description: string | null
-  category: string
-  tags: string[] | null
-  relevance_score: number
-  status: string
-}
-
+// Themenbereiche einer Forderung. Fällt auf "Sonstiges" zurück, damit keine
+// Forderung in der nach Bereichen gegliederten Ansicht verschwindet.
 function areasForDemand(d: Demand): string[] {
-  if (d.tags && d.tags.length > 0) return themenForTags(d.tags)
+  if (d.tags && d.tags.length > 0) {
+    const areas = themenForTags(d.tags)
+    if (areas.length > 0) return areas
+  }
   if (d.category) return [OLD_CATEGORY_TO_BEREICH[d.category] ?? d.category]
-  return []
+  return ['Sonstiges']
 }
 
 export default function Forderungen() {
@@ -140,12 +117,16 @@ export default function Forderungen() {
     }
   }
 
-  // Themenbereich-Filter: eine Forderung erscheint in jedem Bereich,
-  // zu dem mindestens ein gewählter Tag gehört
-  const categories = Object.keys(THEMENBEREICHE).filter(b =>
+  const openDemand = (id: string) => router.push(`/forderungen/${id}`)
+
+  // Kategorien in der festen Reihenfolge aus THEMENBEREICHE, aber nur solche,
+  // die tatsächlich Forderungen enthalten.
+  const categoriesWithDemands = Object.keys(THEMENBEREICHE).filter(b =>
     demands.some(d => areasForDemand(d).includes(b))
   )
-  const filtered = demands.filter(d => activeCategory === null || areasForDemand(d).includes(activeCategory))
+  const focusDemands = activeCategory
+    ? demands.filter(d => areasForDemand(d).includes(activeCategory))
+    : []
 
   return (
     <>
@@ -167,7 +148,7 @@ export default function Forderungen() {
             </Link>
           </div>
 
-          {categories.length > 1 && (
+          {categoriesWithDemands.length > 1 && (
             <div className="flex gap-2 flex-wrap mb-6">
               <button
                 onClick={() => setActiveCategory(null)}
@@ -175,7 +156,7 @@ export default function Forderungen() {
               >
                 Alle
               </button>
-              {categories.map(cat => (
+              {categoriesWithDemands.map(cat => (
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat === activeCategory ? null : cat)}
@@ -191,85 +172,67 @@ export default function Forderungen() {
             <div className="flex flex-col gap-3">
               {[1,2,3].map(i => <div key={i} className="h-36 bg-white rounded-2xl animate-pulse border border-gray-100" />)}
             </div>
-          ) : filtered.length > 0 ? (
-            <div className="flex flex-col gap-3">
-              {filtered.map((d) => {
-                const position = positions[d.id]
-                const isSupporting = position === 'unterstützend'
-                const otherPosition = position === 'gegenargument' || position === 'alternative'
-                const progress = Math.min((d.relevance_score / RELEVANCE_THRESHOLD) * 100, 100)
-                const textCount = textCounts[d.id] ?? 0
-                const snippet = d.description
-                  ? d.description.length > 100 ? d.description.slice(0, 100) + '…' : d.description
-                  : null
-
-                return (
-                  <div
-                    key={d.id}
-                    onClick={() => router.push(`/forderungen/${d.id}`)}
-                    className="bg-white rounded-2xl border border-gray-100 hover:border-blue-200 hover:shadow-sm transition-all cursor-pointer p-5"
-                  >
-                    <div className="flex flex-wrap items-center gap-2 mb-2">
-                      {areasForDemand(d).slice(0, 2).map(a => (
-                        <span key={a} className="text-xs font-medium text-gray-500">{a}</span>
-                      ))}
-                      {areasForDemand(d).length > 2 && (
-                        <span className="text-xs text-gray-400">+{areasForDemand(d).length - 2}</span>
-                      )}
-                      <span className="text-gray-200 text-xs">·</span>
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[d.status] ?? 'bg-gray-100 text-gray-500'}`}>
-                        {statusLabels[d.status] ?? d.status}
-                      </span>
-                    </div>
-
-                    <div className="font-semibold text-gray-900 leading-snug mb-1.5">{d.title}</div>
-
-                    {snippet && <p className="text-sm text-gray-500 leading-relaxed mb-3 line-clamp-2">{snippet}</p>}
-
-                    <div className="flex items-center justify-between text-xs text-gray-400 mb-1.5">
-                      <span>{d.relevance_score} / {RELEVANCE_THRESHOLD} Relevanzpunkte</span>
-                    </div>
-                    <div className="w-full bg-gray-100 rounded-full h-1.5 mb-3 overflow-hidden">
-                      <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${progress}%` }} />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        {otherPosition ? (
-                          <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 text-gray-600">
-                            Deine Position: {POSITION_LABEL[position]}
-                          </span>
-                        ) : (
-                          <button
-                            onClick={(e) => toggleSupport(e, d.id)}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                              isSupporting ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-blue-50 hover:text-blue-600'
-                            }`}
-                          >
-                            <ThumbsUp size={13} className={isSupporting ? 'fill-white' : ''} />
-                            {isSupporting ? 'Unterstützt' : 'Unterstützen'}
-                          </button>
-                        )}
-
-                        {textCount > 0 && (
-                          <span className="flex items-center gap-1 text-xs text-gray-400">
-                            <MessageSquare size={13} />
-                            {textCount} {textCount === 1 ? 'Beitrag' : 'Beiträge'}
-                          </span>
-                        )}
-                      </div>
-
-                      <ChevronRight size={15} className="text-gray-300 shrink-0" />
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          ) : (
+          ) : demands.length === 0 ? (
             <div className="text-center py-20 text-gray-400">
               <div className="text-4xl mb-3">📋</div>
               <div className="font-medium">Noch keine Forderungen</div>
               <div className="text-sm mt-1">Sei der Erste und reiche ein Anliegen ein.</div>
+            </div>
+          ) : activeCategory ? (
+            // Fokus-Ansicht einer Kategorie: alle Forderungen als Liste
+            <>
+              <p className="text-sm text-gray-500 mb-4">
+                {focusDemands.length} {focusDemands.length === 1 ? 'Forderung' : 'Forderungen'} in {activeCategory}
+              </p>
+              <div className="flex flex-col gap-3">
+                {focusDemands.map(d => (
+                  <DemandCard
+                    key={d.id}
+                    demand={d}
+                    areas={areasForDemand(d)}
+                    position={positions[d.id]}
+                    textCount={textCounts[d.id] ?? 0}
+                    variant="list"
+                    onOpen={openDemand}
+                    onToggleSupport={toggleSupport}
+                  />
+                ))}
+              </div>
+            </>
+          ) : (
+            // "Alle": nach Themenbereichen gegliedert, je Bereich eine horizontal
+            // wischbare Reihe mit "Alle anzeigen".
+            <div className="flex flex-col">
+              {categoriesWithDemands.map(cat => {
+                const rowDemands = demands.filter(d => areasForDemand(d).includes(cat))
+                return (
+                  <section key={cat} className="mb-8">
+                    <div className="flex items-center justify-between mb-3">
+                      <h2 className="text-lg font-semibold text-gray-900">{cat}</h2>
+                      <button
+                        onClick={() => setActiveCategory(cat)}
+                        className="flex items-center gap-0.5 text-sm font-medium text-blue-600 hover:text-blue-700 shrink-0"
+                      >
+                        Alle anzeigen <ChevronRight size={15} />
+                      </button>
+                    </div>
+                    <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:-mx-6 sm:px-6 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                      {rowDemands.slice(0, ROW_LIMIT).map(d => (
+                        <DemandCard
+                          key={d.id}
+                          demand={d}
+                          areas={areasForDemand(d)}
+                          position={positions[d.id]}
+                          textCount={textCounts[d.id] ?? 0}
+                          variant="row"
+                          onOpen={openDemand}
+                          onToggleSupport={toggleSupport}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                )
+              })}
             </div>
           )}
         </div>
