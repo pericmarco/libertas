@@ -135,6 +135,9 @@ export default function ForderungDetail() {
   const [selectedType, setSelectedType] = useState<PositionType | null>(null)
   const [draftText, setDraftText] = useState('')
   const [savingPos, setSavingPos] = useState(false)
+  // Nach abgegebener Position ist die Karte eingeklappt; „Position ändern"
+  // öffnet den Editor wieder.
+  const [editingPosition, setEditingPosition] = useState(false)
   const [posError, setPosError] = useState('')
 
   useEffect(() => {
@@ -215,6 +218,7 @@ export default function ForderungDetail() {
     setSavingPos(false)
     if (error) { setPosError(error.message); return }
     setArguments(prev => [...prev.filter(a => a.user_id !== userId), data])
+    setEditingPosition(false)
   }
 
   async function removePosition() {
@@ -224,6 +228,7 @@ export default function ForderungDetail() {
     setArguments(prev => prev.filter(a => a.user_id !== userId))
     setSelectedType(null)
     setDraftText('')
+    setEditingPosition(false)
   }
 
   async function withdrawDemand() {
@@ -436,7 +441,42 @@ export default function ForderungDetail() {
           </div>
 
           {/* Deine Position (nicht bei zurückgezogenen Forderungen oder Mängelmeldungen) */}
-          {!isZurueckgezogen && !isMangel && (
+          {!isZurueckgezogen && !isMangel && ownPosition && !editingPosition ? (
+          /* Eingeklappt: Position ist abgegeben — kompakte Zeile statt offenem Editor */
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
+            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Deine Position zu dieser Forderung</div>
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-sm font-semibold text-blue-700">
+                <CheckCircle size={14} />
+                {POSITION_META[ownPosition.type as PositionType]?.label ?? ownPosition.type}
+              </span>
+              <button
+                onClick={() => {
+                  setSelectedType(ownPosition.type as PositionType)
+                  setDraftText(ownPosition.text ?? '')
+                  setPosError('')
+                  setEditingPosition(true)
+                }}
+                className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+              >
+                Position ändern
+              </button>
+            </div>
+            <button
+              onClick={() => setDiscussionOpen(true)}
+              className="mt-4 w-full flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50 hover:bg-blue-100 px-4 py-3 transition-colors"
+            >
+              <span className="flex items-center gap-2 text-sm font-semibold text-blue-700">
+                <MessageSquare size={15} />
+                Diskussion ansehen
+              </span>
+              <span className="flex items-center gap-1.5 text-xs text-blue-500">
+                {textArgs.length} {textArgs.length === 1 ? 'Beitrag' : 'Beiträge'}
+                <ChevronRight size={14} />
+              </span>
+            </button>
+          </div>
+          ) : !isZurueckgezogen && !isMangel && (
           <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
             <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Deine Position zu dieser Forderung</div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
@@ -489,6 +529,11 @@ export default function ForderungDetail() {
                   >
                     {savingPos ? 'Speichern…' : ownPosition ? 'Position aktualisieren' : 'Position speichern'}
                   </button>
+                  {ownPosition && editingPosition && (
+                    <button onClick={() => setEditingPosition(false)} className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+                      Abbrechen
+                    </button>
+                  )}
                   {ownPosition && (
                     <button onClick={removePosition} className="text-sm text-gray-400 hover:text-red-600 transition-colors">
                       Position entfernen

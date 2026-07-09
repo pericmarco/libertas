@@ -5,6 +5,13 @@ import Navbar from '@/components/layout/Navbar'
 import { createClient } from '@/lib/supabase/client'
 import { ShieldCheck, Search, ChevronDown, Trash2, AlertTriangle, Flame, Wrench } from 'lucide-react'
 import { ART_LABELS, SCOPE_LABELS, FEEDBACK_LABELS, themenForTags } from '@/lib/einreichung'
+import AdminMaengelKarte from '@/components/AdminMaengelKarte'
+
+// Pin-Farben der Mängel-Karte nach Bearbeitungsstatus
+const MOD_PIN_COLOR = (modStatus: string) =>
+  modStatus === 'zurueckgestellt' ? '#6B7280'
+  : DONE_MOD_STATUSES.includes(modStatus) ? '#16A34A'
+  : '#EA580C'
 
 const RELEVANCE_THRESHOLD = 50
 
@@ -40,6 +47,8 @@ type Demand = {
   category: string | null
   tags: string[] | null
   submission_type: string | null
+  lat: number | null
+  lng: number | null
   frequency: string | null
   affected_groups: string[] | null
   impacts: string[] | null
@@ -197,6 +206,23 @@ export default function Admin() {
     return true
   })
 
+  // Verortete Mängel der aktuellen Auswahl — Karte und Liste zeigen
+  // immer dieselbe Menge (gleiche Filter).
+  const maengelPins = filtered
+    .filter(d => d.submission_type === 'mangel' && d.lat != null && d.lng != null && d.status !== 'zurückgezogen')
+    .map(d => {
+      const modStatus = moderation[d.id]?.status ?? 'neu'
+      return {
+        id: d.id,
+        lng: d.lng as number,
+        lat: d.lat as number,
+        title: d.title,
+        meta: MOD_STATUS[modStatus]?.label ?? modStatus,
+        href: `/forderungen/${d.id}`,
+        color: MOD_PIN_COLOR(modStatus),
+      }
+    })
+
   return (
     <>
       <Navbar />
@@ -272,6 +298,9 @@ export default function Admin() {
                   ))}
                 </select>
               </div>
+
+              {/* Mängel-Triage-Karte — dauerhaft sichtbar, folgt den Filtern der Liste */}
+              <AdminMaengelKarte pins={maengelPins} />
 
               {/* Liste */}
               <div className="flex flex-col gap-3">
