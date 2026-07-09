@@ -65,19 +65,27 @@ export default function Datenschutz() {
               <h2 className="font-semibold text-gray-900 mb-1">5. Wer deine Daten verarbeitet (Auftragsverarbeiter)</h2>
               <ul className="list-disc list-inside space-y-1 text-gray-600">
                 <li><strong>Supabase</strong> (Supabase Inc.) — Datenbank, Authentifizierung. Serverstandort: Frankfurt am Main, Deutschland (EU)</li>
-                <li><strong>Vercel</strong> (Vercel Inc., USA) — Hosting der Webanwendung. Datentransfer in die USA erfolgt auf Grundlage des EU-US Data Privacy Framework</li>
+                <li><strong>Vercel</strong> (Vercel Inc., USA) — Hosting der Webanwendung und cookielose Reichweitenmessung (Vercel Web Analytics, siehe Abschnitt 6). Datentransfer in die USA erfolgt auf Grundlage des EU-US Data Privacy Framework</li>
                 <li><strong>Resend</strong> — Versand von Bestätigungs- und Systemmails (nur E-Mail-Adresse)</li>
               </ul>
               <p className="mt-2 text-xs text-gray-400">Mit Supabase und Vercel bestehen bzw. werden Auftragsverarbeitungsverträge (AVV) abgeschlossen.</p>
             </section>
 
             <section>
-              <h2 className="font-semibold text-gray-900 mb-1">6. Cookies</h2>
+              <h2 className="font-semibold text-gray-900 mb-1">6. Cookies und Reichweitenmessung</h2>
               <p>
                 Wir setzen ausschließlich ein technisch notwendiges Cookie zur Aufrechterhaltung deiner
                 Anmeldesitzung (Supabase Auth Session). Es werden keine Tracking-, Analyse- oder
                 Werbe-Cookies eingesetzt. Für dieses Cookie ist keine Einwilligung erforderlich
                 (§ 25 Abs. 2 Nr. 2 TTDSG).
+              </p>
+              <p className="mt-2">
+                Zur Verbesserung der Plattform nutzen wir <strong>Vercel Web Analytics</strong>, eine
+                cookielose Reichweitenmessung: Erfasst werden aggregierte Seitenaufrufe; Besucher werden
+                dabei nicht über eine dauerhafte Kennung wiedererkannt, sondern über einen Hash, der
+                sich täglich ändert. Es findet kein seitenübergreifendes Tracking statt und es werden
+                keine Nutzungsprofile gebildet. Rechtsgrundlage ist unser berechtigtes Interesse an
+                einer funktionsfähigen, bedarfsgerechten Plattform (Art. 6 Abs. 1 lit. f DSGVO).
               </p>
             </section>
 
