@@ -47,6 +47,7 @@ export default function Datenschutz() {
                 <li>Bereitstellung deines Kontos und der Beteiligungsfunktionen (Forderungen, Abstimmungen, Kommentare)</li>
                 <li>Berechnung des Repräsentativitäts-Scores: Wir vergleichen die anonymisierte Zusammensetzung der Teilnehmenden einer Forderung oder Umfrage (Altersgruppe, Geschlecht, Stadtteil) mit der Bevölkerungsstruktur von Köln Innenstadt. Bei Umfragen erfolgt dieser Vergleich technisch so, dass niemand — auch wir nicht direkt über die Anwendung — einsehen kann, wer wie abgestimmt hat</li>
                 <li>Deine Beiträge und Positionen werden anderen Nutzern anonym angezeigt, ohne Namensnennung</li>
+                <li>Eingereichte Forderungen und Beiträge sind öffentlich einsehbar — auch ohne Anmeldung. Für nicht angemeldete Besucher werden dabei weder dein Name noch dein Nutzername ausgegeben; ein selbst gewählter Nutzername ist ausschließlich für angemeldete Nutzer sichtbar. Mängelmeldungen sind grundsätzlich nicht öffentlich, sondern nur für dich und unser Team einsehbar</li>
               </ul>
             </section>
 

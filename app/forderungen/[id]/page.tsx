@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import Navbar from '@/components/layout/Navbar'
-import { ChevronLeft, ChevronRight, ThumbsUp, MessageSquare, Lightbulb, ShieldCheck, CheckCircle, Circle, AlertCircle, Heart, Undo2, ChevronDown, Wrench, Info, X, MapPin } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ThumbsUp, MessageSquare, Lightbulb, ShieldCheck, CheckCircle, Circle, AlertCircle, Heart, Undo2, ChevronDown, Wrench, Info, X, MapPin, Lock, LogIn } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 // Karte nur clientseitig und erst bei Bedarf laden.
@@ -18,6 +18,10 @@ import { computeRepScoreForUsers } from '@/lib/repScore'
 import { ART_LABELS, SCOPE_LABELS, FEEDBACK_LABELS, themenForTags } from '@/lib/einreichung'
 
 const RELEVANCE_THRESHOLD = 50
+
+// Muss mit der Forderungsübersicht übereinstimmen: so viele Forderungen
+// sind für nicht angemeldete Besucher voll sichtbar.
+const PUBLIC_PREVIEW_COUNT = 2
 
 const PROCESS_STEPS = [
   { label: 'Eingereicht' },
@@ -139,6 +143,9 @@ export default function ForderungDetail() {
   // öffnet den Editor wieder.
   const [editingPosition, setEditingPosition] = useState(false)
   const [posError, setPosError] = useState('')
+  // Nicht angemeldete Besucher sehen nur die zwei relevantesten Forderungen;
+  // alle anderen Detailseiten sind gesperrt.
+  const [anonGated, setAnonGated] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
@@ -154,6 +161,19 @@ export default function ForderungDetail() {
       ])
 
       setDemand(demandData)
+
+      // Öffentliche Vorschau: für nicht angemeldete Besucher ist nur die
+      // Detailseite der zwei relevantesten Forderungen freigeschaltet.
+      if (!uid && demandData) {
+        const { data: topIds } = await supabase.from('demands')
+          .select('id')
+          .neq('status', 'zurückgezogen')
+          .or('submission_type.is.null,submission_type.neq.mangel')
+          .order('relevance_score', { ascending: false })
+          .limit(PUBLIC_PREVIEW_COUNT)
+        setAnonGated(!(topIds ?? []).some(t => t.id === demandData.id))
+      }
+
       const args = argsData ?? []
       setArguments(args)
       setResponses(respData ?? [])
@@ -283,6 +303,37 @@ export default function ForderungDetail() {
       <Navbar />
       <main className="pt-16 min-h-screen flex items-center justify-center">
         <div className="text-gray-400">Forderung nicht gefunden</div>
+      </main>
+    </>
+  )
+
+  // Gesperrte Detailseite für nicht angemeldete Besucher (außerhalb der Top-2)
+  if (anonGated) return (
+    <>
+      <Navbar />
+      <main className="pt-16 min-h-screen bg-gray-50">
+        <div className="max-w-2xl mx-auto px-6 py-10">
+          <Link href="/forderungen" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 transition-colors mb-6">
+            <ChevronLeft size={16} /> Zurück zur Übersicht
+          </Link>
+          <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
+            <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Lock size={24} className="text-blue-600" />
+            </div>
+            <h1 className="text-xl font-bold text-gray-900 mb-2">{demand.title}</h1>
+            <p className="text-gray-500 mb-6 leading-relaxed">
+              Diese Forderung kannst du nach einer kostenlosen Anmeldung vollständig lesen,
+              unterstützen und mitdiskutieren. Zwei aktuelle Forderungen sind auch ohne
+              Anmeldung offen einsehbar.
+            </p>
+            <Link
+              href="/login"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors"
+            >
+              <LogIn size={16} /> Anmelden oder registrieren
+            </Link>
+          </div>
+        </div>
       </main>
     </>
   )

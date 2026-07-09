@@ -324,7 +324,10 @@ export default function Abstimmungen() {
                 const opts = getOptions(vote.id)
                 const votedOption = userVotes[vote.id]
                 const hasVoted = !!votedOption
-                const showResults = hasVoted || !userId
+                // Ergebnisse erst nach eigener Stimme. Nicht angemeldete
+                // Besucher sehen bewusst nur die Vorschau (Frage + Optionen),
+                // nicht die Verteilung — das ist der Anmelde-Anreiz.
+                const showResults = hasVoted && !!userId
                 const endsAt = vote.ends_at ? new Date(vote.ends_at).toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' }) : null
                 const rep = reps[vote.id] ?? { score: 0, participants: 0 }
                 const chosen = selected[vote.id]
@@ -402,6 +405,12 @@ export default function Abstimmungen() {
                             )
                           })}
                         </div>
+                      )}
+
+                      {!userId && opts.length > 0 && (
+                        <p className="text-xs text-gray-400 mb-4 -mt-2">
+                          Melde dich an, um abzustimmen und die Ergebnisse zu sehen.
+                        </p>
                       )}
 
                       <div className="flex items-center justify-between pt-4 border-t">

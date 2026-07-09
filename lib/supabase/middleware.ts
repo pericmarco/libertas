@@ -3,12 +3,20 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 const PUBLIC_PATHS = [
   '/', '/login', '/register', '/impressum', '/datenschutz',
+  // Öffentliche Lese-Ansicht (ohne Login): Forderungsübersicht + Stadtumfragen.
+  // Mitmachen (Position, Unterstützen, Abstimmen, Einreichen) erfordert weiter
+  // eine Anmeldung; die Seiten selbst leiten dann zu /login.
+  '/forderungen', '/abstimmungen',
   // PWA-Assets müssen ohne Login ladbar sein
   '/manifest.webmanifest', '/icon', '/apple-icon',
 ]
 
 function isPublicPath(pathname: string) {
-  return PUBLIC_PATHS.includes(pathname) || pathname.startsWith('/auth/callback')
+  if (PUBLIC_PATHS.includes(pathname) || pathname.startsWith('/auth/callback')) return true
+  // Forderungs-Detailseiten sind öffentlich lesbar — aber NICHT das
+  // Einreichungsformular (/forderungen/neu), das eine Anmeldung braucht.
+  if (pathname.startsWith('/forderungen/') && pathname !== '/forderungen/neu') return true
+  return false
 }
 
 export async function updateSession(request: NextRequest) {
