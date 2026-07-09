@@ -165,14 +165,14 @@ export default function Forderungen() {
       <main className="pt-16 min-h-screen bg-gray-50">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
 
-          <div className="flex items-start justify-between mb-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Bürgerforderungen</h1>
               <p className="text-gray-500 mt-1">Welche Themen bewegen Köln Innenstadt?</p>
             </div>
             <Link
               href={userId ? '/forderungen/neu' : '/login'}
-              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors shrink-0"
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors shrink-0 w-full sm:w-auto"
             >
               <Plus size={15} />
               Einreichen
@@ -183,10 +183,10 @@ export default function Forderungen() {
           <ForderungenMapCard pins={mapPins} />
 
           {categoriesWithDemands.length > 1 && (
-            <div className="flex gap-2 flex-wrap mb-6">
+            <div className="flex gap-2 overflow-x-auto mb-6 -mx-4 px-4 sm:-mx-6 sm:px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <button
                 onClick={() => setActiveCategory(null)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${activeCategory === null ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300'}`}
+                className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors ${activeCategory === null ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300'}`}
               >
                 Alle
               </button>
@@ -194,7 +194,7 @@ export default function Forderungen() {
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat === activeCategory ? null : cat)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${activeCategory === cat ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300'}`}
+                  className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors ${activeCategory === cat ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300'}`}
                 >
                   {cat}
                 </button>

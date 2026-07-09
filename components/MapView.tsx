@@ -48,6 +48,8 @@ type Props = {
   className?: string
   center?: LngLat
   zoom?: number
+  /** false = statische Vorschau (kein Zoom/Pan, keine Zoom-Buttons) */
+  interactive?: boolean
   // Anzeige-Modus
   pins?: MapPin[]
   onPinClick?: (id: string) => void
@@ -62,6 +64,7 @@ export default function MapView({
   className,
   center = COLOGNE,
   zoom = 12,
+  interactive = true,
   pins,
   onPinClick,
   picker = false,
@@ -102,9 +105,10 @@ export default function MapView({
           center: [center.lng, center.lat],
           zoom,
           attributionControl: false,
+          interactive,
         })
         map.addControl(new ml.AttributionControl({ compact: true, customAttribution: ATTRIBUTION }), 'bottom-right')
-        map.addControl(new ml.NavigationControl({ showCompass: false }), 'top-right')
+        if (interactive) map.addControl(new ml.NavigationControl({ showCompass: false }), 'top-right')
         if (pickerRef.current) {
           map.on('click', (e) => {
             const p = { lng: e.lngLat.lng, lat: e.lngLat.lat }
