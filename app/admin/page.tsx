@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { ShieldCheck, Search, ChevronDown, Trash2, AlertTriangle, Flame, Wrench } from 'lucide-react'
 import { ART_LABELS, SCOPE_LABELS, FEEDBACK_LABELS, themenForTags } from '@/lib/einreichung'
 import AdminMaengelKarte from '@/components/AdminMaengelKarte'
+import { PARTEI_FARBEN } from '@/lib/stadtteilDaten'
 
 // Pin-Farben der Mängel-Karte nach Bearbeitungsstatus
 const MOD_PIN_COLOR = (modStatus: string) =>
@@ -62,7 +63,7 @@ type Demand = {
 }
 
 type Moderation = { demand_id: string; status: string; note: string | null }
-type Profile = { id: string; username: string | null; full_name: string | null; role: string; district_id: string | null; created_at?: string }
+type Profile = { id: string; username: string | null; full_name: string | null; role: string; district_id: string | null; created_at?: string; party?: string | null; politician_title?: string | null; politician_verified?: boolean }
 
 export default function Admin() {
   const [authorized, setAuthorized] = useState<boolean | null>(null)
@@ -91,7 +92,7 @@ export default function Admin() {
       const [{ data: d }, { data: m }, { data: p }, { data: dist }] = await Promise.all([
         supabase.from('demands').select('*').order('created_at', { ascending: false }),
         supabase.from('demand_moderation').select('*'),
-        supabase.from('profiles').select('id, username, full_name, role, district_id, created_at'),
+        supabase.from('profiles').select('id, username, full_name, role, district_id, created_at, party, politician_title, politician_verified'),
         supabase.from('districts').select('id, name'),
       ])
       setDemands(d ?? [])
@@ -161,6 +162,15 @@ export default function Admin() {
     const { error } = await supabase.from('profiles').update({ role }).eq('id', userId)
     if (!error) {
       setProfiles(prev => prev.map(p => p.id === userId ? { ...p, role } : p))
+    }
+  }
+
+  // Politiker-Felder per Hand setzen (Partei, Funktion, Freischaltung)
+  async function savePolitician(userId: string, fields: { party?: string | null; politician_title?: string | null; politician_verified?: boolean }) {
+    const supabase = createClient()
+    const { error } = await supabase.from('profiles').update(fields).eq('id', userId)
+    if (!error) {
+      setProfiles(prev => prev.map(p => p.id === userId ? { ...p, ...fields } : p))
     }
   }
 
@@ -434,26 +444,66 @@ export default function Admin() {
 
           {tab === 'nutzer' && (
             <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+              <datalist id="parteien-liste">
+                {Object.keys(PARTEI_FARBEN).filter(n => n !== 'Weitere').map(n => <option key={n} value={n} />)}
+              </datalist>
               {profiles.map((p, i) => {
                 const roleInfo = ROLES[p.role] ?? ROLES.citizen
                 return (
-                  <div key={p.id} className={`flex flex-wrap items-center justify-between gap-3 px-5 py-4 ${i < profiles.length - 1 ? 'border-b border-gray-100' : ''}`}>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-gray-900 text-sm">{p.username ? `@${p.username}` : '—'}</span>
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${roleInfo.badge}`}>{roleInfo.label}</span>
+                  <div key={p.id} className={`px-5 py-4 ${i < profiles.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-gray-900 text-sm">{p.username ? `@${p.username}` : '—'}</span>
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${roleInfo.badge}`}>{roleInfo.label}</span>
+                        </div>
+                        <div className="text-xs text-gray-400 mt-0.5">
+                          {p.full_name ?? 'Kein Name'}{p.district_id ? ` · ${districts[p.district_id]}` : ''}
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-400 mt-0.5">
-                        {p.full_name ?? 'Kein Name'}{p.district_id ? ` · ${districts[p.district_id]}` : ''}
-                      </div>
+                      <select
+                        value={p.role}
+                        onChange={e => setRole(p.id, e.target.value)}
+                        className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        {Object.entries(ROLES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                      </select>
                     </div>
-                    <select
-                      value={p.role}
-                      onChange={e => setRole(p.id, e.target.value)}
-                      className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      {Object.entries(ROLES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                    </select>
+
+                    {/* Politiker-Freischaltung (nur bei Rolle Politik) — alles per Hand */}
+                    {p.role === 'politician' && (
+                      <div className="mt-3 rounded-xl bg-purple-50/50 border border-purple-100 p-3 flex flex-col sm:flex-row sm:items-end gap-3">
+                        <div className="flex-1">
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Partei (leer = parteilos)</label>
+                          <input
+                            defaultValue={p.party ?? ''}
+                            list="parteien-liste"
+                            onBlur={e => savePolitician(p.id, { party: e.target.value.trim() || null })}
+                            placeholder="z. B. GRÜNE"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Funktion</label>
+                          <input
+                            defaultValue={p.politician_title ?? ''}
+                            onBlur={e => savePolitician(p.id, { politician_title: e.target.value.trim() || null })}
+                            placeholder="z. B. Bezirksvertreter Innenstadt"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                        <button
+                          onClick={() => savePolitician(p.id, { politician_verified: !p.politician_verified })}
+                          className={`shrink-0 px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                            p.politician_verified
+                              ? 'bg-green-600 text-white border-green-600 hover:bg-green-700'
+                              : 'bg-white text-gray-600 border-gray-200 hover:border-green-300'
+                          }`}
+                        >
+                          {p.politician_verified ? '✓ Freigeschaltet' : 'Freischalten'}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )
               })}

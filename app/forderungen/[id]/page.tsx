@@ -16,6 +16,15 @@ const MapView = dynamic(() => import('@/components/MapView'), {
 import RepScoreBadge from '@/components/RepScoreBadge'
 import { computeRepScoreForUsers } from '@/lib/repScore'
 import { ART_LABELS, SCOPE_LABELS, FEEDBACK_LABELS, themenForTags } from '@/lib/einreichung'
+import { PARTEI_FARBEN } from '@/lib/stadtteilDaten'
+
+// Offizielle Antwort-Labels (Wert in demand_responses.position ↔ Anzeige)
+const RESPONSE_LABELS: Record<string, { label: string; bg: string }> = {
+  unterstuetzung: { label: 'Unterstützung', bg: 'bg-green-100 text-green-700' },
+  gegenargument:  { label: 'Gegenargument', bg: 'bg-red-100 text-red-600' },
+  alternative:    { label: 'Alternative',   bg: 'bg-blue-100 text-blue-700' },
+}
+const partyColor = (party: string | null) => (party && PARTEI_FARBEN[party]) || '#6B7280'
 
 const RELEVANCE_THRESHOLD = 50
 
@@ -109,7 +118,7 @@ type Argument = {
   created_at: string
 }
 
-type Response = { id: string; author: string; role: string; position: string; text: string; created_at: string }
+type Response = { id: string; author: string; role: string; position: string; text: string; created_at: string; party: string | null; user_id: string | null }
 
 export default function ForderungDetail() {
   const { id } = useParams<{ id: string }>()
@@ -147,6 +156,14 @@ export default function ForderungDetail() {
   // alle anderen Detailseiten sind gesperrt.
   const [anonGated, setAnonGated] = useState(false)
 
+  // Offizielle Antwort (nur freigeschaltete Politiker)
+  const [isPolitician, setIsPolitician] = useState(false)
+  const [respOpen, setRespOpen] = useState(false)
+  const [respLabel, setRespLabel] = useState('')
+  const [respText, setRespText] = useState('')
+  const [respSaving, setRespSaving] = useState(false)
+  const [respError, setRespError] = useState('')
+
   useEffect(() => {
     const supabase = createClient()
     async function load() {
@@ -183,6 +200,12 @@ export default function ForderungDetail() {
       if (own) {
         setSelectedType(own.type as PositionType)
         setDraftText(own.text ?? '')
+      }
+
+      // Eigener Politiker-Status (für den Antwort-Editor)
+      if (uid) {
+        const { data: me } = await supabase.from('profiles').select('role, politician_verified').eq('id', uid).single()
+        setIsPolitician(me?.role === 'politician' && me?.politician_verified === true)
       }
 
       // Nutzernamen + Rollen der Beteiligten laden (Beiträge + Forderungs-Autor)
@@ -273,6 +296,26 @@ export default function ForderungDetail() {
       .filter(p => p && p.lat != null && p.lng != null)
       .map(p => ({ lng: p.lng, lat: p.lat }))
   }, [demand])
+
+  async function submitResponse() {
+    if (!respLabel || respText.trim().length < 10) {
+      setRespError('Bitte ein Label wählen und einen kurzen Text (mind. 10 Zeichen) schreiben.')
+      return
+    }
+    setRespSaving(true)
+    setRespError('')
+    const supabase = createClient()
+    // Nur Label + Text senden — Name/Partei/Rolle setzt der Trigger serverseitig
+    const { data, error } = await supabase
+      .from('demand_responses')
+      .insert({ demand_id: id, position: respLabel, text: respText.trim() })
+      .select('*')
+      .single()
+    setRespSaving(false)
+    if (error) { setRespError('Antwort konnte nicht gespeichert werden. Bist du freigeschaltet?'); return }
+    setResponses(prev => [...prev, data])
+    setRespText(''); setRespLabel(''); setRespOpen(false); setShowResponses(true)
+  }
 
   async function toggleLike(argId: string) {
     if (!userId) { router.push('/register'); return }
@@ -751,6 +794,57 @@ export default function ForderungDetail() {
           </div>
           )}
 
+          {/* Offiziell antworten — nur für freigeschaltete Politiker */}
+          {!isMangel && !isZurueckgezogen && isPolitician && (
+            <div className="bg-white rounded-2xl border border-blue-100 mb-4 overflow-hidden">
+              <button
+                onClick={() => setRespOpen(o => !o)}
+                className="w-full flex items-center justify-between px-6 py-4 text-left"
+              >
+                <span className="flex items-center gap-2.5 text-sm font-semibold text-blue-700">
+                  <ShieldCheck size={16} />
+                  Offiziell auf diese Forderung antworten
+                </span>
+                <ChevronDown size={16} className={`text-blue-300 transition-transform ${respOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {respOpen && (
+                <div className="px-6 pb-5">
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {Object.entries(RESPONSE_LABELS).map(([key, v]) => (
+                      <button
+                        key={key}
+                        onClick={() => setRespLabel(key)}
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                          respLabel === key ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
+                        }`}
+                      >
+                        {v.label}
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={respText}
+                    onChange={e => { setRespText(e.target.value); setRespError('') }}
+                    rows={4}
+                    placeholder="Begründe deine offizielle Position verständlich…"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  />
+                  <p className="text-xs text-gray-400 mt-2">
+                    Deine Antwort erscheint öffentlich mit deinem Namen und deiner Partei als offizielle Rückmeldung.
+                  </p>
+                  {respError && <div className="text-sm text-red-600 bg-red-50 px-4 py-2.5 rounded-xl mt-2">{respError}</div>}
+                  <button
+                    onClick={submitResponse}
+                    disabled={respSaving || !respLabel || respText.trim().length < 10}
+                    className="mt-3 px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {respSaving ? 'Wird veröffentlicht…' : 'Offiziell antworten'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Antworten von Stadt & Politik — nur wenn vorhanden, ausklappbar */}
           {!isMangel && displayResponses.length > 0 && (
           <div className="bg-white rounded-2xl border border-gray-100 mb-4 overflow-hidden">
@@ -765,25 +859,32 @@ export default function ForderungDetail() {
             {showResponses && (
             <div className="px-6 pb-5 flex flex-col gap-4">
               {displayResponses.map(r => {
-                const pos = POSITION_STYLES[r.position]
+                const lab = RESPONSE_LABELS[r.position]
                 return (
                   <div key={r.id} className="border border-gray-200 rounded-xl p-4 bg-gray-50">
                     <div className="flex items-start justify-between gap-3 mb-3">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-sm font-bold text-gray-600">
-                          {r.author.charAt(0)}
+                          {r.author?.charAt(0) ?? '?'}
                         </div>
                         <div>
                           <div className="text-sm font-semibold text-gray-900">{r.author}</div>
-                          <div className="text-xs text-gray-400">{r.role}</div>
+                          {/* Badge = Parteiname in Parteifarbe (parteilos = neutral) */}
+                          <span
+                            className="inline-flex items-center gap-1.5 text-xs font-medium mt-0.5"
+                            style={{ color: partyColor(r.party) }}
+                          >
+                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: partyColor(r.party) }} />
+                            {r.party ?? 'parteilos'}
+                          </span>
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-1 shrink-0">
                         <span className="flex items-center gap-1 text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
-                          <ShieldCheck size={11} /> Verifizierte Rückmeldung
+                          <ShieldCheck size={11} /> Offizielle Antwort
                         </span>
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${pos?.bg ?? 'bg-gray-100 text-gray-600'}`}>
-                          {pos?.label ?? r.position}
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${lab?.bg ?? 'bg-gray-100 text-gray-600'}`}>
+                          {lab?.label ?? r.position}
                         </span>
                       </div>
                     </div>
