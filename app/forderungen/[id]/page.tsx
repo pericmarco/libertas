@@ -3,9 +3,16 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import Navbar from '@/components/layout/Navbar'
-import { ChevronLeft, ChevronRight, ThumbsUp, MessageSquare, Lightbulb, ShieldCheck, CheckCircle, Circle, AlertCircle, Heart, Undo2, ChevronDown, Wrench, Info, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ThumbsUp, MessageSquare, Lightbulb, ShieldCheck, CheckCircle, Circle, AlertCircle, Heart, Undo2, ChevronDown, Wrench, Info, X, MapPin } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+
+// Karte nur clientseitig und erst bei Bedarf laden.
+const MapView = dynamic(() => import('@/components/MapView'), {
+  ssr: false,
+  loading: () => <div className="h-64 w-full bg-gray-100 animate-pulse" />,
+})
 import RepScoreBadge from '@/components/RepScoreBadge'
 import { computeRepScoreForUsers } from '@/lib/repScore'
 import { ART_LABELS, SCOPE_LABELS, FEEDBACK_LABELS, themenForTags } from '@/lib/einreichung'
@@ -76,6 +83,9 @@ type Demand = {
   submission_type: string | null
   location: string | null
   location_scope: string | null
+  lat: number | null
+  lng: number | null
+  locations: { lat: number; lng: number }[] | null
   frequency: string | null
   affected_groups: string[] | null
   impacts: string[] | null
@@ -379,6 +389,29 @@ export default function ForderungDetail() {
               </div>
             )}
           </div>
+
+          {/* Ort auf der Karte — nur wenn Koordinaten hinterlegt sind */}
+          {(() => {
+            const pts = (Array.isArray(demand.locations) && demand.locations.length > 0
+              ? demand.locations
+              : demand.lat != null && demand.lng != null ? [{ lat: demand.lat, lng: demand.lng }] : []
+            ).filter(p => p && p.lat != null && p.lng != null)
+            if (pts.length === 0) return null
+            return (
+              <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-4">
+                <div className="px-6 pt-5 pb-3 flex items-center gap-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                  <MapPin size={13} /> Ort
+                </div>
+                <MapView
+                  pins={pts.map(p => ({ lng: p.lng, lat: p.lat }))}
+                  center={{ lng: pts[0].lng, lat: pts[0].lat }}
+                  zoom={15}
+                  className="h-64 w-full"
+                />
+                {demand.location && <p className="px-6 py-3 text-sm text-gray-600">{demand.location}</p>}
+              </div>
+            )
+          })()}
 
           {/* 2. Problem + Lösung */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">

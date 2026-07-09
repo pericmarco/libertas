@@ -8,6 +8,13 @@ import { Plus, ChevronRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { THEMENBEREICHE, themenForTags } from '@/lib/einreichung'
 import DemandCard, { type Demand } from '@/components/DemandCard'
+import ForderungenMapCard from '@/components/ForderungenMapCard'
+import type { MapPin } from '@/components/MapView'
+
+const STATUS_LABEL: Record<string, string> = {
+  eingereicht: 'Eingereicht', geprüft: 'Geprüft', bearbeitet: 'In Bearbeitung',
+  umgesetzt: 'Umgesetzt', abgelehnt: 'Abgelehnt',
+}
 
 // Wie viele Karten pro Kategorie-Reihe in der "Alle"-Ansicht gezeigt werden,
 // bevor "Alle anzeigen" in die Kategorie-Ansicht führt.
@@ -44,6 +51,7 @@ export default function Forderungen() {
   const [userId, setUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  const [mapPins, setMapPins] = useState<MapPin[]>([])
 
   const router = useRouter()
 
@@ -64,6 +72,29 @@ export default function Forderungen() {
       ])
 
       setDemands(demandsData ?? [])
+
+      // Verortete Forderungen für die Karte (defensiv: fehlen die Geo-Spalten
+      // noch, bleibt die Karte einfach ohne echte Pins → Demo-Ansicht).
+      const { data: geoData, error: geoErr } = await supabase.from('demands')
+        .select('id, title, category, status, lat, lng')
+        .neq('status', 'zurückgezogen')
+        .or('submission_type.is.null,submission_type.neq.mangel')
+        .not('lat', 'is', null)
+        .limit(200)
+      if (!geoErr && geoData) {
+        setMapPins(
+          geoData
+            .filter(g => g.lat != null && g.lng != null)
+            .map(g => ({
+              id: g.id,
+              lng: g.lng as number,
+              lat: g.lat as number,
+              title: g.title,
+              meta: `${g.category} · ${STATUS_LABEL[g.status] ?? g.status}`,
+              href: `/forderungen/${g.id}`,
+            }))
+        )
+      }
 
       // Textbeiträge pro Forderung zählen (Positionen ohne Text sind keine "Beiträge")
       const counts: Record<string, number> = {}
@@ -147,6 +178,9 @@ export default function Forderungen() {
               Einreichen
             </Link>
           </div>
+
+          {/* Karte: Forderungen räumlich entdecken */}
+          <ForderungenMapCard pins={mapPins} />
 
           {categoriesWithDemands.length > 1 && (
             <div className="flex gap-2 flex-wrap mb-6">

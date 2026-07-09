@@ -10,7 +10,39 @@ const ATTRIBUTION = '© GeoBasis-DE / BKG (2026) CC BY 4.0'
 const COLOGNE = { lng: 6.9578, lat: 50.9367 }
 
 export type LngLat = { lng: number; lat: number }
-export type MapPin = LngLat & { id?: string; color?: string }
+export type MapPin = LngLat & {
+  id?: string
+  color?: string
+  title?: string
+  meta?: string
+  href?: string
+}
+
+// Popup-Inhalt XSS-sicher aufbauen (Titel kommen aus Nutzereingaben).
+function buildPopupContent(p: MapPin): HTMLElement {
+  const el = document.createElement('div')
+  el.style.cssText = 'min-width:150px;max-width:220px'
+  if (p.title) {
+    const t = document.createElement('div')
+    t.textContent = p.title
+    t.style.cssText = 'font-weight:600;font-size:13px;color:#111827;line-height:1.3'
+    el.appendChild(t)
+  }
+  if (p.meta) {
+    const m = document.createElement('div')
+    m.textContent = p.meta
+    m.style.cssText = 'font-size:11px;color:#6B7280;margin-top:3px'
+    el.appendChild(m)
+  }
+  if (p.href) {
+    const a = document.createElement('a')
+    a.href = p.href
+    a.textContent = 'Öffnen →'
+    a.style.cssText = 'display:inline-block;margin-top:7px;font-size:12px;font-weight:600;color:#2563EB;text-decoration:none'
+    el.appendChild(a)
+  }
+  return el
+}
 
 type Props = {
   className?: string
@@ -104,10 +136,15 @@ export default function MapView({
       const marker = new ml.Marker({ color: p.color ?? '#2563EB' })
         .setLngLat([p.lng, p.lat])
         .addTo(map)
-      if (!picker && onPinClick && p.id) {
-        const el = marker.getElement()
-        el.style.cursor = 'pointer'
-        el.addEventListener('click', () => onPinClick(p.id!))
+      if (!picker) {
+        if (p.title || p.meta || p.href) {
+          const popup = new ml.Popup({ offset: 24, closeButton: false }).setDOMContent(buildPopupContent(p))
+          marker.setPopup(popup)
+        } else if (onPinClick && p.id) {
+          const el = marker.getElement()
+          el.style.cursor = 'pointer'
+          el.addEventListener('click', () => onPinClick(p.id!))
+        }
       }
       markersRef.current.push(marker)
     }
