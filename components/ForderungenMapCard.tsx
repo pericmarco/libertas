@@ -66,7 +66,7 @@ export default function ForderungenMapCard({ pins }: { pins: Pin[] }) {
 
       {/* Vollbild-Kartenmodus */}
       {full && (
-        <div className="fixed inset-0 z-[60] bg-white flex flex-col">
+        <div className="fixed inset-0 z-[60] bg-white flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-4 h-14 border-b border-gray-100 shrink-0">
             <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-900">
               <MapPin size={15} className="text-gray-400" /> Forderungen auf der Karte
@@ -82,9 +82,7 @@ export default function ForderungenMapCard({ pins }: { pins: Pin[] }) {
               <X size={20} />
             </button>
           </div>
-          <div className="flex-1 relative">
-            <MapView pins={shown} zoom={13} className="absolute inset-0" />
-          </div>
+          <MapView pins={shown} zoom={13} className="w-full h-[calc(100dvh-3.5rem)]" />
         </div>
       )}
     </>

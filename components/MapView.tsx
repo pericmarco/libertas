@@ -118,16 +118,18 @@ export default function MapView({
             onChangeRef.current?.(next)
           })
         }
+        mapRef.current = map
         map.on('load', () => { if (!cancelled) { setReady(true); map.resize() } })
         map.on('error', () => { if (!cancelled) setFailed(true) })
         // Container-Größe beobachten — fixt die leere Karte, wenn sie erst
         // durch Layout Größe bekommt (z. B. im Vollbild-Overlay).
         if (typeof ResizeObserver !== 'undefined' && containerRef.current) {
-          const ro = new ResizeObserver(() => mapRef.current?.resize())
+          const ro = new ResizeObserver(() => map.resize())
           ro.observe(containerRef.current)
           roRef.current = ro
         }
-        mapRef.current = map
+        // Nach dem ersten Frame noch einmal sicher neu vermessen.
+        requestAnimationFrame(() => { if (!cancelled) map.resize() })
       } catch {
         if (!cancelled) setFailed(true)
       }
