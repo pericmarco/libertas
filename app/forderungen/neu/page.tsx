@@ -3,9 +3,16 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import Navbar from '@/components/layout/Navbar'
-import { ChevronLeft, ChevronDown, CheckCircle, Circle, Info, Pencil } from 'lucide-react'
+import { ChevronLeft, ChevronDown, CheckCircle, Circle, Info, Pencil, MapPin, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+
+// Karte nur clientseitig und erst bei Bedarf laden (maplibre ist groß).
+const MapView = dynamic(() => import('@/components/MapView'), {
+  ssr: false,
+  loading: () => <div className="h-64 w-full rounded-xl bg-gray-100 animate-pulse" />,
+})
 import { containsBlocked, REGION_NAME } from '@/lib/constants'
 import {
   type Anliegenart, ART_OPTIONS, ART_LABELS, ORTSTYPEN, SCOPE_LABELS,
@@ -33,6 +40,7 @@ export default function NeueForderung() {
   const [ortText, setOrtText] = useState('')
   const [ortZusatz, setOrtZusatz] = useState('')
   const [mehrereOrteText, setMehrereOrteText] = useState('')
+  const [pins, setPins] = useState<{ lng: number; lat: number }[]>([])
 
   // Schritt 3: Titel
   const [title, setTitle] = useState('')
@@ -165,7 +173,7 @@ export default function NeueForderung() {
 
     setSubmitting(true)
 
-    const { data, error: dbError } = await supabase.from('demands').insert({
+    const baseRecord = {
       title: titleTrimmed,
       description: problem.trim(),
       solution: change.trim(),
@@ -183,7 +191,23 @@ export default function NeueForderung() {
       district_id: needsDistrict ? districtId : null,
       user_id: userData.user.id,
       status: 'eingereicht',
-    }).select('id').single()
+    }
+
+    // Koordinaten nur wenn der Ort-Typ dazu passt und Punkte gesetzt wurden.
+    const geoRelevant = needsKonkreterOrt || effectiveScope === 'mehrere_orte'
+    const geo = geoRelevant && pins.length > 0
+      ? { lat: pins[0].lat, lng: pins[0].lng, locations: pins }
+      : {}
+
+    let { data, error: dbError } = await supabase.from('demands')
+      .insert({ ...baseRecord, ...geo }).select('id').single()
+
+    // Fallback: sind die Geo-Spalten noch nicht angelegt (Migration noch
+    // nicht eingespielt), ohne Koordinaten erneut einreichen — das
+    // Einreichen soll nie an der Karte scheitern.
+    if (dbError && Object.keys(geo).length > 0 && /lat|lng|locations|column|schema cache/i.test(dbError.message)) {
+      ;({ data, error: dbError } = await supabase.from('demands').insert(baseRecord).select('id').single())
+    }
 
     setSubmitting(false)
 
@@ -195,6 +219,11 @@ export default function NeueForderung() {
       } else {
         setError('Fehler beim Einreichen. Bitte nochmal versuchen.')
       }
+      return
+    }
+
+    if (!data) {
+      setError('Fehler beim Einreichen. Bitte nochmal versuchen.')
       return
     }
 
@@ -336,6 +365,21 @@ export default function NeueForderung() {
                 </div>
               )}
 
+              {needsKonkreterOrt && (art === 'mangel' || scope === 'ort') && (
+                <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                  <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1">
+                    <MapPin size={14} className="text-gray-400" /> Ort auf der Karte markieren (optional)
+                  </label>
+                  <p className="text-xs text-gray-400 mb-3">Tippe auf die Karte, um den genauen Punkt zu setzen — das hilft, den Ort später auf der Karte zu finden.</p>
+                  <MapView picker maxPins={1} value={pins} onChange={setPins} className="h-64 w-full rounded-xl overflow-hidden border border-gray-100" />
+                  {pins.length > 0 && (
+                    <button onClick={() => setPins([])} className="mt-2 inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 transition-colors">
+                      <X size={13} /> Punkt entfernen
+                    </button>
+                  )}
+                </div>
+              )}
+
               {scope === 'mehrere_orte' && districtId && (
                 <div className="bg-white rounded-2xl border border-gray-100 p-5">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Welche Orte sind ungefähr betroffen? (optional)</label>
@@ -344,6 +388,20 @@ export default function NeueForderung() {
                     onChange={e => setMehrereOrteText(e.target.value)}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
+                  <div className="mt-4">
+                    <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1">
+                      <MapPin size={14} className="text-gray-400" /> Betroffene Orte auf der Karte markieren (optional)
+                    </label>
+                    <p className="text-xs text-gray-400 mb-3">
+                      Tippe mehrere Punkte an.{pins.length > 0 && ` ${pins.length} ${pins.length === 1 ? 'Punkt' : 'Punkte'} gesetzt.`}
+                    </p>
+                    <MapView picker maxPins={12} value={pins} onChange={setPins} className="h-64 w-full rounded-xl overflow-hidden border border-gray-100" />
+                    {pins.length > 0 && (
+                      <button onClick={() => setPins([])} className="mt-2 inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 transition-colors">
+                        <X size={13} /> Alle Punkte entfernen
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
