@@ -193,6 +193,7 @@ export default function Forderungen() {
                     position={positions[d.id]}
                     textCount={textCounts[d.id] ?? 0}
                     variant="list"
+                    iconCategory={activeCategory}
                     onOpen={openDemand}
                     onToggleSupport={toggleSupport}
                   />
@@ -225,6 +226,7 @@ export default function Forderungen() {
                           position={positions[d.id]}
                           textCount={textCounts[d.id] ?? 0}
                           variant="row"
+                          iconCategory={cat}
                           onOpen={openDemand}
                           onToggleSupport={toggleSupport}
                         />
