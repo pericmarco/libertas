@@ -5,6 +5,8 @@ import { MapPin, TrendingUp, Users, CheckCircle, Newspaper, ExternalLink } from 
 import { createClient } from '@/lib/supabase/server'
 import { REGION_NAME } from '@/lib/constants'
 import ElectionsCard from '@/components/ElectionsCard'
+import CouncilSeatDistributionChart from '@/components/CouncilSeatDistributionChart'
+import { COLOGNE_COUNCIL } from '@/lib/councilSeats'
 import Link from 'next/link'
 
 export default async function Dashboard() {
@@ -76,6 +78,9 @@ export default async function Dashboard() {
 
           {/* Anstehende Wahlen */}
           <ElectionsCard elections={elections ?? []} />
+
+          {/* Sitzverteilung im Rat */}
+          <CouncilSeatDistributionChart {...COLOGNE_COUNCIL} />
 
           {/* Aktuelle News */}
           <Card className="mb-6">
