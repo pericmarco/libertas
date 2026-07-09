@@ -366,42 +366,48 @@ export default function NeueForderung() {
               )}
 
               {needsKonkreterOrt && (art === 'mangel' || scope === 'ort') && (
-                <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                  <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1">
-                    <MapPin size={14} className="text-gray-400" /> Ort auf der Karte markieren (optional)
-                  </label>
-                  <p className="text-xs text-gray-400 mb-3">Tippe auf die Karte, um den genauen Punkt zu setzen — das hilft, den Ort später auf der Karte zu finden.</p>
-                  <MapView picker maxPins={1} value={pins} onChange={setPins} className="h-64 w-full rounded-xl overflow-hidden border border-gray-100" />
-                  {pins.length > 0 && (
-                    <button onClick={() => setPins([])} className="mt-2 inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 transition-colors">
-                      <X size={13} /> Punkt entfernen
-                    </button>
-                  )}
+                <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                  <div className="px-4 pt-4 pb-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                        <MapPin size={14} className="text-gray-400" /> Ort auf der Karte markieren (optional)
+                      </label>
+                      {pins.length > 0 && (
+                        <button onClick={() => setPins([])} className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 transition-colors shrink-0">
+                          <X size={13} /> Entfernen
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">Tippe auf die Karte, um den genauen Punkt zu setzen — das hilft, den Ort später auf der Karte zu finden.</p>
+                  </div>
+                  <MapView picker maxPins={1} value={pins} onChange={setPins} className="h-80 w-full" />
                 </div>
               )}
 
               {scope === 'mehrere_orte' && districtId && (
-                <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Welche Orte sind ungefähr betroffen? (optional)</label>
-                  <input
-                    value={mehrereOrteText}
-                    onChange={e => setMehrereOrteText(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <div className="mt-4">
-                    <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1">
-                      <MapPin size={14} className="text-gray-400" /> Betroffene Orte auf der Karte markieren (optional)
-                    </label>
-                    <p className="text-xs text-gray-400 mb-3">
+                <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                  <div className="px-4 pt-4 pb-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Welche Orte sind ungefähr betroffen? (optional)</label>
+                    <input
+                      value={mehrereOrteText}
+                      onChange={e => setMehrereOrteText(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    <div className="flex items-center justify-between gap-2 mt-4">
+                      <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                        <MapPin size={14} className="text-gray-400" /> Betroffene Orte markieren (optional)
+                      </label>
+                      {pins.length > 0 && (
+                        <button onClick={() => setPins([])} className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 transition-colors shrink-0">
+                          <X size={13} /> Entfernen
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">
                       Tippe mehrere Punkte an.{pins.length > 0 && ` ${pins.length} ${pins.length === 1 ? 'Punkt' : 'Punkte'} gesetzt.`}
                     </p>
-                    <MapView picker maxPins={12} value={pins} onChange={setPins} className="h-64 w-full rounded-xl overflow-hidden border border-gray-100" />
-                    {pins.length > 0 && (
-                      <button onClick={() => setPins([])} className="mt-2 inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 transition-colors">
-                        <X size={13} /> Alle Punkte entfernen
-                      </button>
-                    )}
                   </div>
+                  <MapView picker maxPins={12} value={pins} onChange={setPins} className="h-80 w-full" />
                 </div>
               )}
             </div>
