@@ -82,7 +82,7 @@ export default function ForderungenMapCard({ pins }: { pins: Pin[] }) {
               <X size={20} />
             </button>
           </div>
-          <MapView pins={shown} zoom={13} className="w-full h-[calc(100dvh-3.5rem)]" />
+          <MapView pins={shown} zoom={13} geolocate className="w-full h-[calc(100dvh-3.5rem)]" />
         </div>
       )}
     </>

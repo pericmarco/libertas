@@ -44,13 +44,25 @@ function buildPopupContent(p: MapPin): HTMLElement {
   return el
 }
 
+// Backstop gegen zu viele DOM-Marker: darüber wird die Karte auf älteren
+// Handys spürbar zäh. Die Aufrufer limitieren ihre Abfragen bereits (≤200);
+// greift dieses Limit, fehlen die ältesten Pins zuerst.
+const MAX_DISPLAY_PINS = 400
+
 type Props = {
   className?: string
   center?: LngLat
   zoom?: number
   /** false = statische Vorschau (kein Zoom/Pan, keine Zoom-Buttons) */
   interactive?: boolean
-  // Anzeige-Modus
+  /** Karte in scrollbaren Seiten: 1 Finger scrollt die Seite, 2 Finger bewegen die Karte */
+  cooperative?: boolean
+  /** „Mein Standort"-Button anzeigen (nur bei interaktiven Karten sinnvoll) */
+  geolocate?: boolean
+  /** Kartenausschnitt einmalig auf alle Pins einpassen (ab 2 Pins) */
+  fit?: boolean
+  // Anzeige-Modus. Im Picker-Modus zusätzlich als Kontext-Pins gerendert
+  // (z. B. bereits gemeldete Mängel), nicht als Auswahl.
   pins?: MapPin[]
   onPinClick?: (id: string) => void
   // Auswahl-Modus (Standort setzen)
@@ -65,6 +77,9 @@ export default function MapView({
   center = COLOGNE,
   zoom = 12,
   interactive = true,
+  cooperative = false,
+  geolocate = false,
+  fit = false,
   pins,
   onPinClick,
   picker = false,
@@ -77,6 +92,8 @@ export default function MapView({
   const mlRef = useRef<typeof import('maplibre-gl') | null>(null)
   const markersRef = useRef<Marker[]>([])
   const roRef = useRef<ResizeObserver | null>(null)
+  const readyRef = useRef(false)
+  const fittedRef = useRef(false)
   const [ready, setReady] = useState(false)
   const [failed, setFailed] = useState(false)
 
@@ -107,9 +124,21 @@ export default function MapView({
           zoom,
           attributionControl: false,
           interactive,
+          cooperativeGestures: cooperative,
+          locale: {
+            'CooperativeGesturesHandler.WindowsHelpText': 'Zum Zoomen Strg + Scrollen verwenden',
+            'CooperativeGesturesHandler.MacHelpText': 'Zum Zoomen ⌘ + Scrollen verwenden',
+            'CooperativeGesturesHandler.MobileHelpText': 'Karte mit zwei Fingern bewegen',
+          },
         })
         map.addControl(new ml.AttributionControl({ compact: true, customAttribution: ATTRIBUTION }), 'bottom-right')
         if (interactive) map.addControl(new ml.NavigationControl({ showCompass: false }), 'top-right')
+        if (interactive && geolocate) {
+          map.addControl(new ml.GeolocateControl({
+            positionOptions: { enableHighAccuracy: true },
+            showUserLocation: true,
+          }), 'top-right')
+        }
         if (pickerRef.current) {
           map.on('click', (e) => {
             const p = { lng: e.lngLat.lng, lat: e.lngLat.lat }
@@ -119,8 +148,14 @@ export default function MapView({
           })
         }
         mapRef.current = map
-        map.on('load', () => { if (!cancelled) { setReady(true); map.resize() } })
-        map.on('error', () => { if (!cancelled) setFailed(true) })
+        map.on('load', () => { if (!cancelled) { readyRef.current = true; setReady(true); map.resize() } })
+        // Nur harte Fehler vor dem ersten Rendern (Style nicht ladbar) werfen
+        // die Karte auf den Fallback. Einzelne Kachel-Fehler danach — etwa
+        // eine fehlende Kachel bei hohem Zoom oder ein kurzer Netz-Aussetzer —
+        // dürfen die bereits sichtbare Karte nicht abräumen.
+        map.on('error', () => {
+          if (!cancelled && !readyRef.current && !map.isStyleLoaded()) setFailed(true)
+        })
         // Container-Größe beobachten — fixt die leere Karte, wenn sie erst
         // durch Layout Größe bekommt (z. B. im Vollbild-Overlay).
         if (typeof ResizeObserver !== 'undefined' && containerRef.current) {
@@ -142,31 +177,51 @@ export default function MapView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Marker mit den Daten synchronisieren.
+  // Marker mit den Daten synchronisieren. Anzeige-Pins (`pins`) werden auch
+  // im Picker-Modus gerendert — als Kontext (z. B. bereits gemeldete Mängel)
+  // mit Popup, aber ohne Einfluss auf die Auswahl.
   useEffect(() => {
     const ml = mlRef.current
     const map = mapRef.current
     if (!ml || !map || !ready) return
     markersRef.current.forEach(m => m.remove())
     markersRef.current = []
-    const list: MapPin[] = picker ? (value ?? []) : (pins ?? [])
-    for (const p of list) {
+
+    const display: MapPin[] = (pins ?? []).slice(0, MAX_DISPLAY_PINS)
+    const selection: MapPin[] = picker ? (value ?? []) : []
+
+    for (const p of display) {
       const marker = new ml.Marker({ color: p.color ?? '#2563EB' })
         .setLngLat([p.lng, p.lat])
         .addTo(map)
-      if (!picker) {
-        if (p.title || p.meta || p.href) {
-          const popup = new ml.Popup({ offset: 24, closeButton: false }).setDOMContent(buildPopupContent(p))
-          marker.setPopup(popup)
-        } else if (onPinClick && p.id) {
-          const el = marker.getElement()
-          el.style.cursor = 'pointer'
-          el.addEventListener('click', () => onPinClick(p.id!))
-        }
+      if (p.title || p.meta || p.href) {
+        const popup = new ml.Popup({ offset: 24, closeButton: false }).setDOMContent(buildPopupContent(p))
+        marker.setPopup(popup)
+      } else if (!picker && onPinClick && p.id) {
+        const el = marker.getElement()
+        el.style.cursor = 'pointer'
+        el.addEventListener('click', () => onPinClick(p.id!))
       }
       markersRef.current.push(marker)
     }
-  }, [ready, picker, pins, value, onPinClick])
+    for (const p of selection) {
+      markersRef.current.push(
+        new ml.Marker({ color: p.color ?? '#2563EB' }).setLngLat([p.lng, p.lat]).addTo(map)
+      )
+    }
+
+    // Ausschnitt einmalig auf alle Pins einpassen (z. B. mehrere Orte auf
+    // der Detailseite) — danach nicht mehr, damit Nutzer-Zoom erhalten bleibt.
+    if (fit && !fittedRef.current) {
+      const all = [...display, ...selection]
+      if (all.length >= 2) {
+        const bounds = new ml.LngLatBounds()
+        for (const p of all) bounds.extend([p.lng, p.lat])
+        map.fitBounds(bounds, { padding: 56, maxZoom: 16, animate: false })
+        fittedRef.current = true
+      }
+    }
+  }, [ready, picker, pins, value, onPinClick, fit])
 
   if (failed) {
     return (

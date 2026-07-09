@@ -13,6 +13,10 @@ const MapView = dynamic(() => import('@/components/MapView'), {
   ssr: false,
   loading: () => <div className="h-64 w-full rounded-xl bg-gray-100 animate-pulse" />,
 })
+import type { MapPin as MapPinType } from '@/components/MapView'
+
+// Farbe für bereits gemeldete Mängel auf der Karte (Mangel-Akzent = Orange)
+const MANGEL_PIN_COLOR = '#EA580C'
 import { containsBlocked, REGION_NAME } from '@/lib/constants'
 import {
   type Anliegenart, ART_OPTIONS, ART_LABELS, ORTSTYPEN, SCOPE_LABELS,
@@ -41,6 +45,9 @@ export default function NeueForderung() {
   const [ortZusatz, setOrtZusatz] = useState('')
   const [mehrereOrteText, setMehrereOrteText] = useState('')
   const [pins, setPins] = useState<{ lng: number; lat: number }[]>([])
+  // Bereits gemeldete Mängel als Kontext-Pins im Karten-Schritt — so sieht
+  // man beim Melden sofort, ob an der Stelle schon etwas gemeldet wurde.
+  const [mangelPins, setMangelPins] = useState<MapPinType[] | null>(null)
 
   // Schritt 3: Titel
   const [title, setTitle] = useState('')
@@ -78,6 +85,33 @@ export default function NeueForderung() {
     load()
   }, [])
 
+  // Bestehende verortete Mängel einmalig laden, sobald "Mangel" gewählt ist
+  useEffect(() => {
+    if (art !== 'mangel' || mangelPins !== null) return
+    const supabase = createClient()
+    supabase.from('demands')
+      .select('id, title, lat, lng')
+      .eq('submission_type', 'mangel')
+      .neq('status', 'zurückgezogen')
+      .not('lat', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(200)
+      .then(({ data, error }) => {
+        if (error) { setMangelPins([]); return }
+        setMangelPins(
+          (data ?? [])
+            .filter(d => d.lat != null && d.lng != null)
+            .map(d => ({
+              lng: d.lng as number,
+              lat: d.lat as number,
+              title: d.title,
+              meta: 'Bereits gemeldeter Mangel',
+              color: MANGEL_PIN_COLOR,
+            }))
+        )
+      })
+  }, [art, mangelPins])
+
   // Duplikatprüfung beim Tippen des Titels
   useEffect(() => {
     const q = title.trim()
@@ -98,6 +132,12 @@ export default function NeueForderung() {
   const effectiveScope = art === 'mangel' ? 'ort' : scope
   const needsKonkreterOrt = effectiveScope === 'ort'
   const needsDistrict = ['ort', 'stadtteil', 'mehrere_orte'].includes(effectiveScope)
+
+  // Beim Wechsel auf einen Einzel-Ort (z. B. von "mehrere Orte" zurück)
+  // überzählige Pins verwerfen, damit Anzeige und Auswahl zusammenpassen.
+  useEffect(() => {
+    if (needsKonkreterOrt) setPins(prev => (prev.length > 1 ? prev.slice(0, 1) : prev))
+  }, [needsKonkreterOrt])
 
   const districtName = districts.find(d => d.id === districtId)?.name ?? ''
   const ortstypInfo = ORTSTYPEN.find(o => o.value === ortstyp)
@@ -194,9 +234,12 @@ export default function NeueForderung() {
     }
 
     // Koordinaten nur wenn der Ort-Typ dazu passt und Punkte gesetzt wurden.
+    // Bei Einzel-Ort wird strikt nur der erste Punkt gespeichert, selbst
+    // wenn aus einem früheren Schritt-Wechsel noch mehrere im State liegen.
     const geoRelevant = needsKonkreterOrt || effectiveScope === 'mehrere_orte'
-    const geo = geoRelevant && pins.length > 0
-      ? { lat: pins[0].lat, lng: pins[0].lng, locations: pins }
+    const geoPins = effectiveScope === 'mehrere_orte' ? pins : pins.slice(0, 1)
+    const geo = geoRelevant && geoPins.length > 0
+      ? { lat: geoPins[0].lat, lng: geoPins[0].lng, locations: geoPins }
       : {}
 
     let { data, error: dbError } = await supabase.from('demands')
@@ -378,9 +421,23 @@ export default function NeueForderung() {
                         </button>
                       )}
                     </div>
-                    <p className="text-xs text-gray-400 mt-1">Tippe auf die Karte, um den genauen Punkt zu setzen — das hilft, den Ort später auf der Karte zu finden.</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Tippe auf die Karte, um den genauen Punkt zu setzen — das hilft, den Ort später auf der Karte zu finden.
+                      {art === 'mangel' && (mangelPins?.length ?? 0) > 0 && (
+                        <> <span className="font-medium text-orange-600">Orange Pins</span> sind bereits gemeldete Mängel — tippe sie an, um zu sehen, was dort schon gemeldet wurde.</>
+                      )}
+                    </p>
                   </div>
-                  <MapView picker maxPins={1} value={pins} onChange={setPins} className="h-80 w-full" />
+                  <MapView
+                    picker
+                    maxPins={1}
+                    value={pins}
+                    onChange={setPins}
+                    pins={art === 'mangel' ? mangelPins ?? undefined : undefined}
+                    cooperative
+                    geolocate
+                    className="h-80 w-full"
+                  />
                 </div>
               )}
 
@@ -403,11 +460,11 @@ export default function NeueForderung() {
                         </button>
                       )}
                     </div>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-gray-500 mt-1">
                       Tippe mehrere Punkte an.{pins.length > 0 && ` ${pins.length} ${pins.length === 1 ? 'Punkt' : 'Punkte'} gesetzt.`}
                     </p>
                   </div>
-                  <MapView picker maxPins={12} value={pins} onChange={setPins} className="h-80 w-full" />
+                  <MapView picker maxPins={12} value={pins} onChange={setPins} cooperative geolocate className="h-80 w-full" />
                 </div>
               )}
             </div>

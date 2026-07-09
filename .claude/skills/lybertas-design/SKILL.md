@@ -116,6 +116,26 @@ Fokus-Ring kein grauer Rand durchscheint. Textareas ergänzen
 - Seiten-`<main>` immer mit explizitem `bg-gray-50` (nicht auf den
   Body-Hintergrund verlassen)
 
+## Karten (MapLibre)
+
+Immer `components/MapView.tsx` verwenden (basemap.de/BKG, kein API-Key,
+Attribution ist eingebaut). Konventionen:
+
+- **Pin-Farben:** Blau `#2563EB` = Forderungen und eigene Auswahl,
+  Orange `#EA580C` = Mängelmeldungen. Keine weiteren Pin-Farben ohne
+  Legende.
+- **Trennung:** Mängel erscheinen NIE auf der öffentlichen
+  Forderungs-Karte (Abfragen filtern `submission_type.neq.mangel` und
+  `status ≠ zurückgezogen`). Bestehende Mängel-Pins sind nur im
+  Karten-Schritt des Einreichens (Art = Mangel) als Kontext sichtbar.
+- **Eingebettete Karten in scrollbaren Seiten** bekommen `cooperative`
+  (1 Finger scrollt die Seite, 2 Finger bewegen die Karte); Vollbild-
+  Karten nicht. Kompakte Vorschauen sind `interactive={false}` und
+  öffnen per Tap das Vollbild.
+- **Abfragen limitieren** (≤200 Pins); MapView kappt zusätzlich bei 400.
+- Karten randlos in Karten-Container einbetten (`overflow-hidden` am
+  `rounded-2xl`-Container, Karte ohne eigene Rundung).
+
 ## Icons
 
 `lucide-react`, Standardgröße 16–20 px, `strokeWidth` 1.8 (aktiv 2.5 in

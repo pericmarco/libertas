@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
@@ -236,6 +236,19 @@ export default function ForderungDetail() {
     }
   }
 
+  // Verortung stabil ableiten — sonst bekäme die Karte bei jedem Render
+  // (z. B. beim Tippen in der Diskussion) neue Pin-Objekte und würde die
+  // Marker unnötig neu aufbauen.
+  const ortPins = useMemo(() => {
+    if (!demand) return []
+    return (Array.isArray(demand.locations) && demand.locations.length > 0
+      ? demand.locations
+      : demand.lat != null && demand.lng != null ? [{ lat: demand.lat, lng: demand.lng }] : []
+    )
+      .filter(p => p && p.lat != null && p.lng != null)
+      .map(p => ({ lng: p.lng, lat: p.lat }))
+  }, [demand])
+
   async function toggleLike(argId: string) {
     if (!userId) { router.push('/login'); return }
     const supabase = createClient()
@@ -391,27 +404,22 @@ export default function ForderungDetail() {
           </div>
 
           {/* Ort auf der Karte — nur wenn Koordinaten hinterlegt sind */}
-          {(() => {
-            const pts = (Array.isArray(demand.locations) && demand.locations.length > 0
-              ? demand.locations
-              : demand.lat != null && demand.lng != null ? [{ lat: demand.lat, lng: demand.lng }] : []
-            ).filter(p => p && p.lat != null && p.lng != null)
-            if (pts.length === 0) return null
-            return (
-              <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-4">
-                <div className="px-6 pt-5 pb-3 flex items-center gap-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                  <MapPin size={13} /> Ort
-                </div>
-                <MapView
-                  pins={pts.map(p => ({ lng: p.lng, lat: p.lat }))}
-                  center={{ lng: pts[0].lng, lat: pts[0].lat }}
-                  zoom={15}
-                  className="h-64 w-full"
-                />
-                {demand.location && <p className="px-6 py-3 text-sm text-gray-600">{demand.location}</p>}
+          {ortPins.length > 0 && (
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-4">
+              <div className="px-6 pt-5 pb-3 flex items-center gap-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                <MapPin size={13} /> Ort
               </div>
-            )
-          })()}
+              <MapView
+                pins={ortPins}
+                center={{ lng: ortPins[0].lng, lat: ortPins[0].lat }}
+                zoom={15}
+                fit={ortPins.length > 1}
+                cooperative
+                className="h-64 w-full"
+              />
+              {demand.location && <p className="px-6 py-3 text-sm text-gray-600">{demand.location}</p>}
+            </div>
+          )}
 
           {/* 2. Problem + Lösung */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">

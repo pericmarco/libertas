@@ -38,6 +38,24 @@ lassen, sondern einen echten eingeloggten Nutzer im Browser brauchen.
   orangem Mängelmeldung-Badge; Detailseite (per Link) ohne Positionen,
   mit Weiterleitungs-Verlauf.
 
+- [ ] **Karte: Mangel mit Pin melden**
+  Mangel einreichen, im Ort-Schritt einen Punkt auf der Karte setzen,
+  absenden. Erwartung: Detailseite zeigt die "Ort"-Karte mit dem Pin.
+  Danach einen zweiten Mangel melden: der erste muss im Karten-Schritt
+  als oranger Pin erscheinen (antippen → Titel-Popup).
+
+- [ ] **Karte: Forderung mit Ort**
+  Forderung (kein Mangel) mit konkretem Ort + Pin einreichen.
+  Erwartung: Pin erscheint auf der Übersichtskarte unter /forderungen
+  (Beispiel-Badge verschwindet), Popup zeigt Titel + "Öffnen".
+  Der Mangel aus dem Test davor darf dort NICHT auftauchen.
+
+- [ ] **Karte: Bedienung am Handy**
+  Auf der Einreichen-Karte mit einem Finger wischen → Seite scrollt,
+  Hinweis "Karte mit zwei Fingern bewegen" erscheint. Zwei Finger →
+  Karte bewegt sich. Standort-Button (oben rechts) fragt nach Freigabe
+  und springt zum eigenen Standort.
+
 - [ ] **Rate-Limit testen (optional, mit Test-Account)**
   Als normaler Bürger 4 Anliegen an einem Tag einreichen — das vierte
   muss mit freundlicher Meldung abgelehnt werden. (Admins sind ausgenommen,
