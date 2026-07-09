@@ -1,16 +1,19 @@
 import Navbar from '@/components/layout/Navbar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { MapPin, TrendingUp, Users, CheckCircle, Newspaper, ExternalLink } from 'lucide-react'
+import { MapPin, FileText, Users, Pencil, Newspaper, ExternalLink } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { REGION_NAME } from '@/lib/constants'
 import ElectionsCard from '@/components/ElectionsCard'
-import CouncilSeatDistributionChart from '@/components/CouncilSeatDistributionChart'
-import { COLOGNE_COUNCIL } from '@/lib/councilSeats'
+import StadtteilCard from '@/components/StadtteilCard'
+import PolitischeVertretung from '@/components/PolitischeVertretung'
 import Link from 'next/link'
 
 export default async function Dashboard() {
   const supabase = await createClient()
+
+  const { data: userData } = await supabase.auth.getUser()
+  const uid = userData.user?.id ?? null
 
   const { data: region } = await supabase
     .from('regions')
@@ -20,28 +23,35 @@ export default async function Dashboard() {
 
   const { data: districts } = await supabase
     .from('districts')
-    .select('id, population')
+    .select('id, name')
     .eq('region_id', region?.id ?? '')
 
   const districtIds = districts?.map(d => d.id) ?? []
-  const totalPopulation = districts?.reduce((sum, d) => sum + (d.population ?? 0), 0) ?? 0
 
   const [
     { data: topics },
-    { count: demandsUmgesetzt },
     { data: news },
     { data: elections },
+    { data: profile },
+    { count: demandsGesamt },
+    { count: unterstuetzt },
+    { count: eingereicht },
   ] = await Promise.all([
     supabase.from('topics').select('*').order('created_at', { ascending: false }),
-    supabase.from('demands').select('*', { count: 'exact', head: true }).eq('status', 'umgesetzt'),
     supabase.from('news').select('*').in('district_id', districtIds).order('published_at', { ascending: false }).limit(4),
     supabase.from('elections').select('id, title, election_date, expected_year, description'),
+    uid ? supabase.from('profiles').select('district_id').eq('id', uid).single() : Promise.resolve({ data: null }),
+    supabase.from('demands').select('id', { count: 'exact', head: true }),
+    uid ? supabase.from('demand_supports').select('demand_id', { count: 'exact', head: true }).eq('user_id', uid) : Promise.resolve({ count: 0 }),
+    uid ? supabase.from('demands').select('id', { count: 'exact', head: true }).eq('user_id', uid) : Promise.resolve({ count: 0 }),
   ])
 
+  const meinStadtteil = districts?.find(d => d.id === profile?.district_id)?.name ?? null
+
   const stats = [
-    { label: 'Aktive Themen', value: String(topics?.filter(t => t.status === 'active').length ?? 0), icon: TrendingUp, color: 'text-blue-600' },
-    { label: 'Bürger in Köln Innenstadt', value: totalPopulation.toLocaleString('de-DE'), icon: Users, color: 'text-green-600' },
-    { label: 'Umgesetzte Forderungen', value: String(demandsUmgesetzt ?? 0), icon: CheckCircle, color: 'text-purple-600' },
+    { label: 'Insgesamt eingereicht', value: String(demandsGesamt ?? 0), icon: FileText, color: 'text-blue-600 bg-blue-50' },
+    { label: 'Von dir unterstützt', value: String(unterstuetzt ?? 0), icon: Users, color: 'text-green-600 bg-green-50' },
+    { label: 'Von dir eingereicht', value: String(eingereicht ?? 0), icon: Pencil, color: 'text-purple-600 bg-purple-50' },
   ]
 
   return (
@@ -59,16 +69,17 @@ export default async function Dashboard() {
             <p className="text-gray-500 mt-1">Aktuelle politische Themen in deinem Stadtbezirk</p>
           </div>
 
-          {/* Stats */}
+          {/* Deine Beteiligung */}
+          <h2 className="font-semibold text-gray-900 mb-3">Deine Beteiligung</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             {stats.map(({ label, value, icon: Icon, color }) => (
               <Card key={label}>
                 <CardContent className="p-6 flex items-center gap-4">
-                  <div className={`p-3 rounded-xl bg-gray-50 ${color}`}>
+                  <div className={`p-3 rounded-xl ${color}`}>
                     <Icon size={22} />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-gray-900">{value}</div>
+                    <div className="text-2xl font-bold text-gray-900 tabular-nums">{value}</div>
                     <div className="text-sm text-gray-500">{label}</div>
                   </div>
                 </CardContent>
@@ -76,11 +87,14 @@ export default async function Dashboard() {
             ))}
           </div>
 
+          {/* Dein Stadtteil auf einen Blick (amtliche Kennzahlen + Ratswahl 2025) */}
+          <StadtteilCard defaultName={meinStadtteil} />
+
           {/* Anstehende Wahlen */}
           <ElectionsCard elections={elections ?? []} />
 
-          {/* Sitzverteilung im Rat */}
-          <CouncilSeatDistributionChart {...COLOGNE_COUNCIL} />
+          {/* Politische Vertretung: Rat Köln + Bezirksvertretung Innenstadt */}
+          <PolitischeVertretung />
 
           {/* Aktuelle News */}
           <Card className="mb-6">
