@@ -90,7 +90,23 @@ export default function Datenschutz() {
             </section>
 
             <section>
-              <h2 className="font-semibold text-gray-900 mb-1">7. Speicherdauer</h2>
+              <h2 className="font-semibold text-gray-900 mb-1">7. Standortdaten (Kartenfunktion)</h2>
+              <p>
+                Beim Einreichen eines Anliegens kannst du einen Ort auf einer Karte markieren. Der
+                „Mein Standort"-Knopf nutzt die Standortabfrage deines Browsers und funktioniert nur,
+                wenn du sie dort ausdrücklich freigibst (Einwilligung, Art. 6 Abs. 1 lit. a DSGVO,
+                § 25 Abs. 1 TTDSG). Dein Gerätestandort wird dabei ausschließlich lokal auf deinem
+                Gerät verwendet, um die Karte zu zentrieren — er wird von uns <strong>weder übertragen
+                noch gespeichert</strong>. Gespeichert werden nur die Koordinaten des Punktes, den du
+                selbst bewusst auf der Karte setzt und mit deinem Anliegen absendest; sie sind Teil
+                deiner Meldung und werden mit ihr gelöscht. Die Kartendarstellung selbst lädt
+                Kartenkacheln von basemap.de, einem Dienst des Bundesamts für Kartographie und
+                Geodäsie (Deutschland); dabei fallen die üblichen technischen Zugriffsdaten an.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="font-semibold text-gray-900 mb-1">8. Speicherdauer</h2>
               <p>
                 Wir speichern deine Daten, solange dein Konto besteht. Nach Löschung deines Kontos werden deine
                 Daten gelöscht, soweit keine gesetzlichen Aufbewahrungspflichten entgegenstehen.
@@ -98,7 +114,7 @@ export default function Datenschutz() {
             </section>
 
             <section>
-              <h2 className="font-semibold text-gray-900 mb-1">8. Deine Rechte</h2>
+              <h2 className="font-semibold text-gray-900 mb-1">9. Deine Rechte</h2>
               <p className="mb-2">Du hast das Recht auf:</p>
               <ul className="list-disc list-inside space-y-1 text-gray-600">
                 <li>Auskunft über deine gespeicherten Daten (Art. 15 DSGVO)</li>
