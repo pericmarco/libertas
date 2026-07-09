@@ -76,6 +76,7 @@ export default function MapView({
   const mapRef = useRef<MLMap | null>(null)
   const mlRef = useRef<typeof import('maplibre-gl') | null>(null)
   const markersRef = useRef<Marker[]>([])
+  const roRef = useRef<ResizeObserver | null>(null)
   const [ready, setReady] = useState(false)
   const [failed, setFailed] = useState(false)
 
@@ -117,14 +118,25 @@ export default function MapView({
             onChangeRef.current?.(next)
           })
         }
-        map.on('load', () => { if (!cancelled) setReady(true) })
+        map.on('load', () => { if (!cancelled) { setReady(true); map.resize() } })
         map.on('error', () => { if (!cancelled) setFailed(true) })
+        // Container-Größe beobachten — fixt die leere Karte, wenn sie erst
+        // durch Layout Größe bekommt (z. B. im Vollbild-Overlay).
+        if (typeof ResizeObserver !== 'undefined' && containerRef.current) {
+          const ro = new ResizeObserver(() => mapRef.current?.resize())
+          ro.observe(containerRef.current)
+          roRef.current = ro
+        }
         mapRef.current = map
       } catch {
         if (!cancelled) setFailed(true)
       }
     })()
-    return () => { cancelled = true; mapRef.current?.remove(); mapRef.current = null }
+    return () => {
+      cancelled = true
+      roRef.current?.disconnect(); roRef.current = null
+      mapRef.current?.remove(); mapRef.current = null
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
