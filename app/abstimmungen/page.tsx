@@ -160,7 +160,7 @@ export default function Abstimmungen() {
   }
 
   async function castVote(voteId: string, optionId: string) {
-    if (!userId) { router.push('/login'); return }
+    if (!userId) { router.push('/register'); return }
     setSubmitting(voteId)
     const supabase = createClient()
     const { error } = await supabase.from('vote_responses').insert({ vote_id: voteId, option_id: optionId, user_id: userId })
@@ -429,10 +429,10 @@ export default function Abstimmungen() {
                           </span>
                         ) : !userId ? (
                           <button
-                            onClick={() => router.push('/login')}
+                            onClick={() => router.push('/register')}
                             className="px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors"
                           >
-                            Anmelden zum Abstimmen
+                            Registrieren zum Abstimmen
                           </button>
                         ) : (
                           <button

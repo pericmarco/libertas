@@ -65,27 +65,49 @@ export default async function Dashboard() {
               <MapPin size={14} />
               <span>Köln Innenstadt</span>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">Dein Dashboard</h1>
-            <p className="text-gray-500 mt-1">Aktuelle politische Themen in deinem Stadtbezirk</p>
+            <h1 className="text-3xl font-bold text-gray-900">{uid ? 'Dein Dashboard' : 'Köln Innenstadt im Überblick'}</h1>
+            <p className="text-gray-500 mt-1">
+              {uid ? 'Aktuelle politische Themen in deinem Stadtbezirk' : 'Aktuelle politische Themen in Köln Innenstadt'}
+            </p>
           </div>
 
-          {/* Deine Beteiligung */}
-          <h2 className="font-semibold text-gray-900 mb-3">Deine Beteiligung</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            {stats.map(({ label, value, icon: Icon, color }) => (
-              <Card key={label}>
-                <CardContent className="p-6 flex items-center gap-4">
-                  <div className={`p-3 rounded-xl ${color}`}>
-                    <Icon size={22} />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-gray-900 tabular-nums">{value}</div>
-                    <div className="text-sm text-gray-500">{label}</div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {uid ? (
+            <>
+              {/* Deine Beteiligung */}
+              <h2 className="font-semibold text-gray-900 mb-3">Deine Beteiligung</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                {stats.map(({ label, value, icon: Icon, color }) => (
+                  <Card key={label}>
+                    <CardContent className="p-6 flex items-center gap-4">
+                      <div className={`p-3 rounded-xl ${color}`}>
+                        <Icon size={22} />
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-gray-900 tabular-nums">{value}</div>
+                        <div className="text-sm text-gray-500">{label}</div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </>
+          ) : (
+            /* Gäste: statt persönlicher Beteiligung eine Registrieren-Einladung */
+            <div className="bg-blue-600 rounded-2xl px-6 py-6 mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Mach mit in Köln Innenstadt</h2>
+                <p className="text-blue-100 text-sm mt-1">
+                  Registriere dich kostenlos, um Forderungen einzureichen, abzustimmen und deine eigene Beteiligung zu sehen.
+                </p>
+              </div>
+              <Link
+                href="/register"
+                className="shrink-0 inline-flex items-center justify-center px-5 py-2.5 bg-white text-blue-600 text-sm font-semibold rounded-xl hover:bg-blue-50 transition-colors"
+              >
+                Kostenlos registrieren
+              </Link>
+            </div>
+          )}
 
           {/* Dein Stadtteil auf einen Blick (amtliche Kennzahlen + Ratswahl 2025) */}
           <StadtteilCard defaultName={meinStadtteil} />

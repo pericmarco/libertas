@@ -122,7 +122,7 @@ export default function Forderungen() {
   async function toggleSupport(e: React.MouseEvent, demandId: string) {
     e.preventDefault()
     e.stopPropagation()
-    if (!userId) { router.push('/login'); return }
+    if (!userId) { router.push('/register'); return }
 
     const current = positions[demandId]
 
@@ -183,7 +183,7 @@ export default function Forderungen() {
               <p className="text-gray-500 mt-1">Welche Themen bewegen Köln Innenstadt?</p>
             </div>
             <Link
-              href={userId ? '/forderungen/neu' : '/login'}
+              href={userId ? '/forderungen/neu' : '/register'}
               className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors shrink-0 w-full sm:w-auto"
             >
               <Plus size={15} />
@@ -197,14 +197,14 @@ export default function Forderungen() {
           {isAnon && demands.length > 0 && (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-blue-50 border border-blue-100 rounded-2xl px-5 py-4 mb-6">
               <p className="text-sm text-blue-800">
-                Du siehst gerade die öffentliche Vorschau. Melde dich an, um <strong>alle Forderungen</strong> zu sehen und mitzumachen.
+                Du siehst gerade die öffentliche Vorschau. Registriere dich kostenlos, um <strong>alle Forderungen</strong> zu sehen und mitzumachen.
               </p>
               <Link
-                href="/login"
+                href="/register"
                 className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors shrink-0"
               >
                 <LogIn size={15} />
-                Anmelden
+                Registrieren
               </Link>
             </div>
           )}
@@ -269,7 +269,7 @@ export default function Forderungen() {
                       key={d.id}
                       title={d.title}
                       relevanceScore={d.relevance_score}
-                      onClick={() => router.push('/login')}
+                      onClick={() => router.push('/register')}
                     />
                   ))}
                 </>

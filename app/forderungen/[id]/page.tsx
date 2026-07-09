@@ -220,7 +220,7 @@ export default function ForderungDetail() {
   const ownPosition = arguments_.find(a => a.user_id === userId) ?? null
 
   async function savePosition() {
-    if (!userId) { router.push('/login'); return }
+    if (!userId) { router.push('/register'); return }
     if (!selectedType) return
     const text = draftText.trim()
     if (selectedType === 'alternative' && text.length < 10) {
@@ -275,7 +275,7 @@ export default function ForderungDetail() {
   }, [demand])
 
   async function toggleLike(argId: string) {
-    if (!userId) { router.push('/login'); return }
+    if (!userId) { router.push('/register'); return }
     const supabase = createClient()
     const liked = userLikes.has(argId)
     setUserLikes(prev => { const n = new Set(prev); liked ? n.delete(argId) : n.add(argId); return n })
@@ -327,10 +327,10 @@ export default function ForderungDetail() {
               Anmeldung offen einsehbar.
             </p>
             <Link
-              href="/login"
+              href="/register"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors"
             >
-              <LogIn size={16} /> Anmelden oder registrieren
+              <LogIn size={16} /> Kostenlos registrieren
             </Link>
           </div>
         </div>
@@ -539,7 +539,7 @@ export default function ForderungDetail() {
                 return (
                   <button
                     key={type}
-                    onClick={() => { if (!userId) { router.push('/login'); return } setSelectedType(type); setPosError(''); if (ownPosition?.type === type) setDraftText(ownPosition.text ?? '') ; else setDraftText('') }}
+                    onClick={() => { if (!userId) { router.push('/register'); return } setSelectedType(type); setPosError(''); if (ownPosition?.type === type) setDraftText(ownPosition.text ?? '') ; else setDraftText('') }}
                     className={`text-left p-4 rounded-xl border transition-all ${
                       isSelected ? 'border-blue-400 bg-blue-50/50 ring-1 ring-blue-200' : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/30'
                     }`}
@@ -698,10 +698,10 @@ export default function ForderungDetail() {
                 <div className="max-w-2xl mx-auto px-4 sm:px-6 py-3">
                   {!userId ? (
                     <button
-                      onClick={() => router.push('/login')}
+                      onClick={() => router.push('/register')}
                       className="w-full py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors"
                     >
-                      Anmelden zum Mitdiskutieren
+                      Registrieren zum Mitdiskutieren
                     </button>
                   ) : (
                     <>

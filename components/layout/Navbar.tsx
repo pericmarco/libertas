@@ -46,7 +46,7 @@ export default function Navbar() {
 
   // Nicht angemeldete Besucher sehen nur die öffentlich zugänglichen Tabs —
   // sonst würden die übrigen Tabs sie nur zum Login umleiten (Sackgasse).
-  const PUBLIC_NAV_HREFS = ['/forderungen', '/abstimmungen']
+  const PUBLIC_NAV_HREFS = ['/dashboard', '/forderungen', '/abstimmungen']
   const links = user
     ? (isAdmin ? [...baseLinks, adminLink] : baseLinks)
     : baseLinks.filter(l => PUBLIC_NAV_HREFS.includes(l.href))

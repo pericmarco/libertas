@@ -3,10 +3,11 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 const PUBLIC_PATHS = [
   '/', '/login', '/register', '/impressum', '/datenschutz',
-  // Öffentliche Lese-Ansicht (ohne Login): Forderungsübersicht + Stadtumfragen.
-  // Mitmachen (Position, Unterstützen, Abstimmen, Einreichen) erfordert weiter
-  // eine Anmeldung; die Seiten selbst leiten dann zu /login.
-  '/forderungen', '/abstimmungen',
+  // Öffentliche Lese-Ansicht (ohne Login): Dashboard-Überblick,
+  // Forderungsübersicht + Stadtumfragen. Mitmachen (Position, Unterstützen,
+  // Abstimmen, Einreichen) erfordert weiter eine Anmeldung; die Seiten
+  // selbst leiten dann zur Registrierung.
+  '/dashboard', '/forderungen', '/abstimmungen',
   // PWA-Assets müssen ohne Login ladbar sein
   '/manifest.webmanifest', '/icon', '/apple-icon',
 ]
