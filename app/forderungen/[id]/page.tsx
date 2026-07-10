@@ -14,6 +14,7 @@ const MapView = dynamic(() => import('@/components/MapView'), {
   loading: () => <div className="h-64 w-full bg-gray-100 animate-pulse" />,
 })
 import RepScoreBadge from '@/components/RepScoreBadge'
+import ReportDemand from '@/components/ReportDemand'
 import { computeRepScoreForUsers } from '@/lib/repScore'
 import { ART_LABELS, SCOPE_LABELS, FEEDBACK_LABELS, themenForTags } from '@/lib/einreichung'
 import { PARTEI_FARBEN } from '@/lib/stadtteilDaten'
@@ -964,6 +965,11 @@ export default function ForderungDetail() {
             )}
             </div>
             )}
+          </div>
+
+          {/* Forderung melden */}
+          <div className="mt-6 flex justify-center">
+            <ReportDemand demandId={id} />
           </div>
 
         </div>

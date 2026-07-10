@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { ShieldCheck, Search, ChevronDown, Trash2, AlertTriangle, Flame, Wrench } from 'lucide-react'
 import { ART_LABELS, SCOPE_LABELS, FEEDBACK_LABELS, themenForTags } from '@/lib/einreichung'
 import AdminMaengelKarte from '@/components/AdminMaengelKarte'
+import AdminReports from '@/components/AdminReports'
 import { PARTEI_FARBEN } from '@/lib/stadtteilDaten'
 
 // Pin-Farben der Mängel-Karte nach Bearbeitungsstatus
@@ -67,7 +68,7 @@ type Profile = { id: string; username: string | null; full_name: string | null; 
 
 export default function Admin() {
   const [authorized, setAuthorized] = useState<boolean | null>(null)
-  const [tab, setTab] = useState<'forderungen' | 'nutzer'>('forderungen')
+  const [tab, setTab] = useState<'forderungen' | 'nutzer' | 'meldungen'>('forderungen')
   const [demands, setDemands] = useState<Demand[]>([])
   const [moderation, setModeration] = useState<Record<string, Moderation>>({})
   const [profiles, setProfiles] = useState<Profile[]>([])
@@ -247,13 +248,13 @@ export default function Admin() {
 
           {/* Tabs */}
           <div className="flex gap-1 p-1 bg-gray-100 rounded-xl w-fit mb-6">
-            {(['forderungen', 'nutzer'] as const).map(t => (
+            {(['forderungen', 'nutzer', 'meldungen'] as const).map(t => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
                 className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors ${tab === t ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
               >
-                {t === 'forderungen' ? `Forderungen (${demands.length})` : `Nutzer (${profiles.length})`}
+                {t === 'forderungen' ? `Forderungen (${demands.length})` : t === 'nutzer' ? `Nutzer (${profiles.length})` : 'Meldungen'}
               </button>
             ))}
           </div>
@@ -509,6 +510,8 @@ export default function Admin() {
               })}
             </div>
           )}
+
+          {tab === 'meldungen' && <AdminReports />}
 
         </div>
       </main>
