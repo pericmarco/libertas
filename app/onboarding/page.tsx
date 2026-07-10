@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { AGE_GROUPS, GENDERS, REGION_NAME } from '@/lib/constants'
 
@@ -76,9 +77,7 @@ export default function Onboarding() {
     <main className="min-h-screen flex items-center justify-center px-6 bg-gray-50">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold">L</span>
-          </div>
+          <Image src="/logo.svg" alt="Lybertas Logo" width={40} height={40} className="w-10 h-10 mx-auto mb-4" unoptimized />
           <h1 className="text-2xl font-bold text-gray-900">Fast geschafft</h1>
           <p className="text-gray-500 mt-2 text-sm leading-relaxed">
             Damit wir zeigen können wie <span className="font-semibold text-gray-700">repräsentativ</span> die Abstimmungsergebnisse sind, brauchen wir noch zwei Angaben von dir.

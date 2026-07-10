@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Megaphone, Vote, BarChart2, ChevronRight, MapPin, CheckCircle } from 'lucide-react'
 
 export default function Home() {
@@ -9,9 +10,7 @@ export default function Home() {
       <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white/80 backdrop-blur-md border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-6 h-full flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">L</span>
-            </div>
+            <Image src="/logo.svg" alt="Lybertas Logo" width={32} height={32} className="w-8 h-8" priority unoptimized />
             <span className="font-semibold text-gray-900">Lybertas</span>
           </div>
           <div className="flex items-center gap-3">
@@ -154,9 +153,7 @@ export default function Home() {
       <footer className="py-8 px-6 border-t border-gray-100">
         <div className="max-w-6xl mx-auto flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between text-sm text-gray-400">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center">
-              <span className="text-white font-bold text-xs">L</span>
-            </div>
+            <Image src="/logo.svg" alt="Lybertas Logo" width={24} height={24} className="w-6 h-6" unoptimized />
             <span>Lybertas · Köln 2026</span>
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-2">
