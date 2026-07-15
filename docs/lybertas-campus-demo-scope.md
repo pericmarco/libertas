@@ -168,6 +168,46 @@ Fresenius-Instanz bedient alle Campusse. Wahrscheinlich zwei Angebote:
 - **Gruppen-/Multi-Campus:** zentrale Instanz, Grundlizenz + Preis pro
   aktivem Campus + Mengenrabatt, zentrale Auswertung, Campusadmins.
 
+## 12b. Campus Köln — konkrete Ausarbeitung (aus Gespräch)
+
+**Zielgruppe & Einstieg:** Erst der **eigene Campus Köln**. Marco & Tobias
+gehen zu ihren Professoren („wir waren 3 Jahre hier und haben X
+festgestellt"). **Nur ein Campus** in der Demo — Multi-Standort entfällt.
+
+**Verkaufsansatz:** Zuerst ein **Pitch-Tag** (wer wir sind, welche Idee),
+Prototyp in der Tasche und auf Wunsch zeigen — nicht mit dem fertigen
+Prototyp „reinplatzen".
+
+**Die vier Grundsteine der Demo:**
+1. **Login mit studentischer E-Mail** — als weiches Tor („für unsere
+   Community").
+2. **Campus-Dashboard mit Hochschul-Neuigkeiten** — das **stärkste
+   Feature**. Heute gibt es keinen einheitlichen Kanal, Infos gehen unter.
+   Beispiele: anstehende Uni-Events, der **FräseCup** (ASTA-Fußballevent
+   über mehrere Standorte) mit Anmeldung, Hinweise der Hochschule.
+3. **Anliegen-Seite** (umbenannte Forderungen) — Studierende melden, was
+   nicht funktioniert. **Vorbefüllt mit echten Beispielen**, die Marco &
+   Tobias in 3 Jahren aufgefallen sind.
+4. **Hochschul-Umfragen** — Anknüpfung an die reale Umfrage, die die
+   Hochschule kürzlich per E-Mail schickte und die untergegangen ist.
+
+**Admin & Rollen:** Adminbereich zur Rechteverwaltung. Zuständige Stellen
+(**Studienservice, Prüfungsamt, Hochschulleitung**) bekommen Rechte, um
+offiziell auf betreffende Anliegen zu antworten — technisch identisch zur
+**Phase-A-Politiker-Antwort**, nur Badge = Stelle statt Partei.
+
+**Produktziel:** ein komplettes Beteiligungs-Ökosystem für die Hochschule,
+das es dort so (gut) noch nicht gibt — der Verkaufshebel.
+
+**Zu entscheiden:** Anliegen **pseudonym** (Nutzername statt echtem Namen)?
+An der Hochschule gibt es Machtgefälle; Pseudonymität könnte Beteiligung
+und Ehrlichkeit erhöhen. ASTA ggf. als Partner/Mitträger, nicht nur Rolle.
+
+**Umgesetzt (Fundament, Stand heute):** Produktlinien-Config in
+`lib/tenant/` (city + campus) — Wording, Module, Rollen, Branding.
+Verbraucht noch niemand; Köln unverändert. Verdrahtung + Campus-Deployment
+folgen, sobald die Campus-Instanz (Supabase + Vercel) steht.
+
 ## 13. Offene Fragen an Marco & Tobias
 
 1. Wie viele Fresenius-Standorte zeigen wir in der Demo (2 reichen)?
