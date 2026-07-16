@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { MapPin, FileText, Users, Pencil, Newspaper, ExternalLink } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { REGION_NAME } from '@/lib/constants'
+import { tenant, t } from '@/lib/tenant'
 import ElectionsCard from '@/components/ElectionsCard'
 import StadtteilCard from '@/components/StadtteilCard'
 import PolitischeVertretung from '@/components/PolitischeVertretung'
@@ -63,11 +64,13 @@ export default async function Dashboard() {
           <div className="mb-8">
             <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
               <MapPin size={14} />
-              <span>Köln Innenstadt</span>
+              <span>{REGION_NAME}</span>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">{uid ? 'Dein Dashboard' : 'Köln Innenstadt im Überblick'}</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{uid ? t('dashboardTitle') : `${REGION_NAME} im Überblick`}</h1>
             <p className="text-gray-500 mt-1">
-              {uid ? 'Aktuelle politische Themen in deinem Stadtbezirk' : 'Aktuelle politische Themen in Köln Innenstadt'}
+              {tenant.productLine === 'campus'
+                ? 'Neuigkeiten und Anliegen an deinem Campus'
+                : (uid ? 'Aktuelle politische Themen in deinem Stadtbezirk' : 'Aktuelle politische Themen in Köln Innenstadt')}
             </p>
           </div>
 
@@ -95,9 +98,9 @@ export default async function Dashboard() {
             /* Gäste: statt persönlicher Beteiligung eine Registrieren-Einladung */
             <div className="bg-blue-600 rounded-2xl px-6 py-6 mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-white">Mach mit in Köln Innenstadt</h2>
+                <h2 className="text-lg font-semibold text-white">Mach mit in {REGION_NAME}</h2>
                 <p className="text-blue-100 text-sm mt-1">
-                  Registriere dich kostenlos, um Forderungen einzureichen, abzustimmen und deine eigene Beteiligung zu sehen.
+                  Registriere dich kostenlos, um {tenant.labels.demandPlural} einzureichen, abzustimmen und deine eigene Beteiligung zu sehen.
                 </p>
               </div>
               <Link
@@ -109,14 +112,20 @@ export default async function Dashboard() {
             </div>
           )}
 
-          {/* Dein Stadtteil auf einen Blick (amtliche Kennzahlen + Ratswahl 2025) */}
-          <StadtteilCard defaultName={meinStadtteil} />
+          {/* City-spezifische Blöcke (Stadtteil-Kennzahlen, Wahlen, Ratsverteilung)
+              — für Campus ausgeblendet, da sie feste Köln-Daten tragen. */}
+          {tenant.productLine === 'city' && (
+            <>
+              {/* Dein Stadtteil auf einen Blick (amtliche Kennzahlen + Ratswahl 2025) */}
+              <StadtteilCard defaultName={meinStadtteil} />
 
-          {/* Anstehende Wahlen */}
-          <ElectionsCard elections={elections ?? []} />
+              {/* Anstehende Wahlen */}
+              <ElectionsCard elections={elections ?? []} />
 
-          {/* Politische Vertretung: Rat Köln + Bezirksvertretung Innenstadt */}
-          <PolitischeVertretung />
+              {/* Politische Vertretung: Rat Köln + Bezirksvertretung Innenstadt */}
+              <PolitischeVertretung />
+            </>
+          )}
 
           {/* Aktuelle News */}
           <Card className="mb-6">
@@ -124,7 +133,7 @@ export default async function Dashboard() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
                   <Newspaper size={16} className="text-gray-400" />
-                  Aktuelles aus Köln Innenstadt
+                  {t('newsTitle')}
                 </CardTitle>
               </div>
             </CardHeader>
