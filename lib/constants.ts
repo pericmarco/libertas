@@ -1,4 +1,9 @@
-export const REGION_NAME = 'Köln Innenstadt'
+import { tenant } from '@/lib/tenant'
+
+// Region/Organisation der aktiven Produktlinie. City → 'Köln Innenstadt',
+// Campus → 'Hochschule Fresenius · Campus Köln'. Der Wert muss exakt zum
+// regions.name-Eintrag in der jeweiligen Datenbank passen.
+export const REGION_NAME = tenant.labels.orgName
 
 export const AGE_GROUPS = ['unter 18', '18–24', '25–29', '30–34', '35–44', '45–54', '55–59', '60–64', '65+']
 

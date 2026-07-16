@@ -9,14 +9,21 @@ import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 
-const baseLinks = [
-  { href: '/dashboard',    label: 'Dashboard',     icon: LayoutDashboard },
-  { href: '/forderungen',  label: 'Forderungen',   icon: Megaphone },
-  { href: '/abstimmungen', label: 'Priorisierung', icon: Vote },
-  { href: '/politiker',    label: 'Politiker',     icon: Users },
-  { href: '/wirkung',      label: 'Wirkung',       icon: TrendingUp },
-  { href: '/profil',       label: 'Profil',        icon: UserIcon },
+import { tenant } from '@/lib/tenant'
+import type { ModuleKey } from '@/lib/tenant'
+
+// Navigation der aktiven Produktlinie — nach Modulen gefiltert, Labels je
+// Produktlinie. City zeigt Politiker/Wirkung, Campus nicht (dafür anderes
+// Wording: Anliegen / Umfragen).
+const NAV: { href: string; module: ModuleKey; label: string; icon: typeof LayoutDashboard }[] = [
+  { href: '/dashboard',    module: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/forderungen',  module: 'anliegen',  label: tenant.labels.demandPlural, icon: Megaphone },
+  { href: '/abstimmungen', module: 'umfragen',  label: tenant.productLine === 'campus' ? 'Umfragen' : 'Priorisierung', icon: Vote },
+  { href: '/politiker',    module: 'politiker', label: 'Politiker', icon: Users },
+  { href: '/wirkung',      module: 'wirkung',   label: 'Wirkung', icon: TrendingUp },
+  { href: '/profil',       module: 'profil',    label: 'Profil', icon: UserIcon },
 ]
+const baseLinks = NAV.filter(l => tenant.modules[l.module])
 
 const adminLink = { href: '/admin', label: 'Admin', icon: ShieldCheck }
 
