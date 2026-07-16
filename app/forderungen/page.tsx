@@ -11,6 +11,7 @@ import DemandCard, { type Demand } from '@/components/DemandCard'
 import LockedDemandTeaser from '@/components/LockedDemandTeaser'
 import ForderungenMapCard from '@/components/ForderungenMapCard'
 import type { MapPin } from '@/components/MapView'
+import { tenant } from '@/lib/tenant'
 
 // Wie viele Forderungen ein nicht angemeldeter Besucher voll sehen darf,
 // bevor der Rest als gesperrte Teaser erscheint.
@@ -179,8 +180,12 @@ export default function Forderungen() {
 
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Bürgerforderungen</h1>
-              <p className="text-gray-500 mt-1">Welche Themen bewegen Köln Innenstadt?</p>
+              <h1 className="text-3xl font-bold text-gray-900">
+                {tenant.productLine === 'campus' ? 'Studierenden-Anliegen' : 'Bürgerforderungen'}
+              </h1>
+              <p className="text-gray-500 mt-1">
+                {tenant.productLine === 'campus' ? 'Was bewegt euren Campus?' : 'Welche Themen bewegen Köln Innenstadt?'}
+              </p>
             </div>
             <Link
               href={userId ? '/forderungen/neu' : '/register'}
@@ -191,8 +196,8 @@ export default function Forderungen() {
             </Link>
           </div>
 
-          {/* Karte: Forderungen räumlich entdecken */}
-          <ForderungenMapCard pins={mapPins} />
+          {/* Karte: Forderungen räumlich entdecken (nur City — Campus hat einen Standort) */}
+          {tenant.modules.karte && <ForderungenMapCard pins={mapPins} />}
 
           {isAnon && demands.length > 0 && (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-blue-50 border border-blue-100 rounded-2xl px-5 py-4 mb-6">
