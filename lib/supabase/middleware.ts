@@ -8,8 +8,6 @@ const PUBLIC_PATHS = [
   // Abstimmen, Einreichen) erfordert weiter eine Anmeldung; die Seiten
   // selbst leiten dann zur Registrierung.
   '/dashboard', '/forderungen', '/abstimmungen',
-  // Frontend-only Demo-Parteiprofil (Marketing) — ohne Login teilbar
-  '/politiker/beispiel',
   // PWA-Assets müssen ohne Login ladbar sein
   '/manifest.webmanifest', '/icon', '/apple-icon',
 ]
@@ -19,6 +17,8 @@ function isPublicPath(pathname: string) {
   // Forderungs-Detailseiten sind öffentlich lesbar — aber NICHT das
   // Einreichungsformular (/forderungen/neu), das eine Anmeldung braucht.
   if (pathname.startsWith('/forderungen/') && pathname !== '/forderungen/neu') return true
+  // Frontend-only Demo-Profile (Partei + Politiker) — ohne Login teilbar (Marketing)
+  if (pathname.startsWith('/politiker/beispiel')) return true
   return false
 }
 
