@@ -127,9 +127,7 @@ export default function Politiker() {
             className="mb-6 block rounded-2xl border border-gray-100 bg-white p-5 transition-all hover:border-blue-200 hover:shadow-sm"
           >
             <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-blue-50">
-                <Image src="/logo.svg" alt="" width={36} height={36} unoptimized />
-              </div>
+              <Image src="/demo/partei-logo.png" alt="" width={56} height={56} className="h-14 w-14 shrink-0" unoptimized />
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className="font-semibold text-gray-900">Lybertas Beispielpartei</span>

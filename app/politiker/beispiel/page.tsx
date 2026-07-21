@@ -39,9 +39,7 @@ export default function BeispielPartei() {
           {/* Hero */}
           <div className="rounded-2xl bg-blue-50 p-6">
             <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white shadow-sm">
-                <Image src="/logo.svg" alt="" width={44} height={44} unoptimized />
-              </div>
+              <Image src="/demo/partei-logo.png" alt="" width={64} height={64} className="h-16 w-16 shrink-0" unoptimized />
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
                   <h1 className="text-xl font-bold text-gray-900 leading-tight">{DEMO_PARTY.name}</h1>
