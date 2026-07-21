@@ -8,6 +8,8 @@ const PUBLIC_PATHS = [
   // Abstimmen, Einreichen) erfordert weiter eine Anmeldung; die Seiten
   // selbst leiten dann zur Registrierung.
   '/dashboard', '/forderungen', '/abstimmungen',
+  // Frontend-only Demo-Parteiprofil (Marketing) — ohne Login teilbar
+  '/politiker/beispiel',
   // PWA-Assets müssen ohne Login ladbar sein
   '/manifest.webmanifest', '/icon', '/apple-icon',
 ]

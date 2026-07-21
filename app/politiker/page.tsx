@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
 import Navbar from '@/components/layout/Navbar'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { MessageCircle, ChevronLeft, QrCode } from 'lucide-react'
+import { MessageCircle, ChevronLeft, ChevronRight, QrCode, BadgeCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 type Politician = {
@@ -114,10 +116,36 @@ export default function Politiker() {
       <Navbar />
       <main className="pt-16 min-h-screen bg-gray-50">
         <div className="max-w-6xl mx-auto px-6 py-10">
-          <div className="mb-8">
+          <div className="mb-6">
             <h1 className="text-3xl font-bold text-gray-900">Politische Vertreter</h1>
             <p className="text-gray-500 mt-1">Wähle eine Partei um ihre Vertreter zu sehen</p>
           </div>
+
+          {/* Demo-Parteiprofil (frontend-only) — zeigt, wie ein Parteiprofil aussehen kann */}
+          <Link
+            href="/politiker/beispiel"
+            className="mb-6 block rounded-2xl border border-gray-100 bg-white p-5 transition-all hover:border-blue-200 hover:shadow-sm"
+          >
+            <div className="flex items-center gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-blue-50">
+                <Image src="/logo.svg" alt="" width={36} height={36} unoptimized />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="font-semibold text-gray-900">Lybertas Beispielpartei</span>
+                  <BadgeCheck size={16} className="shrink-0 text-blue-500" />
+                  <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-600">Beispiel</span>
+                </div>
+                <p className="mt-0.5 text-sm text-gray-500">Fortschritt. Zusammenhalt. Köln.</p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {['Fortschrittlich', 'Transparent', 'Bürgernah'].map(t => (
+                    <span key={t} className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">{t}</span>
+                  ))}
+                </div>
+              </div>
+              <ChevronRight size={18} className="shrink-0 text-gray-300" />
+            </div>
+          </Link>
 
           {parties.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
