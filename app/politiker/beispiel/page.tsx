@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import Navbar from '@/components/layout/Navbar'
-import { ChevronLeft, ChevronDown, ChevronRight, BadgeCheck, Calendar, Compass, Target, MapPin } from 'lucide-react'
+import { ChevronLeft, ChevronDown, ChevronRight, BadgeCheck, Calendar, Compass, Target, MapPin, Mail, ExternalLink } from 'lucide-react'
 import {
   DEMO_PARTY, DEMO_SURVEYS, DEMO_RESPONSES, DEMO_DEMANDS, DEMO_POLITICIANS, RESPONSE_META, initials,
 } from '@/lib/demoBeispiel'
@@ -77,6 +77,35 @@ export default function BeispielPartei() {
                 <ChevronDown size={18} className={`text-gray-400 transition-transform ${positionOpen ? 'rotate-180' : ''}`} />
               </button>
               {positionOpen && <p className="mt-2 text-sm leading-relaxed text-gray-600">{DEMO_PARTY.position}</p>}
+            </div>
+          </div>
+
+          {/* Kontakt — echte Lybertas-Kanäle */}
+          <div className="mt-4 rounded-2xl border border-gray-100 bg-white p-6">
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-semibold text-gray-900">Kontakt</h2>
+              <span className="rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-600">Echte Lybertas-Kanäle</span>
+            </div>
+            <a href="mailto:info@lybertas.de" className="mt-3 inline-flex items-center gap-2 text-sm text-gray-700 hover:text-blue-600">
+              <Mail size={15} className="text-gray-400" /> info@lybertas.de
+            </a>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <a
+                href="https://www.instagram.com/lybertas.de"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:border-blue-300 hover:text-blue-600 transition-colors"
+              >
+                Instagram @lybertas.de <ExternalLink size={12} />
+              </a>
+              <a
+                href="https://www.linkedin.com/company/libertasde/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:border-blue-300 hover:text-blue-600 transition-colors"
+              >
+                LinkedIn <ExternalLink size={12} />
+              </a>
             </div>
           </div>
 
