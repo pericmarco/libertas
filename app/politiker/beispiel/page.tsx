@@ -4,12 +4,13 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import Navbar from '@/components/layout/Navbar'
-import { ChevronLeft, ChevronDown, ChevronRight, BadgeCheck, Calendar, Compass, Target, MapPin, Mail, ExternalLink } from 'lucide-react'
+import { ChevronLeft, ChevronDown, ChevronRight, BadgeCheck, Calendar, Compass, Target, MapPin, Mail } from 'lucide-react'
 import {
   DEMO_PARTY, DEMO_SURVEYS, DEMO_RESPONSES, DEMO_DEMANDS, DEMO_POLITICIANS, RESPONSE_META,
   type DemoSurvey,
 } from '@/lib/demoBeispiel'
 import DemoSurveyModal from '@/components/DemoSurveyModal'
+import { InstagramGlyph, LinkedInGlyph } from '@/components/BrandIcons'
 
 const TABS = ['Umfragen', 'Antworten auf Forderungen', 'Unsere Forderungen'] as const
 type Tab = typeof TABS[number]
@@ -90,22 +91,24 @@ export default function BeispielPartei() {
             <a href="mailto:info@lybertas.de" className="mt-3 inline-flex items-center gap-2 text-sm text-gray-700 hover:text-blue-600">
               <Mail size={15} className="text-gray-400" /> info@lybertas.de
             </a>
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-4 flex items-center gap-3">
               <a
                 href="https://www.instagram.com/lybertas.de"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:border-blue-300 hover:text-blue-600 transition-colors"
+                aria-label="Lybertas auf Instagram"
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-[#feda75] via-[#d62976] to-[#4f5bd5] text-white shadow-sm transition-transform hover:scale-105"
               >
-                Instagram @lybertas.de <ExternalLink size={12} />
+                <InstagramGlyph size={20} />
               </a>
               <a
                 href="https://www.linkedin.com/company/libertasde/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:border-blue-300 hover:text-blue-600 transition-colors"
+                aria-label="Lybertas auf LinkedIn"
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0A66C2] text-white shadow-sm transition-transform hover:scale-105"
               >
-                LinkedIn <ExternalLink size={12} />
+                <LinkedInGlyph size={20} />
               </a>
             </div>
           </div>
