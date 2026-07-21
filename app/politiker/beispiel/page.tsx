@@ -7,7 +7,9 @@ import Navbar from '@/components/layout/Navbar'
 import { ChevronLeft, ChevronDown, ChevronRight, BadgeCheck, Calendar, Compass, Target, MapPin, Mail, ExternalLink } from 'lucide-react'
 import {
   DEMO_PARTY, DEMO_SURVEYS, DEMO_RESPONSES, DEMO_DEMANDS, DEMO_POLITICIANS, RESPONSE_META,
+  type DemoSurvey,
 } from '@/lib/demoBeispiel'
+import DemoSurveyModal from '@/components/DemoSurveyModal'
 
 const TABS = ['Umfragen', 'Antworten auf Forderungen', 'Unsere Forderungen'] as const
 type Tab = typeof TABS[number]
@@ -19,6 +21,7 @@ function BeispielTag() {
 export default function BeispielPartei() {
   const [tab, setTab] = useState<Tab>('Umfragen')
   const [positionOpen, setPositionOpen] = useState(true)
+  const [openSurvey, setOpenSurvey] = useState<DemoSurvey | null>(null)
 
   return (
     <>
@@ -126,21 +129,28 @@ export default function BeispielPartei() {
 
           {tab === 'Umfragen' && (
             <div className="mt-4 flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:-mx-6 sm:px-6 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {DEMO_SURVEYS.map(({ icon: Icon, cat, q, n }) => (
-                <div key={q} className="w-[230px] shrink-0 snap-start rounded-2xl border border-gray-100 bg-white p-5">
-                  <div className="flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500">
-                      <Icon size={14} className="text-gray-400" /> {cat}
-                    </span>
-                    <BeispielTag />
-                  </div>
-                  <div className="mt-3 min-h-[3.5rem] font-semibold leading-snug text-gray-900">{q}</div>
-                  <div className="mt-3 flex items-center justify-between text-xs text-gray-400">
-                    <span>{n} Teilnehmer</span>
-                    <ChevronRight size={15} className="text-gray-300" />
-                  </div>
-                </div>
-              ))}
+              {DEMO_SURVEYS.map(s => {
+                const Icon = s.icon
+                return (
+                  <button
+                    key={s.q}
+                    onClick={() => setOpenSurvey(s)}
+                    className="w-[230px] shrink-0 snap-start rounded-2xl border border-gray-100 bg-white p-5 text-left transition-all hover:border-blue-200 hover:shadow-sm"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500">
+                        <Icon size={14} className="text-gray-400" /> {s.cat}
+                      </span>
+                      <BeispielTag />
+                    </div>
+                    <div className="mt-3 min-h-[3.5rem] font-semibold leading-snug text-gray-900">{s.q}</div>
+                    <div className="mt-3 flex items-center justify-between text-xs text-gray-400">
+                      <span>{s.n} Teilnehmer</span>
+                      <ChevronRight size={15} className="text-gray-300" />
+                    </div>
+                  </button>
+                )
+              })}
             </div>
           )}
 
@@ -189,8 +199,9 @@ export default function BeispielPartei() {
               <Link
                 key={r.slug}
                 href={`/politiker/beispiel/person/${r.slug}`}
-                className="rounded-2xl border border-gray-100 bg-white p-5 transition-all hover:border-blue-200 hover:shadow-sm"
+                className="relative rounded-2xl border border-gray-100 bg-white p-5 transition-all hover:border-blue-200 hover:shadow-sm"
               >
+                <span className="absolute right-3 top-3"><BeispielTag /></span>
                 <Image src={r.photo} alt={r.name} width={48} height={48} className="h-12 w-12 rounded-full object-cover" unoptimized />
                 <div className="mt-3 flex items-center gap-1">
                   <span className="font-semibold text-gray-900">{r.name}</span>
@@ -212,6 +223,8 @@ export default function BeispielPartei() {
           </p>
         </div>
       </main>
+
+      <DemoSurveyModal key={openSurvey?.q ?? "none"} survey={openSurvey} onClose={() => setOpenSurvey(null)} />
     </>
   )
 }

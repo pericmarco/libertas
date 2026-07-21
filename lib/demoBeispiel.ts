@@ -19,13 +19,41 @@ export const DEMO_PARTY = {
   tags: ['Fortschrittlich', 'Transparent', 'Bürgernah'],
 }
 
-export type DemoSurvey = { icon: LucideIcon; cat: string; q: string; n: string }
+export type DemoSurvey = {
+  icon: LucideIcon
+  cat: string
+  q: string
+  n: string
+  sender?: string
+  options: { label: string; percent: number }[]
+}
 export const DEMO_SURVEYS: DemoSurvey[] = [
-  { icon: Car, cat: 'Mobilität', q: 'Soll der ÖPNV in Köln kostenlos werden?', n: '1.234' },
-  { icon: Home, cat: 'Wohnen', q: 'Wie wichtig ist bezahlbarer Wohnraum für dich?', n: '856' },
-  { icon: Leaf, cat: 'Umwelt', q: 'Wie kann Köln bis 2030 klimaneutral werden?', n: '642' },
-  { icon: GraduationCap, cat: 'Bildung', q: 'Brauchen wir mehr Ganztagsplätze an Schulen?', n: '498' },
-  { icon: Shield, cat: 'Sicherheit', q: 'Wie sicher fühlst du dich abends in der Innenstadt?', n: '377' },
+  { icon: Car, cat: 'Mobilität', q: 'Soll der ÖPNV in Köln kostenlos werden?', n: '1.234', options: [
+    { label: 'Ja, komplett kostenlos', percent: 46 },
+    { label: 'Günstiger, aber nicht gratis', percent: 38 },
+    { label: 'Nein, lieber das Angebot ausbauen', percent: 16 },
+  ] },
+  { icon: Home, cat: 'Wohnen', q: 'Wie wichtig ist bezahlbarer Wohnraum für dich?', n: '856', options: [
+    { label: 'Sehr wichtig', percent: 71 },
+    { label: 'Eher wichtig', percent: 22 },
+    { label: 'Weniger wichtig', percent: 7 },
+  ] },
+  { icon: Leaf, cat: 'Umwelt', q: 'Wie kann Köln bis 2030 klimaneutral werden?', n: '642', options: [
+    { label: 'Mehr ÖPNV & Radwege', percent: 41 },
+    { label: 'Gebäude energetisch sanieren', percent: 33 },
+    { label: 'Mehr Grünflächen & Bäume', percent: 26 },
+  ] },
+  { icon: GraduationCap, cat: 'Bildung', q: 'Brauchen wir mehr Ganztagsplätze an Schulen?', n: '498', options: [
+    { label: 'Ja, dringend', percent: 58 },
+    { label: 'Teilweise', percent: 30 },
+    { label: 'Nein', percent: 12 },
+  ] },
+  { icon: Shield, cat: 'Sicherheit', q: 'Wie sicher fühlst du dich abends in der Innenstadt?', n: '377', options: [
+    { label: 'Sehr sicher', percent: 18 },
+    { label: 'Eher sicher', percent: 44 },
+    { label: 'Eher unsicher', percent: 28 },
+    { label: 'Unsicher', percent: 10 },
+  ] },
 ]
 
 export const RESPONSE_META: Record<string, { label: string; badge: string; icon: LucideIcon }> = {
