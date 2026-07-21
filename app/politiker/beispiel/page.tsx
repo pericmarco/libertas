@@ -6,7 +6,7 @@ import Image from 'next/image'
 import Navbar from '@/components/layout/Navbar'
 import { ChevronLeft, ChevronDown, ChevronRight, BadgeCheck, Calendar, Compass, Target, MapPin, Mail, ExternalLink } from 'lucide-react'
 import {
-  DEMO_PARTY, DEMO_SURVEYS, DEMO_RESPONSES, DEMO_DEMANDS, DEMO_POLITICIANS, RESPONSE_META, initials,
+  DEMO_PARTY, DEMO_SURVEYS, DEMO_RESPONSES, DEMO_DEMANDS, DEMO_POLITICIANS, RESPONSE_META,
 } from '@/lib/demoBeispiel'
 
 const TABS = ['Umfragen', 'Antworten auf Forderungen', 'Unsere Forderungen'] as const
@@ -191,9 +191,7 @@ export default function BeispielPartei() {
                 href={`/politiker/beispiel/person/${r.slug}`}
                 className="rounded-2xl border border-gray-100 bg-white p-5 transition-all hover:border-blue-200 hover:shadow-sm"
               >
-                <div className={`flex h-12 w-12 items-center justify-center rounded-full text-sm font-bold ${r.color}`}>
-                  {initials(r.name)}
-                </div>
+                <Image src={r.photo} alt={r.name} width={48} height={48} className="h-12 w-12 rounded-full object-cover" unoptimized />
                 <div className="mt-3 flex items-center gap-1">
                   <span className="font-semibold text-gray-900">{r.name}</span>
                   <BadgeCheck size={14} className="shrink-0 text-blue-500" />

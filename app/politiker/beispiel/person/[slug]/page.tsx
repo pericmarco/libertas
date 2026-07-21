@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useParams } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import {
@@ -9,7 +10,7 @@ import {
   Mail, Globe, ExternalLink, FileText, Briefcase, Quote, Target,
 } from 'lucide-react'
 import {
-  getDemoPolitician, DEMO_SURVEYS, DEMO_RESPONSES, DEMO_DEMANDS, RESPONSE_META, initials,
+  getDemoPolitician, DEMO_SURVEYS, DEMO_RESPONSES, DEMO_DEMANDS, RESPONSE_META,
 } from '@/lib/demoBeispiel'
 
 const TABS = ['Umfragen', 'Antworten auf Forderungen', 'Meine Forderungen'] as const
@@ -56,9 +57,7 @@ export default function BeispielPolitiker() {
           {/* Hero */}
           <div className="rounded-2xl bg-blue-50 p-6">
             <div className="flex items-center gap-4">
-              <div className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-lg font-bold ${p.color}`}>
-                {initials(p.name)}
-              </div>
+              <Image src={p.photo} alt={p.name} width={64} height={64} className="h-16 w-16 shrink-0 rounded-full object-cover" unoptimized />
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
                   <h1 className="text-xl font-bold text-gray-900 leading-tight">{p.name}</h1>

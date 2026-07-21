@@ -52,6 +52,7 @@ export type DemoPolitician = {
   role: string
   ort: string
   color: string
+  photo: string
   funktion: string
   zustaendigkeit: string
   about: string
@@ -68,6 +69,7 @@ export const DEMO_POLITICIANS: DemoPolitician[] = [
     role: 'Spitzenkandidatin',
     ort: 'Köln Innenstadt',
     color: 'bg-blue-50 text-blue-700',
+    photo: '/demo/laura-becker.jpg',
     funktion: 'Spitzenkandidatin & Fraktionsvorsitzende',
     zustaendigkeit: 'Verkehr, Stadtentwicklung, Bürgerbeteiligung',
     about:
@@ -98,6 +100,7 @@ export const DEMO_POLITICIANS: DemoPolitician[] = [
     role: 'Stadtrat',
     ort: 'Köln Ehrenfeld',
     color: 'bg-emerald-50 text-emerald-700',
+    photo: '/demo/maximilian-berger.jpg',
     funktion: 'Stadtrat · Sprecher für Wirtschaft & Digitales',
     zustaendigkeit: 'Wirtschaft, Digitalisierung, Verwaltung',
     about:
@@ -127,6 +130,7 @@ export const DEMO_POLITICIANS: DemoPolitician[] = [
     role: 'Stadträtin',
     ort: 'Köln Kalk',
     color: 'bg-purple-50 text-purple-700',
+    photo: '/demo/sarah-klein.jpg',
     funktion: 'Stadträtin · Sprecherin für Soziales & Bildung',
     zustaendigkeit: 'Soziales, Bildung, Familie',
     about:
