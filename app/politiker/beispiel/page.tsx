@@ -199,10 +199,10 @@ export default function BeispielPartei() {
                   <BadgeCheck size={14} className="shrink-0 text-blue-500" />
                 </div>
                 <div className="text-sm text-gray-500">{r.role}</div>
-                <div className="mt-1.5 inline-flex items-center gap-1 text-xs text-gray-400">
+                <div className="mt-1.5 flex items-center gap-1 text-xs text-gray-400">
                   <MapPin size={12} /> {r.ort}
                 </div>
-                <div className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-blue-600">
+                <div className="mt-3 flex items-center gap-1 text-xs font-medium text-blue-600">
                   Profil ansehen <ChevronRight size={13} />
                 </div>
               </Link>
