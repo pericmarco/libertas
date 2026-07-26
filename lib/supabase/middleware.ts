@@ -7,7 +7,7 @@ const PUBLIC_PATHS = [
   // Forderungsübersicht + Stadtumfragen. Mitmachen (Position, Unterstützen,
   // Abstimmen, Einreichen) erfordert weiter eine Anmeldung; die Seiten
   // selbst leiten dann zur Registrierung.
-  '/dashboard', '/forderungen', '/abstimmungen',
+  '/dashboard', '/forderungen', '/abstimmungen', '/politiker',
   // PWA-Assets müssen ohne Login ladbar sein
   '/manifest.webmanifest', '/icon', '/apple-icon',
 ]
@@ -19,6 +19,9 @@ function isPublicPath(pathname: string) {
   if (pathname.startsWith('/forderungen/') && pathname !== '/forderungen/neu') return true
   // Frontend-only Demo-Profile (Partei + Politiker) — ohne Login teilbar (Marketing)
   if (pathname.startsWith('/politiker/beispiel')) return true
+  // Politiker-Verzeichnis + Detailseiten sind öffentlich lesbar — aber NICHT
+  // die Selbstverwaltung (/politiker/mein-profil), die eine Anmeldung braucht.
+  if (pathname.startsWith('/politiker/') && pathname !== '/politiker/mein-profil') return true
   return false
 }
 

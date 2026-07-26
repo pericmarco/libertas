@@ -1,127 +1,117 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import Navbar from '@/components/layout/Navbar'
-import { Card, CardContent } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
-import { MessageCircle, ChevronLeft, ChevronRight, QrCode, BadgeCheck } from 'lucide-react'
+import { Search, BadgeCheck, MessageCircle, ChevronRight, Landmark } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { Politician, POLITICIAN_COLUMNS, partyColor, onPartyText, initials } from '@/lib/politiker'
 
-type Politician = {
-  id: string
-  name: string
-  party: string
-  role: string
-  topics: string[]
-  response_rate: number
-  avatar_url: string | null
-}
-
-const partyColors: Record<string, { bg: string; text: string; border: string; card: string }> = {
-  SPD:   { bg: 'bg-red-600',    text: 'text-white',      border: 'border-red-200',    card: 'bg-red-50' },
-  CDU:   { bg: 'bg-gray-800',   text: 'text-white',      border: 'border-gray-200',   card: 'bg-gray-50' },
-  Grüne: { bg: 'bg-green-600',  text: 'text-white',      border: 'border-green-200',  card: 'bg-green-50' },
-  FDP:   { bg: 'bg-yellow-400', text: 'text-gray-900',   border: 'border-yellow-200', card: 'bg-yellow-50' },
-  AfD:   { bg: 'bg-blue-700',   text: 'text-white',      border: 'border-blue-200',   card: 'bg-blue-50' },
-  Linke: { bg: 'bg-purple-600', text: 'text-white',      border: 'border-purple-200', card: 'bg-purple-50' },
-}
-
-const defaultColor = { bg: 'bg-gray-600', text: 'text-white', border: 'border-gray-200', card: 'bg-gray-50' }
-
-export default function Politiker() {
+export default function PolitikerVerzeichnis() {
   const [politicians, setPoliticians] = useState<Politician[]>([])
-  const [selectedParty, setSelectedParty] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [query, setQuery] = useState('')
+  const [party, setParty] = useState<string | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.from('politicians').select('*').order('name').then(({ data }) => {
-      if (data) setPoliticians(data)
-    })
+    supabase
+      .from('politicians_public')
+      .select(POLITICIAN_COLUMNS)
+      .order('verified', { ascending: false })
+      .order('name')
+      .then(({ data }) => {
+        if (data) setPoliticians(data as Politician[])
+        setLoading(false)
+      })
   }, [])
 
-  const parties = [...new Set(politicians.map(p => p.party))].sort()
-  const partyPoliticians = selectedParty ? politicians.filter(p => p.party === selectedParty) : []
+  const parties = useMemo(
+    () => [...new Set(politicians.map(p => p.party).filter(Boolean) as string[])].sort(),
+    [politicians]
+  )
 
-  if (selectedParty) {
-    const colors = partyColors[selectedParty] ?? defaultColor
-    return (
-      <>
-        <Navbar />
-        <main className="pt-16 min-h-screen bg-gray-50">
-          <div className="max-w-6xl mx-auto px-6 py-10">
-            <button
-              onClick={() => setSelectedParty(null)}
-              className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors mb-6"
-            >
-              <ChevronLeft size={16} />
-              Alle Parteien
-            </button>
-
-            <div className="flex items-center gap-3 mb-8">
-              <div className={`px-4 py-1.5 rounded-full text-sm font-bold ${colors.bg} ${colors.text}`}>
-                {selectedParty}
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900">Politiker in deinem Wahlkreis</h1>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {partyPoliticians.map((p) => (
-                <Card key={p.id} className={`hover:shadow-sm transition-shadow border ${colors.border}`}>
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className={`w-12 h-12 rounded-full ${colors.bg} flex items-center justify-center font-bold text-lg ${colors.text}`}>
-                        {p.name.charAt(0)}
-                      </div>
-                      <div>
-                        <div className="font-semibold text-gray-900">{p.name}</div>
-                        <div className="text-sm text-gray-500">{p.role}</div>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {(p.topics ?? []).map((t: string) => (
-                        <span key={t} className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">{t}</span>
-                      ))}
-                    </div>
-
-                    <div className="mb-4">
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="text-gray-500 flex items-center gap-1"><MessageCircle size={12} /> Reaktionsquote</span>
-                        <span className="font-semibold text-gray-700">{p.response_rate}%</span>
-                      </div>
-                      <Progress value={p.response_rate} className="h-1.5" />
-                    </div>
-
-                    <button
-                      title="QR-Code für Plakat"
-                      className="w-full flex items-center justify-center gap-2 py-2 text-sm text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 hover:text-gray-700 transition-colors"
-                    >
-                      <QrCode size={15} />
-                      QR-Code für Plakat
-                    </button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </main>
-      </>
-    )
-  }
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return politicians.filter(p => {
+      if (party && p.party !== party) return false
+      if (!q) return true
+      return (
+        p.name.toLowerCase().includes(q) ||
+        (p.role ?? '').toLowerCase().includes(q) ||
+        (p.constituency ?? '').toLowerCase().includes(q) ||
+        (p.party ?? '').toLowerCase().includes(q) ||
+        (p.topics ?? []).some(t => t.toLowerCase().includes(q))
+      )
+    })
+  }, [politicians, query, party])
 
   return (
     <>
       <Navbar />
       <main className="pt-16 min-h-screen bg-gray-50">
-        <div className="max-w-6xl mx-auto px-6 py-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+
+          {/* Kopf */}
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Politische Vertreter</h1>
-            <p className="text-gray-500 mt-1">Wähle eine Partei um ihre Vertreter zu sehen</p>
+            <div className="flex items-center gap-2 mb-1">
+              <Landmark size={20} className="text-blue-600" />
+              <h1 className="text-3xl font-bold text-gray-900">Politik-Verzeichnis</h1>
+            </div>
+            <p className="text-gray-500">
+              Wer vertritt dich vor Ort? Finde deine Mandatsträger:innen, ihre Schwerpunkte
+              und wie verlässlich sie auf Anliegen reagieren.
+            </p>
           </div>
 
-          {/* Demo-Parteiprofil (frontend-only) — zeigt, wie ein Parteiprofil aussehen kann */}
+          {/* Suche + Parteifilter */}
+          <div className="flex flex-col gap-3 mb-6">
+            <div className="relative">
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-300" />
+              <input
+                type="text"
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder="Nach Name, Funktion oder Thema suchen…"
+                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            {parties.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setParty(null)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                    party === null
+                      ? 'bg-gray-900 text-white border-gray-900'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                  }`}
+                >
+                  Alle Parteien
+                </button>
+                {parties.map(pt => {
+                  const active = party === pt
+                  return (
+                    <button
+                      key={pt}
+                      onClick={() => setParty(active ? null : pt)}
+                      className="px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors"
+                      style={
+                        active
+                          ? { background: partyColor(pt), color: onPartyText(pt), borderColor: partyColor(pt) }
+                          : { background: '#fff', color: '#4B5563', borderColor: '#E5E7EB' }
+                      }
+                    >
+                      {pt}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Demo-Parteiprofil (frontend-only) — Showcase für Vermarktung/Musterstadt */}
           <Link
             href="/politiker/beispiel"
             className="mb-6 block rounded-2xl border border-gray-100 bg-white p-5 transition-all hover:border-blue-200 hover:shadow-sm"
@@ -145,33 +135,87 @@ export default function Politiker() {
             </div>
           </Link>
 
-          {parties.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {parties.map(party => {
-                const colors = partyColors[party] ?? defaultColor
-                const count = politicians.filter(p => p.party === party).length
-                return (
-                  <button
-                    key={party}
-                    onClick={() => setSelectedParty(party)}
-                    className={`p-6 rounded-2xl border ${colors.border} ${colors.card} text-left hover:shadow-sm transition-all group`}
-                  >
-                    <div className={`inline-block px-3 py-1 rounded-full text-sm font-bold mb-3 ${colors.bg} ${colors.text}`}>
-                      {party}
-                    </div>
-                    <div className="text-gray-900 font-semibold">
-                      {count} {count === 1 ? 'Vertreter' : 'Vertreter'}
-                    </div>
-                    <div className="text-sm text-gray-400 mt-1 group-hover:text-gray-600 transition-colors">
-                      Profil ansehen →
-                    </div>
-                  </button>
-                )
-              })}
+          {/* Liste */}
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-40 bg-white rounded-2xl animate-pulse border border-gray-100" />)}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-20 text-gray-400">
+              {politicians.length === 0
+                ? 'Noch keine Einträge im Verzeichnis.'
+                : 'Keine Treffer für diese Suche.'}
             </div>
           ) : (
-            <div className="text-center py-20 text-gray-400">Keine Politiker vorhanden</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filtered.map(p => (
+                <Link
+                  key={p.id}
+                  href={`/politiker/${p.slug}`}
+                  className="group bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-sm hover:border-gray-200 transition-all flex flex-col"
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    {p.avatar_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={p.avatar_url} alt={p.name} className="w-12 h-12 rounded-full object-cover" />
+                    ) : (
+                      <div
+                        className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm"
+                        style={{ background: partyColor(p.party), color: onPartyText(p.party) }}
+                      >
+                        {initials(p.name)}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold text-gray-900 truncate">{p.name}</span>
+                        {p.verified && <BadgeCheck size={15} className="text-blue-500 shrink-0" />}
+                      </div>
+                      <div className="text-sm text-gray-500 truncate">{p.role ?? p.constituency ?? '—'}</div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                    {p.party && (
+                      <span
+                        className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                        style={{ background: partyColor(p.party), color: onPartyText(p.party) }}
+                      >
+                        {p.party}
+                      </span>
+                    )}
+                    {(p.topics ?? []).slice(0, 2).map(t => (
+                      <span key={t} className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{t}</span>
+                    ))}
+                  </div>
+
+                  <div className="mt-auto flex items-center justify-between text-sm">
+                    <span className="text-gray-400 flex items-center gap-1">
+                      <MessageCircle size={13} /> {p.response_rate}% Reaktion
+                    </span>
+                    <span className="text-blue-600 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      Profil <ChevronRight size={14} />
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
           )}
+
+          {/* Hinweis für Mandatsträger:innen */}
+          <div className="mt-10 bg-blue-50 border border-blue-100 rounded-2xl px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="text-sm text-blue-900">
+              <span className="font-semibold">Sie sind Mandatsträger:in?</span>{' '}
+              Melden Sie sich an, um Ihren Eintrag selbst aktuell zu halten.
+            </div>
+            <Link
+              href="/politiker/mein-profil"
+              className="shrink-0 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-xl transition-colors text-center"
+            >
+              Eintrag verwalten
+            </Link>
+          </div>
+
         </div>
       </main>
     </>
