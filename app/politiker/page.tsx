@@ -6,7 +6,7 @@ import Image from 'next/image'
 import Navbar from '@/components/layout/Navbar'
 import { Search, BadgeCheck, MessageCircle, ChevronRight, Landmark } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { Politician, POLITICIAN_COLUMNS, partyColor, onPartyText, initials } from '@/lib/politiker'
+import { Politician, partyColor, onPartyText, initials } from '@/lib/politiker'
 
 export default function PolitikerVerzeichnis() {
   const [politicians, setPoliticians] = useState<Politician[]>([])
@@ -17,8 +17,7 @@ export default function PolitikerVerzeichnis() {
   useEffect(() => {
     const supabase = createClient()
     supabase
-      .from('politicians_public')
-      .select(POLITICIAN_COLUMNS)
+      .rpc('politicians_public')
       .order('verified', { ascending: false })
       .order('name')
       .then(({ data }) => {

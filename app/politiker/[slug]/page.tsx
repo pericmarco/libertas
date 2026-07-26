@@ -10,7 +10,7 @@ import {
   MapPin, MessageSquare, Settings,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { Politician, POLITICIAN_COLUMNS, partyColor, onPartyText, initials } from '@/lib/politiker'
+import { Politician, partyColor, onPartyText, initials } from '@/lib/politiker'
 
 // Offizielle Antwort-Labels (identisch zur Forderungs-Detailseite)
 const RESPONSE_LABELS: Record<string, { label: string; bg: string }> = {
@@ -41,8 +41,7 @@ export default function PolitikerDetail() {
     const supabase = createClient()
     async function load() {
       const { data } = await supabase
-        .from('politicians_public')
-        .select(POLITICIAN_COLUMNS)
+        .rpc('politicians_public')
         .eq('slug', slug)
         .maybeSingle()
 
