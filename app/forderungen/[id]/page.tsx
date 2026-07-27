@@ -335,7 +335,7 @@ export default function ForderungDetail() {
     <>
       <Navbar />
       <main className="pt-16 min-h-screen bg-gray-50">
-        <div className="max-w-3xl mx-auto px-6 py-10 space-y-4">
+        <div className="max-w-6xl mx-auto px-6 py-10 space-y-4">
           {[1,2,3].map(i => <div key={i} className="h-32 bg-white rounded-2xl animate-pulse" />)}
         </div>
       </main>
@@ -429,11 +429,18 @@ export default function ForderungDetail() {
     <>
       <Navbar />
       <main className="pt-16 min-h-screen bg-gray-50">
-        <div className="max-w-3xl mx-auto px-6 py-10">
+        <div className="max-w-6xl mx-auto px-6 py-10">
 
           <Link href="/forderungen" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors mb-6">
             <ChevronLeft size={15} /> Alle Forderungen
           </Link>
+
+          {/* Auf großen Bildschirmen zweispaltig: interaktiver Verlauf links,
+              kontextuelle Meta (Details & Verlauf, Melden) als klebrige
+              Seitenspalte rechts. Auf Mobil bleibt alles einspaltig in exakt
+              der bisherigen Reihenfolge (DOM-Reihenfolge unverändert). */}
+          <div className="lg:grid lg:grid-cols-3 lg:gap-6 lg:items-start">
+            <div className="lg:col-span-2">
 
           {/* 1. Titel & Einordnung */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
@@ -901,6 +908,10 @@ export default function ForderungDetail() {
           </div>
           )}
 
+            </div>{/* Ende linke Hauptspalte */}
+
+            <aside className="lg:col-span-1 lg:sticky lg:top-20">
+
           {/* Details & Verlauf — Strukturdaten, Adressaten und Prozessstand gebündelt */}
           <div className="bg-white rounded-2xl border border-gray-100 mb-4 overflow-hidden">
             <button onClick={() => setShowDetails(!showDetails)} className="w-full flex items-center justify-between px-6 py-4 text-left">
@@ -968,9 +979,12 @@ export default function ForderungDetail() {
           </div>
 
           {/* Forderung melden */}
-          <div className="mt-6 flex justify-center">
+          <div className="mt-6 flex justify-center lg:justify-start">
             <ReportDemand demandId={id} />
           </div>
+
+            </aside>{/* Ende Seitenspalte */}
+          </div>{/* Ende zweispaltiges Raster */}
 
         </div>
       </main>

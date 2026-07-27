@@ -176,7 +176,7 @@ export default function Forderungen() {
     <>
       <Navbar />
       <main className="pt-16 min-h-screen bg-gray-50">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
 
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
             <div>
@@ -246,37 +246,41 @@ export default function Forderungen() {
             </div>
           ) : isAnon ? (
             // Öffentliche Vorschau: Top-2 voll, Rest gesperrt
-            <div className="flex flex-col gap-3">
-              {publicTop.map(d => (
-                <DemandCard
-                  key={d.id}
-                  demand={d}
-                  areas={areasForDemand(d)}
-                  position={positions[d.id]}
-                  textCount={textCounts[d.id] ?? 0}
-                  variant="list"
-                  iconCategory={areasForDemand(d)[0]}
-                  onOpen={openDemand}
-                  onToggleSupport={toggleSupport}
-                />
-              ))}
+            <div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {publicTop.map(d => (
+                  <DemandCard
+                    key={d.id}
+                    demand={d}
+                    areas={areasForDemand(d)}
+                    position={positions[d.id]}
+                    textCount={textCounts[d.id] ?? 0}
+                    variant="list"
+                    iconCategory={areasForDemand(d)[0]}
+                    onOpen={openDemand}
+                    onToggleSupport={toggleSupport}
+                  />
+                ))}
+              </div>
               {lockedRest.length > 0 && (
                 <>
-                  <div className="flex items-center gap-3 mt-4 mb-1">
+                  <div className="flex items-center gap-3 mt-6 mb-4">
                     <span className="h-px flex-1 bg-gray-200" />
                     <span className="text-xs font-medium text-gray-400">
                       {lockedRest.length} weitere {lockedRest.length === 1 ? 'Forderung' : 'Forderungen'} — nach Anmeldung
                     </span>
                     <span className="h-px flex-1 bg-gray-200" />
                   </div>
-                  {lockedRest.map(d => (
-                    <LockedDemandTeaser
-                      key={d.id}
-                      title={d.title}
-                      relevanceScore={d.relevance_score}
-                      onClick={() => router.push('/register')}
-                    />
-                  ))}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                    {lockedRest.map(d => (
+                      <LockedDemandTeaser
+                        key={d.id}
+                        title={d.title}
+                        relevanceScore={d.relevance_score}
+                        onClick={() => router.push('/register')}
+                      />
+                    ))}
+                  </div>
                 </>
               )}
             </div>
@@ -286,7 +290,7 @@ export default function Forderungen() {
               <p className="text-sm text-gray-500 mb-4">
                 {focusDemands.length} {focusDemands.length === 1 ? 'Forderung' : 'Forderungen'} in {activeCategory}
               </p>
-              <div className="flex flex-col gap-3">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {focusDemands.map(d => (
                   <DemandCard
                     key={d.id}
