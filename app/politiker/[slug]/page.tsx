@@ -67,7 +67,7 @@ export default function PolitikerDetail() {
       <>
         <Navbar />
         <main className="pt-16 min-h-screen bg-gray-50">
-          <div className="max-w-3xl mx-auto px-6 py-10">
+          <div className="max-w-6xl mx-auto px-6 py-10">
             <div className="h-48 bg-white rounded-2xl animate-pulse border border-gray-100" />
           </div>
         </main>
@@ -98,7 +98,7 @@ export default function PolitikerDetail() {
     <>
       <Navbar />
       <main className="pt-16 min-h-screen bg-gray-50">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
 
           <Link href="/politiker" className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors mb-6">
             <ChevronLeft size={16} /> Verzeichnis
@@ -159,16 +159,21 @@ export default function PolitikerDetail() {
             </div>
           </div>
 
+          {/* Ab großen Bildschirmen zweispaltig: Bio + Stellungnahmen links,
+              Reaktionsquote + Kontakt als klebrige Spalte rechts. Dank
+              expliziter Grid-Platzierung bleibt die mobile Reihenfolge exakt. */}
+          <div className="mt-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:items-start">
+
           {/* Bio */}
           {p.bio && (
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 mt-4">
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 lg:col-start-1 lg:col-span-2">
               <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Über</div>
               <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{p.bio}</p>
             </div>
           )}
 
           {/* Reaktionsquote + Kontakt */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+          <div className="flex flex-col gap-4 mt-4 lg:mt-0 lg:col-start-3 lg:row-start-1 lg:sticky lg:top-20">
             <div className="bg-white rounded-2xl border border-gray-100 p-6">
               <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Reaktion auf Anliegen</div>
               <div className="flex justify-between text-sm mb-1.5">
@@ -204,7 +209,7 @@ export default function PolitikerDetail() {
 
           {/* Offizielle Antworten */}
           {responses.length > 0 && (
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 mt-4">
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 mt-4 lg:mt-0 lg:col-start-1 lg:col-span-2">
               <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">
                 Offizielle Stellungnahmen ({responses.length})
               </div>
@@ -229,6 +234,8 @@ export default function PolitikerDetail() {
               </div>
             </div>
           )}
+
+          </div>{/* Ende zweispaltiges Raster */}
 
           {/* Selbstverwaltung */}
           <div className="mt-6 text-center">

@@ -110,9 +110,28 @@ Fokus-Ring kein grauer Rand durchscheint. Textareas ergänzen
 - Vollbild-Overlays: `fixed inset-0 z-50` + Body-Scroll-Lock per
   `useEffect` (`document.body.style.overflow`), sticky Header mit
   Titel + Schließen-X
-- Inhaltsbreite: `max-w-6xl mx-auto px-6` für breite Seiten (Dashboard,
-  Abstimmungen, Politiker, Admin), `max-w-3xl` für Listen,
-  `max-w-2xl` für Formulare und Detailseiten. Vertikal: `py-10`.
+- Inhaltsbreite: **alle Hauptseiten nutzen am Desktop denselben Rahmen
+  `max-w-6xl mx-auto px-6`** (wie Dashboard/Politiker) — keine schmalen,
+  auf Handybreite begrenzten Seiten mehr. Damit einspaltige Inhalte dabei
+  nicht unschön auseinandergezogen werden, wird die Breite **inhaltsbewusst**
+  gefüllt statt eine Spalte zu strecken:
+  - Listen (Forderungen): mehrspaltiges Karten-Raster
+    (`grid lg:grid-cols-2`) bzw. horizontale Swipe-Reihen.
+  - Detail-/Profilseiten (Forderungs-Detail, Beispiel-/echte Politiker- und
+    Parteiprofile): zweispaltig ab `lg` — interaktiver/erzählender Inhalt in
+    angenehmer Lesebreite links, kontextuelle Meta (Karte, Details & Verlauf,
+    Steckbrief, Kontakt, Reaktionsquote) als klebrige Seitenspalte rechts
+    (`lg:sticky lg:top-20`).
+  - Formulare (Profil, Einreichen-Wizard): mehrspaltiges Karten-Layout bzw.
+    Schritt links + Fortschritts-Seitenspalte rechts.
+  - Rechtstexte (Impressum, Datenschutz): Abschnitte in zwei lesbaren
+    Spalten (`lg:columns-2`).
+  - **Mobile bleibt unangetastet:** die Zweispaltigkeit greift erst ab `lg`;
+    die DOM-Reihenfolge wird so gewählt (bzw. per `lg:order`/expliziter
+    Grid-Platzierung entkoppelt), dass die einspaltige Handy-Ansicht exakt
+    erhalten bleibt.
+  - Ausnahmen bewusst schmal: Lese-Overlays (Diskussion) und Sperr-/
+    Fehlerzustände behalten `max-w-2xl` für gute Lesbarkeit. Vertikal: `py-10`.
 - Seiten-`<main>` immer mit explizitem `bg-gray-50` (nicht auf den
   Body-Hintergrund verlassen)
 

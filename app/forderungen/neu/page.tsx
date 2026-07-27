@@ -279,6 +279,19 @@ export default function NeueForderung() {
   if (step > 1) statusParts.push(ortSummary())
   if (step > 3 && themen.length > 0) statusParts.push(themen.join(', '))
 
+  // Kompakte Werte je Schritt für die Fortschritts-Seitenspalte (Desktop)
+  const clip = (s: string, n = 42) => (s.length > n ? s.slice(0, n) + '…' : s)
+  const stepValues: (string | null)[] = [
+    art ? ART_LABELS[art] : null,
+    step > 1 ? ortSummary() : null,
+    title.trim() ? clip(title.trim()) : null,
+    themen.length > 0 ? themen.join(', ') : null,
+    problem.trim() ? clip(problem.trim()) : null,
+    change.trim() ? clip(change.trim()) : null,
+    art === 'mangel' ? 'Lybertas-Team → Stadt' : (feedback ? FEEDBACK_LABELS[feedback] : null),
+    null,
+  ]
+
   const bigCard = (selected: boolean) =>
     `w-full text-left p-5 rounded-2xl border-2 transition-all ${
       selected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white hover:border-blue-300'
@@ -295,7 +308,7 @@ export default function NeueForderung() {
     <>
       <Navbar />
       <main className="pt-16 min-h-screen bg-gray-50">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
 
           <Link href="/forderungen" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors mb-5">
             <ChevronLeft size={15} /> Alle Forderungen
@@ -311,10 +324,18 @@ export default function NeueForderung() {
             <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
           </div>
 
-          {/* Statuszeile bisheriger Antworten */}
+          {/* Statuszeile bisheriger Antworten (nur mobil — am Desktop zeigt
+              die Seitenspalte den Fortschritt) */}
           {statusParts.length > 0 && step < 7 && (
-            <div className="text-xs text-gray-400 mb-5 truncate">{statusParts.join(' · ')}</div>
+            <div className="text-xs text-gray-400 mb-5 truncate lg:hidden">{statusParts.join(' · ')}</div>
           )}
+
+          {/* Ab großen Bildschirmen zweispaltig: der aktuelle Schritt links,
+              eine klebrige Fortschritts-/Zusammenfassungs-Spalte rechts.
+              Auf Mobil (Spalte ausgeblendet) bleibt der Assistent unverändert. */}
+          <div className="lg:grid lg:grid-cols-3 lg:gap-8 lg:items-start">
+
+          <div className="lg:col-span-2">
 
           {/* ── Schritt 1: Art ── */}
           {step === 0 && (
@@ -749,6 +770,46 @@ export default function NeueForderung() {
               </button>
             )}
           </div>
+
+          </div>{/* Ende linke Schritt-Spalte */}
+
+          {/* Fortschritt & Zusammenfassung — nur am Desktop */}
+          <aside className="hidden lg:block lg:col-span-1 lg:sticky lg:top-20">
+            <div className="rounded-2xl border border-gray-100 bg-white p-5">
+              <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Dein Anliegen</div>
+              <ol className="flex flex-col gap-0.5">
+                {STEPS.map((label, i) => {
+                  const done = i < step
+                  const current = i === step
+                  const val = stepValues[i]
+                  return (
+                    <li key={label}>
+                      <button
+                        type="button"
+                        onClick={() => { if (i <= step) { setStep(i); setError('') } }}
+                        disabled={i > step}
+                        className={`w-full text-left flex items-start gap-2.5 rounded-lg px-2 py-1.5 transition-colors ${
+                          current ? 'bg-blue-50' : i < step ? 'hover:bg-gray-50 cursor-pointer' : 'cursor-default'
+                        }`}
+                      >
+                        {done
+                          ? <CheckCircle size={16} className="mt-0.5 shrink-0 text-blue-600" />
+                          : current
+                          ? <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 border-blue-600 bg-blue-600"><span className="h-1.5 w-1.5 rounded-full bg-white" /></span>
+                          : <Circle size={16} className="mt-0.5 shrink-0 text-gray-200" />}
+                        <span className="min-w-0">
+                          <span className={`block text-sm ${current ? 'font-semibold text-blue-700' : done ? 'text-gray-700' : 'text-gray-300'}`}>{label}</span>
+                          {val && <span className="block text-xs text-gray-400 truncate">{val}</span>}
+                        </span>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ol>
+            </div>
+          </aside>
+
+          </div>{/* Ende zweispaltiges Raster */}
 
         </div>
       </main>

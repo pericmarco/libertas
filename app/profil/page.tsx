@@ -98,7 +98,7 @@ export default function Profil() {
       <>
         <Navbar />
         <main className="pt-16 min-h-screen bg-gray-50">
-          <div className="max-w-2xl mx-auto px-6 py-10 space-y-4">
+          <div className="max-w-6xl mx-auto px-6 py-10 space-y-4">
             {[1, 2, 3].map(i => <div key={i} className="h-32 bg-white rounded-2xl animate-pulse" />)}
           </div>
         </main>
@@ -110,7 +110,7 @@ export default function Profil() {
     <>
       <Navbar />
       <main className="pt-16 min-h-screen bg-gray-50">
-        <div className="max-w-2xl mx-auto px-6 py-10">
+        <div className="max-w-6xl mx-auto px-6 py-10">
 
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900">Dein Profil</h1>
@@ -118,6 +118,9 @@ export default function Profil() {
           </div>
 
           <form onSubmit={handleSave} className="flex flex-col gap-6">
+
+            {/* Auf großen Bildschirmen die beiden Karten nebeneinander */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:items-start">
 
             {/* Konto */}
             <div className="bg-white rounded-2xl border border-gray-100 p-6">
@@ -231,6 +234,8 @@ export default function Profil() {
                 oder Geschlechter in einer Beteiligung über- oder unterrepräsentiert sind.
               </div>
             </div>
+
+            </div>{/* Ende Karten-Raster */}
 
             {error && (
               <div className="text-sm text-red-600 bg-red-50 px-4 py-3 rounded-xl">

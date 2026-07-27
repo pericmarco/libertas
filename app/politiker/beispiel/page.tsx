@@ -28,7 +28,7 @@ export default function BeispielPartei() {
     <>
       <Navbar />
       <main className="pt-16 min-h-screen bg-gray-50">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
           <Link href="/politiker" className="mb-5 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors">
             <ChevronLeft size={15} /> Alle Parteien
           </Link>
@@ -52,8 +52,17 @@ export default function BeispielPartei() {
             <p className="mt-4 text-sm leading-relaxed text-gray-600">{DEMO_PARTY.description}</p>
           </div>
 
+          {/* Ab großen Bildschirmen zweispaltig: Steckbrief + Kontakt als
+              klebrige Seitenspalte rechts, Umfragen/Antworten/Forderungen
+              links. Die Seitenspalte steht im DOM zuerst und wird per
+              lg:order nach rechts geschoben — so bleibt die mobile
+              Reihenfolge (Steckbrief, Kontakt, Tabs …) unverändert. */}
+          <div className="mt-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:items-start">
+
+          <aside className="lg:order-2 lg:col-span-1 lg:sticky lg:top-20 flex flex-col gap-4">
+
           {/* Steckbrief */}
-          <div className="mt-4 rounded-2xl border border-gray-100 bg-white p-6">
+          <div className="rounded-2xl border border-gray-100 bg-white p-6">
             <h2 className="text-base font-semibold text-gray-900">Steckbrief</h2>
             <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
               {[
@@ -83,7 +92,7 @@ export default function BeispielPartei() {
           </div>
 
           {/* Kontakt — echte Lybertas-Kanäle */}
-          <div className="mt-4 rounded-2xl border border-gray-100 bg-white p-6">
+          <div className="rounded-2xl border border-gray-100 bg-white p-6">
             <div className="flex items-center gap-2">
               <h2 className="text-base font-semibold text-gray-900">Kontakt</h2>
               <span className="rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-600">Echte Lybertas-Kanäle</span>
@@ -113,8 +122,12 @@ export default function BeispielPartei() {
             </div>
           </div>
 
+          </aside>{/* Ende Seitenspalte */}
+
+          <div className="lg:order-1 lg:col-span-2 mt-6 lg:mt-0">
+
           {/* Tabs */}
-          <div className="mt-6 flex gap-5 border-b border-gray-100">
+          <div className="flex gap-5 border-b border-gray-100">
             {TABS.map(t => (
               <button
                 key={t}
@@ -192,6 +205,9 @@ export default function BeispielPartei() {
               ))}
             </div>
           )}
+
+          </div>{/* Ende Hauptspalte */}
+          </div>{/* Ende zweispaltiges Raster */}
 
           {/* Unsere Vertreter — klickbar zu den Politikerprofilen */}
           <h2 className="mt-8 mb-3 text-base font-semibold text-gray-900">Unsere Vertreter</h2>

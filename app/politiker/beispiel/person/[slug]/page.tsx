@@ -48,7 +48,7 @@ export default function BeispielPolitiker() {
     <>
       <Navbar />
       <main className="pt-16 min-h-screen bg-gray-50">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
           <Link href="/politiker/beispiel" className="mb-5 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors">
             <ChevronLeft size={15} /> Zurück zum Parteiprofil
           </Link>
@@ -74,8 +74,17 @@ export default function BeispielPolitiker() {
             </div>
           </div>
 
+          {/* Ab großen Bildschirmen zweispaltig: Verifiziert-Hinweis +
+              Funktion & Zuständigkeit als klebrige Seitenspalte rechts, der
+              Rest (Über, Programm, Kontakt, Tabs) links. Die Seitenspalte
+              steht im DOM zuerst und wird per lg:order nach rechts geschoben —
+              so bleibt die mobile Reihenfolge exakt erhalten. */}
+          <div className="mt-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:items-start">
+
+          <aside className="lg:order-2 lg:col-span-1 lg:sticky lg:top-20 flex flex-col gap-4">
+
           {/* Verifiziert-Hinweis */}
-          <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
+          <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
             <div className="flex items-start gap-2.5">
               <ShieldCheck size={18} className="mt-0.5 shrink-0 text-blue-600" />
               <div className="min-w-0 flex-1">
@@ -97,7 +106,7 @@ export default function BeispielPolitiker() {
           </div>
 
           {/* Funktion & Zuständigkeit */}
-          <div className="mt-4 rounded-2xl border border-gray-100 bg-white p-6">
+          <div className="rounded-2xl border border-gray-100 bg-white p-6">
             <h2 className="text-base font-semibold text-gray-900">Funktion & Zuständigkeit</h2>
             <div className="mt-4 flex flex-col gap-4 sm:flex-row">
               <div className="flex flex-1 items-start gap-2.5">
@@ -117,8 +126,12 @@ export default function BeispielPolitiker() {
             </div>
           </div>
 
+          </aside>{/* Ende Seitenspalte */}
+
+          <div className="lg:order-1 lg:col-span-2 mt-4 lg:mt-0">
+
           {/* Über mich */}
-          <div className="mt-4 rounded-2xl border border-gray-100 bg-white p-6">
+          <div className="rounded-2xl border border-gray-100 bg-white p-6">
             <h2 className="text-base font-semibold text-gray-900">Über {p.name.split(' ')[0]}</h2>
             <p className="mt-2 text-sm leading-relaxed text-gray-600">{p.about}</p>
           </div>
@@ -266,6 +279,9 @@ export default function BeispielPolitiker() {
               ))}
             </div>
           )}
+
+          </div>{/* Ende Hauptspalte */}
+          </div>{/* Ende zweispaltiges Raster */}
 
           <p className="mt-8 text-center text-xs text-gray-400">
             Beispielprofil zu Demonstrationszwecken · alle Angaben und Personen sind fiktiv.

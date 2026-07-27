@@ -6,7 +6,7 @@ export default function Wirkung() {
     <>
       <Navbar />
       <main className="pt-16 min-h-screen bg-gray-50">
-        <div className="max-w-2xl mx-auto px-6 py-10">
+        <div className="max-w-6xl mx-auto px-6 py-10">
 
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900">Wirkung</h1>

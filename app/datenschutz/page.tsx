@@ -4,7 +4,7 @@ import { ChevronLeft, AlertTriangle } from 'lucide-react'
 export default function Datenschutz() {
   return (
     <main className="min-h-screen bg-gray-50 px-6 py-10">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors mb-6">
           <ChevronLeft size={15} /> Zurück zur Startseite
         </Link>
@@ -20,7 +20,7 @@ export default function Datenschutz() {
         <div className="bg-white rounded-2xl border border-gray-100 p-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-6">Datenschutzerklärung</h1>
 
-          <div className="text-sm text-gray-700 leading-relaxed space-y-6">
+          <div className="text-sm text-gray-700 leading-relaxed lg:columns-2 lg:gap-x-12 [&>section]:mb-6 [&>section]:break-inside-avoid">
 
             <section>
               <h2 className="font-semibold text-gray-900 mb-1">1. Verantwortlicher</h2>
