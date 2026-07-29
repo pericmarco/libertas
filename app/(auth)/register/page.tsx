@@ -5,6 +5,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { REGION_NAME, USERNAME_REGEX, containsBlocked } from '@/lib/constants'
+import { validatePassword } from '@/lib/password'
+import PasswordRequirements from '@/components/PasswordRequirements'
 
 type District = { id: string; name: string; city: string }
 
@@ -40,6 +42,9 @@ export default function Register() {
       setError('Bitte akzeptiere die Datenschutzerklärung, um fortzufahren.')
       return
     }
+
+    const pwError = validatePassword(password)
+    if (pwError) { setError(pwError); return }
 
     setLoading(true)
 
@@ -184,13 +189,14 @@ export default function Register() {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Passwort</label>
               <input
                 type="password"
-                placeholder="Mindestens 6 Zeichen"
+                placeholder="Sicheres Passwort wählen"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={8}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
+              <PasswordRequirements password={password} />
             </div>
 
             {/* Pflicht-Einwilligung — ohne Häkchen keine Registrierung */}

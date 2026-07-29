@@ -6,6 +6,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { CheckCircle2 } from 'lucide-react'
+import { validatePassword } from '@/lib/password'
+import PasswordRequirements from '@/components/PasswordRequirements'
 
 export default function PasswortNeu() {
   const router = useRouter()
@@ -29,7 +31,8 @@ export default function PasswortNeu() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    if (password.length < 8) { setError('Das Passwort muss mindestens 8 Zeichen haben.'); return }
+    const pwError = validatePassword(password)
+    if (pwError) { setError(pwError); return }
     if (password !== confirm) { setError('Die Passwörter stimmen nicht überein.'); return }
     setLoading(true)
     const supabase = createClient()
@@ -75,6 +78,7 @@ export default function PasswortNeu() {
                   minLength={8}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
+                <PasswordRequirements password={password} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Passwort wiederholen</label>

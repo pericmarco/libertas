@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import Navbar from '@/components/layout/Navbar'
 import { createClient } from '@/lib/supabase/client'
 import { AGE_GROUPS, GENDERS, REGION_NAME, USERNAME_REGEX, containsBlocked } from '@/lib/constants'
+import { validatePassword } from '@/lib/password'
+import PasswordRequirements from '@/components/PasswordRequirements'
 import { ShieldCheck, CheckCircle2, KeyRound, Mail } from 'lucide-react'
 
 type District = { id: string; name: string }
@@ -115,7 +117,8 @@ export default function Profil() {
 
   async function changePassword() {
     setPwMsg('')
-    if (newPassword.length < 8) { setPwMsg('Das Passwort muss mindestens 8 Zeichen haben.'); return }
+    const pwError = validatePassword(newPassword)
+    if (pwError) { setPwMsg(pwError); return }
     if (newPassword !== confirmPassword) { setPwMsg('Die Passwörter stimmen nicht überein.'); return }
     setPwBusy(true)
     const supabase = createClient()
@@ -212,6 +215,7 @@ export default function Profil() {
                     {pwBusy ? 'Speichern…' : 'Speichern'}
                   </button>
                 </div>
+                <PasswordRequirements password={newPassword} />
                 {pwMsg && (
                   <div className={`text-xs mt-2 px-3 py-2 rounded-lg ${pwMsg.startsWith('Fehler') || pwMsg.includes('mindestens') || pwMsg.includes('stimmen') ? 'text-red-600 bg-red-50' : 'text-green-600 bg-green-50'}`}>{pwMsg}</div>
                 )}
