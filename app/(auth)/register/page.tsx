@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
-import { REGION_NAME, USERNAME_REGEX, containsBlocked } from '@/lib/constants'
+import { REGION_NAME } from '@/lib/constants'
 import { validatePassword } from '@/lib/password'
 import PasswordRequirements from '@/components/PasswordRequirements'
 
@@ -12,7 +12,6 @@ type District = { id: string; name: string; city: string }
 
 export default function Register() {
   const [fullName, setFullName] = useState('')
-  const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [districtId, setDistrictId] = useState('')
@@ -48,45 +47,18 @@ export default function Register() {
 
     setLoading(true)
 
-    // Nutzername ist optional — wer keinen wählt, bleibt bei Beiträgen anonym
-    // und kann ihn jederzeit im Profil nachtragen
-    const name = username.trim()
-    if (name) {
-      if (!USERNAME_REGEX.test(name)) {
-        setError('Nutzername: 3–24 Zeichen, nur Buchstaben, Zahlen, Punkt und Unterstrich.')
-        setLoading(false)
-        return
-      }
-      if (containsBlocked(name)) {
-        setError('Dieser Nutzername ist nicht zulässig. Bitte wähle einen anderen.')
-        setLoading(false)
-        return
-      }
-    }
-
     const supabase = createClient()
-
-    if (name) {
-      const { data: taken } = await supabase
-        .from('profiles').select('id').ilike('username', name).limit(1)
-      if (taken && taken.length > 0) {
-        setError('Dieser Nutzername ist bereits vergeben.')
-        setLoading(false)
-        return
-      }
-    }
 
     const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
         // Klarname wird erhoben, aber ausschließlich intern gespeichert (für
-        // den Ernstfall). Öffentlich erscheint höchstens der Nutzername.
-        // terms_accepted/consent_version → Einwilligungs-Nachweis (Trigger
-        // setzt daraus consent_at + consent_version im Profil).
+        // den Ernstfall). Der Nutzername (öffentliches Pseudonym) wird erst im
+        // Onboarding abgefragt. terms_accepted/consent_version → Einwilligungs-
+        // Nachweis (Trigger setzt daraus consent_at + consent_version im Profil).
         data: {
           full_name: fullName.trim() || null,
-          username: name || null,
           district_id: districtId || null,
           terms_accepted: 'true',
           consent_version: '1',
@@ -148,18 +120,6 @@ export default function Register() {
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <p className="text-xs text-gray-400 mt-1.5">Bleibt <strong>privat</strong> und wird niemals öffentlich angezeigt. Wir speichern ihn nur intern.</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Nutzername <span className="text-gray-400 font-normal">(optional)</span></label>
-              <input
-                type="text"
-                placeholder="z. B. koelner_jeck"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                maxLength={24}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <p className="text-xs text-gray-500 mt-1.5">Ein frei wählbares Pseudonym. Ohne Nutzernamen bleibst du bei Beiträgen komplett anonym.</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">E-Mail</label>

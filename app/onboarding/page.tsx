@@ -4,11 +4,12 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
-import { AGE_GROUPS, GENDERS, REGION_NAME } from '@/lib/constants'
+import { AGE_GROUPS, GENDERS, REGION_NAME, USERNAME_REGEX, containsBlocked } from '@/lib/constants'
 
 type District = { id: string; name: string }
 
 export default function Onboarding() {
+  const [username, setUsername] = useState('')
   const [ageGroup, setAgeGroup] = useState('')
   const [gender, setGender] = useState('')
   const [districtId, setDistrictId] = useState('')
@@ -27,7 +28,7 @@ export default function Onboarding() {
       }
       const { data: profile } = await supabase
         .from('profiles')
-        .select('age_group, gender, district_id')
+        .select('username, age_group, gender, district_id')
         .eq('id', data.user.id)
         .single()
 
@@ -36,6 +37,7 @@ export default function Onboarding() {
         return
       }
 
+      if (profile?.username) setUsername(profile.username)
       if (profile?.district_id) setDistrictId(profile.district_id)
 
       const { data: region } = await supabase.from('regions').select('id').eq('name', REGION_NAME).single()
@@ -56,12 +58,33 @@ export default function Onboarding() {
     const { data } = await supabase.auth.getUser()
     if (!data.user) return
 
+    // Nutzername ist optional — wenn gesetzt, Format + Verfügbarkeit prüfen.
+    const name = username.trim()
+    if (name) {
+      if (!USERNAME_REGEX.test(name)) {
+        setError('Nutzername: 3–24 Zeichen, nur Buchstaben, Zahlen, Punkt und Unterstrich.')
+        setLoading(false); return
+      }
+      if (containsBlocked(name)) {
+        setError('Dieser Nutzername ist nicht zulässig. Bitte wähle einen anderen.')
+        setLoading(false); return
+      }
+      const { data: taken } = await supabase
+        .from('profiles').select('id').ilike('username', name).neq('id', data.user.id).limit(1)
+      if (taken && taken.length > 0) {
+        setError('Dieser Nutzername ist bereits vergeben.')
+        setLoading(false); return
+      }
+    }
+
     const { error: upsertError } = await supabase
       .from('profiles')
-      .upsert({ id: data.user.id, age_group: ageGroup, gender, district_id: districtId })
+      .upsert({ id: data.user.id, username: name || null, age_group: ageGroup, gender, district_id: districtId })
 
     if (upsertError) {
-      setError(upsertError.message)
+      setError(upsertError.message.includes('duplicate key')
+        ? 'Dieser Nutzername ist bereits vergeben.'
+        : upsertError.message)
       setLoading(false)
       return
     }
@@ -80,7 +103,7 @@ export default function Onboarding() {
           <Image src="/logo.svg" alt="Lybertas Logo" width={40} height={40} className="w-10 h-10 mx-auto mb-4" unoptimized />
           <h1 className="text-2xl font-bold text-gray-900">Fast geschafft</h1>
           <p className="text-gray-500 mt-2 text-sm leading-relaxed">
-            Damit wir zeigen können wie <span className="font-semibold text-gray-700">repräsentativ</span> die Abstimmungsergebnisse sind, brauchen wir noch zwei Angaben von dir.
+            Damit wir zeigen können wie <span className="font-semibold text-gray-700">repräsentativ</span> die Abstimmungsergebnisse sind, brauchen wir noch ein paar Angaben von dir.
           </p>
         </div>
 
@@ -91,6 +114,20 @@ export default function Onboarding() {
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Nutzername <span className="text-gray-400 font-normal">(optional)</span></label>
+              <input
+                type="text"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                placeholder="z. B. koelner_jeck"
+                minLength={3}
+                maxLength={24}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <p className="text-xs text-gray-400 mt-1.5">Frei wählbares Pseudonym. Ohne Nutzernamen bleibst du bei Beiträgen komplett anonym — du kannst ihn auch später im Profil setzen.</p>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">Altersgruppe</label>
               <div className="grid grid-cols-3 gap-2">
