@@ -77,7 +77,15 @@ export default function Register() {
       options: {
         // Klarname wird erhoben, aber ausschließlich intern gespeichert (für
         // den Ernstfall). Öffentlich erscheint höchstens der Nutzername.
-        data: { full_name: fullName.trim() || null, username: name || null, district_id: districtId || null },
+        // terms_accepted/consent_version → Einwilligungs-Nachweis (Trigger
+        // setzt daraus consent_at + consent_version im Profil).
+        data: {
+          full_name: fullName.trim() || null,
+          username: name || null,
+          district_id: districtId || null,
+          terms_accepted: 'true',
+          consent_version: '1',
+        },
       },
     })
 
@@ -195,7 +203,7 @@ export default function Register() {
                 className="w-4 h-4 mt-0.5 accent-blue-600 shrink-0"
               />
               <span className="text-sm text-gray-600 leading-relaxed">
-                Ich habe die{' '}
+                Ich bin mindestens 16 Jahre alt und habe die{' '}
                 <Link href="/datenschutz" target="_blank" className="text-blue-600 font-medium hover:underline">
                   Datenschutzerklärung
                 </Link>{' '}

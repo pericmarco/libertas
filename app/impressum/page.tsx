@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ChevronLeft, AlertTriangle } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
 
 export default function Impressum() {
   return (
@@ -9,37 +9,38 @@ export default function Impressum() {
           <ChevronLeft size={15} /> Zurück zur Startseite
         </Link>
 
-        <div className="flex items-start gap-3 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 mb-6 text-sm text-yellow-800 leading-relaxed">
-          <AlertTriangle size={16} className="shrink-0 mt-0.5" />
-          <span>
-            <strong>Entwurf, noch nicht vollständig.</strong> Anschrift und E-Mail-Adresse fehlen noch — beides ist
-            nach §5 TMG Pflichtangabe. Diese Seite darf erst live gehen, wenn diese Angaben ergänzt sind.
-          </span>
-        </div>
-
         <div className="bg-white rounded-2xl border border-gray-100 p-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-6">Impressum</h1>
 
           <div className="text-sm text-gray-700 leading-relaxed lg:columns-2 lg:gap-x-12 [&>section]:mb-6 [&>section]:break-inside-avoid">
             <section>
-              <h2 className="font-semibold text-gray-900 mb-1">Angaben gemäß § 5 TMG</h2>
+              <h2 className="font-semibold text-gray-900 mb-1">Angaben gemäß § 5 DDG</h2>
               <p>
+                Lybertas GbR<br />
+                vertreten durch die Gesellschafter Tobias Mittmann und Marco Müller
+              </p>
+              <p className="mt-3">
                 Tobias Mittmann<br />
+                Bergstraße 144<br />
+                53129 Bonn
+              </p>
+              <p className="mt-3">
                 Marco Müller<br />
-                <span className="text-red-500">[Anschrift noch zu ergänzen — Straße, Hausnummer, PLZ, Ort]</span>
+                Mathilde-Wrede-Str. 5<br />
+                51469 Bergisch Gladbach
               </p>
             </section>
 
             <section>
               <h2 className="font-semibold text-gray-900 mb-1">Kontakt</h2>
               <p>
-                E-Mail: <span className="text-red-500">[noch zu ergänzen]</span>
+                E-Mail: <a href="mailto:info@lybertas.de" className="text-blue-600 hover:underline">info@lybertas.de</a>
               </p>
             </section>
 
             <section>
               <h2 className="font-semibold text-gray-900 mb-1">Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h2>
-              <p>Tobias Mittmann, Marco Müller (Anschrift wie oben)</p>
+              <p>Tobias Mittmann und Marco Müller (Anschriften wie oben)</p>
             </section>
 
             <section>
@@ -52,13 +53,11 @@ export default function Impressum() {
             </section>
 
             <section>
-              <h2 className="font-semibold text-gray-900 mb-1">Streitschlichtung</h2>
+              <h2 className="font-semibold text-gray-900 mb-1">Verbraucherstreitbeilegung</h2>
               <p>
-                Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit:{' '}
-                <a href="https://ec.europa.eu/consumers/odr/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                  https://ec.europa.eu/consumers/odr/
-                </a>. Wir sind nicht verpflichtet und nicht bereit, an einem Streitbeilegungsverfahren vor einer
-                Verbraucherschlichtungsstelle teilzunehmen.
+                Wir sind nicht verpflichtet und nicht bereit, an einem Streitbeilegungsverfahren vor einer
+                Verbraucherschlichtungsstelle teilzunehmen (§ 36 VSBG). Die frühere EU-Plattform zur
+                Online-Streitbeilegung (OS) wurde im Jahr 2025 eingestellt.
               </p>
             </section>
           </div>
