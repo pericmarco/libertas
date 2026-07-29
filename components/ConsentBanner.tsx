@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { ShieldCheck } from 'lucide-react'
+
+// Auf diesen Seiten darf der Banner nicht überlagern — sonst kann man die
+// Erklärung nicht lesen, bevor man zustimmt.
+const EXEMPT = ['/datenschutz', '/impressum']
 
 // Einwilligungs-Banner: muss aktiv bestätigt werden. Blendet sich erst nach
 // „Verstanden & akzeptieren" aus und merkt sich die Einwilligung lokal.
@@ -12,6 +17,7 @@ const CONSENT_KEY = 'lybertas_consent'
 const CONSENT_VERSION = 1
 
 export default function ConsentBanner() {
+  const pathname = usePathname()
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -33,7 +39,7 @@ export default function ConsentBanner() {
     setVisible(false)
   }
 
-  if (!visible) return null
+  if (!visible || EXEMPT.includes(pathname)) return null
 
   return (
     <div
