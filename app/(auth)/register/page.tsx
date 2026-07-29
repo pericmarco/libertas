@@ -9,11 +9,13 @@ import { REGION_NAME, USERNAME_REGEX, containsBlocked } from '@/lib/constants'
 type District = { id: string; name: string; city: string }
 
 export default function Register() {
+  const [fullName, setFullName] = useState('')
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [districtId, setDistrictId] = useState('')
   const [districts, setDistricts] = useState<District[]>([])
+  const [accepted, setAccepted] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -31,8 +33,15 @@ export default function Register() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setLoading(true)
     setError('')
+
+    // Ohne akzeptierte Datenschutzerklärung keine Registrierung.
+    if (!accepted) {
+      setError('Bitte akzeptiere die Datenschutzerklärung, um fortzufahren.')
+      return
+    }
+
+    setLoading(true)
 
     // Nutzername ist optional — wer keinen wählt, bleibt bei Beiträgen anonym
     // und kann ihn jederzeit im Profil nachtragen
@@ -66,9 +75,9 @@ export default function Register() {
       email,
       password,
       options: {
-        // Kein Klarname mehr — Datensparsamkeit. Öffentliche Identität ist
-        // höchstens ein selbst gewählter Nutzername.
-        data: { username: name || null, district_id: districtId || null },
+        // Klarname wird erhoben, aber ausschließlich intern gespeichert (für
+        // den Ernstfall). Öffentlich erscheint höchstens der Nutzername.
+        data: { full_name: fullName.trim() || null, username: name || null, district_id: districtId || null },
       },
     })
 
@@ -116,6 +125,18 @@ export default function Register() {
         <div className="bg-white rounded-2xl border border-gray-100 p-6">
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Vollständiger Name</label>
+              <input
+                type="text"
+                placeholder="Max Mustermann"
+                value={fullName}
+                onChange={e => setFullName(e.target.value)}
+                required
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <p className="text-xs text-gray-400 mt-1.5">Bleibt <strong>privat</strong> und wird niemals öffentlich angezeigt. Wir speichern ihn nur intern.</p>
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Nutzername <span className="text-gray-400 font-normal">(optional)</span></label>
               <input
                 type="text"
@@ -125,7 +146,7 @@ export default function Register() {
                 maxLength={24}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-              <p className="text-xs text-gray-500 mt-1.5">Ein frei wählbares Pseudonym. Ohne Nutzernamen bleibst du bei Beiträgen komplett anonym. Wir fragen bewusst keinen Klarnamen ab.</p>
+              <p className="text-xs text-gray-500 mt-1.5">Ein frei wählbares Pseudonym. Ohne Nutzernamen bleibst du bei Beiträgen komplett anonym.</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">E-Mail</label>
@@ -164,6 +185,24 @@ export default function Register() {
               />
             </div>
 
+            {/* Pflicht-Einwilligung — ohne Häkchen keine Registrierung */}
+            <label className="flex items-start gap-3 cursor-pointer mt-1">
+              <input
+                type="checkbox"
+                checked={accepted}
+                onChange={e => { setAccepted(e.target.checked); setError('') }}
+                required
+                className="w-4 h-4 mt-0.5 accent-blue-600 shrink-0"
+              />
+              <span className="text-sm text-gray-600 leading-relaxed">
+                Ich habe die{' '}
+                <Link href="/datenschutz" target="_blank" className="text-blue-600 font-medium hover:underline">
+                  Datenschutzerklärung
+                </Link>{' '}
+                gelesen und stimme der Verarbeitung meiner Daten zu.
+              </span>
+            </label>
+
             {error && (
               <div className="text-sm text-red-600 bg-red-50 px-4 py-3 rounded-xl">
                 {error}
@@ -172,7 +211,7 @@ export default function Register() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !accepted}
               className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Registrieren…' : 'Registrieren'}

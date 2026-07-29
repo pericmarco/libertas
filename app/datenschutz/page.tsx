@@ -34,7 +34,7 @@ export default function Datenschutz() {
               <h2 className="font-semibold text-gray-900 mb-1">2. Welche Daten wir verarbeiten</h2>
               <p className="mb-2">Bei der Nutzung von Lybertas verarbeiten wir folgende Daten:</p>
               <ul className="list-disc list-inside space-y-1 text-gray-600">
-                <li><strong>Bei der Registrierung:</strong> E-Mail-Adresse, Passwort (verschlüsselt gespeichert) und optional ein selbst gewählter Nutzername (Pseudonym). Einen Klarnamen erheben wir bewusst nicht.</li>
+                <li><strong>Bei der Registrierung:</strong> Name, E-Mail-Adresse, Passwort (verschlüsselt gespeichert) und optional ein selbst gewählter Nutzername (Pseudonym). Dein Name wird ausschließlich intern gespeichert und niemals öffentlich angezeigt; öffentlich erscheint höchstens dein Nutzername.</li>
                 <li><strong>Im Profil:</strong> Altersgruppe, Geschlecht, Stadtteil — freiwillig im Rahmen der Nutzung angegeben, um Beteiligung repräsentativ auswerten zu können</li>
                 <li><strong>Bei Beteiligung:</strong> eingereichte Forderungen, Positionen (Unterstützung/Gegenargument/Alternative), Kommentare, Umfrage-Antworten</li>
                 <li><strong>Technisch:</strong> ein Session-Cookie zur Anmeldung, IP-Adresse und Standard-Zugriffsdaten durch unseren Hosting-Anbieter</li>

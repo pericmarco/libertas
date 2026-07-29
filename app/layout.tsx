@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
-import ConsentBanner from "@/components/ConsentBanner";
 import "./globals.css";
 
 const geist = Geist({ subsets: ["latin"] });
@@ -20,7 +19,6 @@ export default function RootLayout({
     <html lang="de" className="h-full">
       <body className={`${geist.className} min-h-full antialiased bg-gray-50`}>
         {children}
-        <ConsentBanner />
         <Analytics />
       </body>
     </html>

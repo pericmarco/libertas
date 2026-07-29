@@ -11,6 +11,7 @@ type District = { id: string; name: string }
 export default function Profil() {
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<string>('citizen')
+  const [fullName, setFullName] = useState('')
   const [username, setUsername] = useState('')
   const [ageGroup, setAgeGroup] = useState('')
   const [gender, setGender] = useState('')
@@ -38,11 +39,12 @@ export default function Profil() {
       setEmail(userData.user.email ?? '')
 
       const [{ data: profile }, { data: region }] = await Promise.all([
-        supabase.from('profiles').select('username, role, age_group, gender, district_id').eq('id', userData.user.id).single(),
+        supabase.from('profiles').select('full_name, username, role, age_group, gender, district_id').eq('id', userData.user.id).single(),
         supabase.from('regions').select('id').eq('name', REGION_NAME).single(),
       ])
 
       if (profile) {
+        setFullName(profile.full_name ?? '')
         setUsername(profile.username ?? '')
         setRole(profile.role ?? 'citizen')
         if (profile.age_group && AGE_GROUPS.includes(profile.age_group)) setAgeGroup(profile.age_group)
@@ -83,7 +85,7 @@ export default function Profil() {
 
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ username: name || null, age_group: ageGroup, gender, district_id: districtId })
+      .update({ full_name: fullName.trim() || null, username: name || null, age_group: ageGroup, gender, district_id: districtId })
       .eq('id', userData.user.id)
 
     if (updateError) {
@@ -226,21 +228,34 @@ export default function Profil() {
 
           <form onSubmit={handleSave} className="flex flex-col gap-6">
 
-            {/* Öffentliches Profil */}
+            {/* Profil */}
             <div className="bg-white rounded-2xl border border-gray-100 p-6">
-              <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Öffentliches Profil</div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Nutzername <span className="text-gray-400 font-normal">(optional)</span></label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={e => { setUsername(e.target.value); setSaved(false) }}
-                  placeholder="z. B. koelner_jeck"
-                  minLength={3}
-                  maxLength={24}
-                  className={inp}
-                />
-                <p className="text-xs text-gray-400 mt-1.5">Frei wählbares Pseudonym. Ohne Nutzernamen bleibst du bei Beiträgen komplett anonym. Wir speichern bewusst keinen Klarnamen.</p>
+              <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Profil</div>
+              <div className="flex flex-col gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Name</label>
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={e => { setFullName(e.target.value); setSaved(false) }}
+                    placeholder="Vor- und Nachname"
+                    className={inp}
+                  />
+                  <p className="text-xs text-gray-400 mt-1.5">Bleibt <strong>privat</strong> und wird niemals öffentlich angezeigt — nur intern gespeichert.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Nutzername <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={e => { setUsername(e.target.value); setSaved(false) }}
+                    placeholder="z. B. koelner_jeck"
+                    minLength={3}
+                    maxLength={24}
+                    className={inp}
+                  />
+                  <p className="text-xs text-gray-400 mt-1.5">Frei wählbares Pseudonym. Ohne Nutzernamen bleibst du bei Beiträgen komplett anonym.</p>
+                </div>
               </div>
             </div>
 
