@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 const PUBLIC_PATHS = [
-  '/', '/login', '/register', '/impressum', '/datenschutz',
+  '/', '/login', '/register', '/passwort-vergessen', '/impressum', '/datenschutz',
   // Öffentliche Lese-Ansicht (ohne Login): Dashboard-Überblick,
   // Forderungsübersicht + Stadtumfragen. Mitmachen (Position, Unterstützen,
   // Abstimmen, Einreichen) erfordert weiter eine Anmeldung; die Seiten

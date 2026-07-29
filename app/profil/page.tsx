@@ -4,14 +4,13 @@ import { useState, useEffect } from 'react'
 import Navbar from '@/components/layout/Navbar'
 import { createClient } from '@/lib/supabase/client'
 import { AGE_GROUPS, GENDERS, REGION_NAME, USERNAME_REGEX, containsBlocked } from '@/lib/constants'
-import { ShieldCheck, CheckCircle2 } from 'lucide-react'
+import { ShieldCheck, CheckCircle2, KeyRound, Mail } from 'lucide-react'
 
 type District = { id: string; name: string }
 
 export default function Profil() {
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<string>('citizen')
-  const [fullName, setFullName] = useState('')
   const [username, setUsername] = useState('')
   const [ageGroup, setAgeGroup] = useState('')
   const [gender, setGender] = useState('')
@@ -22,6 +21,15 @@ export default function Profil() {
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
 
+  // Konto & Sicherheit
+  const [newEmail, setNewEmail] = useState('')
+  const [emailBusy, setEmailBusy] = useState(false)
+  const [emailMsg, setEmailMsg] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [pwBusy, setPwBusy] = useState(false)
+  const [pwMsg, setPwMsg] = useState('')
+
   useEffect(() => {
     const supabase = createClient()
     async function load() {
@@ -30,12 +38,11 @@ export default function Profil() {
       setEmail(userData.user.email ?? '')
 
       const [{ data: profile }, { data: region }] = await Promise.all([
-        supabase.from('profiles').select('full_name, username, role, age_group, gender, district_id').eq('id', userData.user.id).single(),
+        supabase.from('profiles').select('username, role, age_group, gender, district_id').eq('id', userData.user.id).single(),
         supabase.from('regions').select('id').eq('name', REGION_NAME).single(),
       ])
 
       if (profile) {
-        setFullName(profile.full_name ?? '')
         setUsername(profile.username ?? '')
         setRole(profile.role ?? 'citizen')
         if (profile.age_group && AGE_GROUPS.includes(profile.age_group)) setAgeGroup(profile.age_group)
@@ -76,7 +83,7 @@ export default function Profil() {
 
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ full_name: fullName || null, username: name || null, age_group: ageGroup, gender, district_id: districtId })
+      .update({ username: name || null, age_group: ageGroup, gender, district_id: districtId })
       .eq('id', userData.user.id)
 
     if (updateError) {
@@ -91,7 +98,35 @@ export default function Profil() {
     setSaving(false)
   }
 
+  async function changeEmail() {
+    setEmailMsg('')
+    const next = newEmail.trim()
+    if (!next || next === email) return
+    setEmailBusy(true)
+    const supabase = createClient()
+    const { error } = await supabase.auth.updateUser({ email: next })
+    setEmailBusy(false)
+    if (error) { setEmailMsg('Fehler: ' + error.message); return }
+    setEmailMsg('Wir haben einen Bestätigungslink an die neue Adresse geschickt. Die Änderung wird erst nach dem Bestätigen wirksam.')
+    setNewEmail('')
+  }
+
+  async function changePassword() {
+    setPwMsg('')
+    if (newPassword.length < 8) { setPwMsg('Das Passwort muss mindestens 8 Zeichen haben.'); return }
+    if (newPassword !== confirmPassword) { setPwMsg('Die Passwörter stimmen nicht überein.'); return }
+    setPwBusy(true)
+    const supabase = createClient()
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    setPwBusy(false)
+    if (error) { setPwMsg('Fehler: ' + error.message); return }
+    setPwMsg('Dein Passwort wurde geändert.')
+    setNewPassword('')
+    setConfirmPassword('')
+  }
+
   const complete = ageGroup && gender && districtId
+  const inp = 'w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
 
   if (loading) {
     return (
@@ -114,57 +149,98 @@ export default function Profil() {
 
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900">Dein Profil</h1>
-            <p className="text-gray-500 mt-1">Verwalte deine persönlichen Angaben</p>
+            <p className="text-gray-500 mt-1">Verwalte dein Konto und deine Angaben</p>
+          </div>
+
+          {/* Konto & Sicherheit — eigene Karte, außerhalb des Demografie-Formulars */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6">
+            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Konto &amp; Sicherheit</div>
+            <div className="flex flex-col gap-6">
+
+              {/* E-Mail ändern */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-1.5"><Mail size={14} className="text-gray-400" /> E-Mail</label>
+                <div className="text-sm text-gray-500 mb-2">Aktuell: <span className="text-gray-700">{email}</span></div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="email"
+                    value={newEmail}
+                    onChange={e => { setNewEmail(e.target.value); setEmailMsg('') }}
+                    placeholder="neue@e-mail.de"
+                    className={inp}
+                  />
+                  <button
+                    type="button"
+                    onClick={changeEmail}
+                    disabled={emailBusy || !newEmail.trim()}
+                    className="shrink-0 px-4 py-3 sm:py-2 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-40"
+                  >
+                    {emailBusy ? 'Senden…' : 'E-Mail ändern'}
+                  </button>
+                </div>
+                {emailMsg && (
+                  <div className={`text-xs mt-2 px-3 py-2 rounded-lg ${emailMsg.startsWith('Fehler') ? 'text-red-600 bg-red-50' : 'text-green-600 bg-green-50'}`}>{emailMsg}</div>
+                )}
+              </div>
+
+              {/* Passwort ändern */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-1.5"><KeyRound size={14} className="text-gray-400" /> Passwort ändern</label>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={e => { setNewPassword(e.target.value); setPwMsg('') }}
+                    placeholder="Neues Passwort"
+                    className={inp}
+                  />
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={e => { setConfirmPassword(e.target.value); setPwMsg('') }}
+                    placeholder="Wiederholen"
+                    className={inp}
+                  />
+                  <button
+                    type="button"
+                    onClick={changePassword}
+                    disabled={pwBusy || !newPassword || !confirmPassword}
+                    className="shrink-0 px-4 py-3 sm:py-2 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-40"
+                  >
+                    {pwBusy ? 'Speichern…' : 'Speichern'}
+                  </button>
+                </div>
+                {pwMsg && (
+                  <div className={`text-xs mt-2 px-3 py-2 rounded-lg ${pwMsg.startsWith('Fehler') || pwMsg.includes('mindestens') || pwMsg.includes('stimmen') ? 'text-red-600 bg-red-50' : 'text-green-600 bg-green-50'}`}>{pwMsg}</div>
+                )}
+              </div>
+
+              {role !== 'citizen' && (
+                <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5">
+                  <ShieldCheck size={15} />
+                  {role === 'admin' ? 'Administrator-Konto' : role === 'politician' ? 'Politik-Konto' : 'Stadt-Konto'}
+                </div>
+              )}
+            </div>
           </div>
 
           <form onSubmit={handleSave} className="flex flex-col gap-6">
 
-            {/* Auf großen Bildschirmen die beiden Karten nebeneinander */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:items-start">
-
-            {/* Konto */}
+            {/* Öffentliches Profil */}
             <div className="bg-white rounded-2xl border border-gray-100 p-6">
-              <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Konto</div>
-              <div className="flex flex-col gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">E-Mail</label>
-                  <input
-                    type="email"
-                    value={email}
-                    disabled
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 text-gray-400 cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Name</label>
-                  <input
-                    type="text"
-                    value={fullName}
-                    onChange={e => setFullName(e.target.value)}
-                    placeholder="Dein Name"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <p className="text-xs text-gray-400 mt-1.5">Dein echter Name — bleibt privat und wird nicht öffentlich angezeigt.</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Nutzername</label>
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={e => { setUsername(e.target.value); setSaved(false) }}
-                    placeholder="z. B. koelner_jeck"
-                    minLength={3}
-                    maxLength={24}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <p className="text-xs text-gray-400 mt-1.5">Unter diesem Namen erscheinen deine Beiträge öffentlich.</p>
-                </div>
-                {role !== 'citizen' && (
-                  <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5">
-                    <ShieldCheck size={15} />
-                    {role === 'admin' ? 'Administrator-Konto' : 'Stadt-Konto'}
-                  </div>
-                )}
+              <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Öffentliches Profil</div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Nutzername <span className="text-gray-400 font-normal">(optional)</span></label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={e => { setUsername(e.target.value); setSaved(false) }}
+                  placeholder="z. B. koelner_jeck"
+                  minLength={3}
+                  maxLength={24}
+                  className={inp}
+                />
+                <p className="text-xs text-gray-400 mt-1.5">Frei wählbares Pseudonym. Ohne Nutzernamen bleibst du bei Beiträgen komplett anonym. Wir speichern bewusst keinen Klarnamen.</p>
               </div>
             </div>
 
@@ -234,8 +310,6 @@ export default function Profil() {
                 oder Geschlechter in einer Beteiligung über- oder unterrepräsentiert sind.
               </div>
             </div>
-
-            </div>{/* Ende Karten-Raster */}
 
             {error && (
               <div className="text-sm text-red-600 bg-red-50 px-4 py-3 rounded-xl">

@@ -9,7 +9,6 @@ import { REGION_NAME, USERNAME_REGEX, containsBlocked } from '@/lib/constants'
 type District = { id: string; name: string; city: string }
 
 export default function Register() {
-  const [fullName, setFullName] = useState('')
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -67,7 +66,9 @@ export default function Register() {
       email,
       password,
       options: {
-        data: { full_name: fullName, username: name || null, district_id: districtId || null },
+        // Kein Klarname mehr — Datensparsamkeit. Öffentliche Identität ist
+        // höchstens ein selbst gewählter Nutzername.
+        data: { username: name || null, district_id: districtId || null },
       },
     })
 
@@ -115,17 +116,6 @@ export default function Register() {
         <div className="bg-white rounded-2xl border border-gray-100 p-6">
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Vollständiger Name</label>
-              <input
-                type="text"
-                placeholder="Max Mustermann"
-                value={fullName}
-                onChange={e => setFullName(e.target.value)}
-                required
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Nutzername <span className="text-gray-400 font-normal">(optional)</span></label>
               <input
                 type="text"
@@ -135,7 +125,7 @@ export default function Register() {
                 maxLength={24}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-              <p className="text-xs text-gray-500 mt-1.5">Unter diesem Namen erscheinen deine Beiträge. Ohne Nutzernamen bleibst du anonym. Dein echter Name bleibt immer privat.</p>
+              <p className="text-xs text-gray-500 mt-1.5">Ein frei wählbares Pseudonym. Ohne Nutzernamen bleibst du bei Beiträgen komplett anonym. Wir fragen bewusst keinen Klarnamen ab.</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">E-Mail</label>
