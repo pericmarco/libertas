@@ -188,7 +188,7 @@ export default function Forderungen() {
                 {tenant.productLine === 'campus' ? 'Studierenden-Anliegen' : 'Bürgerforderungen'}
               </h1>
               <p className="text-gray-500 mt-1">
-                {tenant.productLine === 'campus' ? 'Was bewegt euren Campus?' : 'Welche Themen bewegen Köln Innenstadt?'}
+                {tenant.productLine === 'campus' ? 'Was bewegt euren Campus?' : `Welche Themen bewegen ${city.name}?`}
               </p>
             </div>
             <Link

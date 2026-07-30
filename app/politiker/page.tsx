@@ -113,7 +113,10 @@ export default function PolitikerVerzeichnis() {
             )}
           </div>
 
-          {/* Demo-Parteiprofil (frontend-only) — Showcase für Vermarktung/Musterstadt */}
+          {/* Demo-Parteiprofil (frontend-only) — Showcase für die Vermarktung.
+              Trägt fest hinterlegte Kölner Demo-Inhalte und erscheint deshalb
+              nur in Köln, nicht in anderen Städten. */}
+          {city.slug === 'koeln' && (
           <Link
             href="/politiker/beispiel"
             className="mb-6 block rounded-2xl border border-gray-100 bg-white p-5 transition-all hover:border-blue-200 hover:shadow-sm"
@@ -136,6 +139,7 @@ export default function PolitikerVerzeichnis() {
               <ChevronRight size={18} className="shrink-0 text-gray-300" />
             </div>
           </Link>
+          )}
 
           {/* Liste */}
           {loading ? (
