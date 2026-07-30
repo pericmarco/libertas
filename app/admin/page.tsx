@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react'
 import Navbar from '@/components/layout/Navbar'
 import { createClient } from '@/lib/supabase/client'
-import { ShieldCheck, Search, ChevronDown, Trash2, AlertTriangle, Flame, Wrench } from 'lucide-react'
+import { ShieldCheck, Search, ChevronDown, Trash2, AlertTriangle, Flame, Wrench, Building2 } from 'lucide-react'
 import { ART_LABELS, SCOPE_LABELS, FEEDBACK_LABELS, themenForTags } from '@/lib/einreichung'
 import AdminMaengelKarte from '@/components/AdminMaengelKarte'
 import AdminReports from '@/components/AdminReports'
 import AdminPolitiker from '@/components/AdminPolitiker'
+import { useCity } from '@/lib/city/context'
 import { PARTEI_FARBEN } from '@/lib/stadtteilDaten'
 
 // Pin-Farben der Mängel-Karte nach Bearbeitungsstatus
@@ -68,6 +69,10 @@ type Moderation = { demand_id: string; status: string; note: string | null }
 type Profile = { id: string; username: string | null; full_name: string | null; role: string; district_id: string | null; created_at?: string; party?: string | null; politician_title?: string | null; politician_verified?: boolean }
 
 export default function Admin() {
+  // Der Admin-Bereich verwaltet immer NUR die Stadt, unter deren Adresse er
+  // aufgerufen wurde. Stadt wechseln = Subdomain wechseln. Das verhindert,
+  // dass versehentlich in der falschen Stadt moderiert wird.
+  const city = useCity()
   const [authorized, setAuthorized] = useState<boolean | null>(null)
   const [tab, setTab] = useState<'forderungen' | 'nutzer' | 'politiker' | 'meldungen'>('forderungen')
   const [demands, setDemands] = useState<Demand[]>([])
@@ -92,10 +97,10 @@ export default function Admin() {
       setAuthorized(true)
 
       const [{ data: d }, { data: m }, { data: p }, { data: dist }] = await Promise.all([
-        supabase.from('demands').select('*').order('created_at', { ascending: false }),
+        supabase.from('demands').select('*').eq('city_id', city.id).order('created_at', { ascending: false }),
         supabase.from('demand_moderation').select('*'),
-        supabase.from('profiles').select('id, username, full_name, role, district_id, created_at, party, politician_title, politician_verified'),
-        supabase.from('districts').select('id, name'),
+        supabase.from('profiles').select('id, username, full_name, role, district_id, created_at, party, politician_title, politician_verified').eq('city_id', city.id),
+        supabase.from('districts').select('id, name').eq('city_id', city.id),
       ])
       setDemands(d ?? [])
       setModeration(Object.fromEntries((m ?? []).map(x => [x.demand_id, x])))
@@ -103,7 +108,7 @@ export default function Admin() {
       setDistricts(Object.fromEntries((dist ?? []).map(x => [x.id, x.name])))
     }
     load()
-  }, [])
+  }, [city.id])
 
   const profileById = Object.fromEntries(profiles.map(p => [p.id, p]))
 
@@ -241,11 +246,21 @@ export default function Admin() {
       <main className="pt-16 min-h-screen bg-gray-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
 
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
             <ShieldCheck size={20} className="text-blue-600" />
             <h1 className="text-3xl font-bold text-gray-900">Admin</h1>
+            {/* Unmissverständlich zeigen, welche Stadt hier verwaltet wird */}
+            <span
+              className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full text-white"
+              style={{ background: city.primary_color }}
+            >
+              <Building2 size={12} /> {city.name}
+            </span>
           </div>
-          <p className="text-gray-500 mb-6">Moderation, Weiterleitung und Rollenverwaltung</p>
+          <p className="text-gray-500 mb-6">
+            Moderation, Weiterleitung und Rollenverwaltung — ausschließlich für <strong>{city.name}</strong>.
+            Für eine andere Stadt deren Adresse aufrufen.
+          </p>
 
           {/* Tabs */}
           <div className="flex gap-1 p-1 bg-gray-100 rounded-xl w-fit mb-6">

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { PARTEI_FARBEN } from '@/lib/stadtteilDaten'
 import { Politician, POLITICIAN_COLUMNS, partyColor, onPartyText, initials } from '@/lib/politiker'
+import { useCity } from '@/lib/city/context'
 import { Plus, ChevronDown, Trash2, BadgeCheck, Link2, Link2Off, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 
@@ -46,6 +47,7 @@ function toRow(f: FormState) {
 }
 
 export default function AdminPolitiker() {
+  const city = useCity()
   const [entries, setEntries] = useState<Politician[]>([])
   const [expanded, setExpanded] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
@@ -59,11 +61,12 @@ export default function AdminPolitiker() {
     const { data } = await supabase
       .from('politicians')
       .select(POLITICIAN_COLUMNS)
+      .eq('city_id', city.id)
       .order('verified', { ascending: false })
       .order('name')
     if (data) setEntries(data as Politician[])
   }
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [city.id])
 
   function openEditor(p: Politician) {
     setExpanded(expanded === p.id ? null : p.id)
@@ -86,7 +89,9 @@ export default function AdminPolitiker() {
     if (!newForm.name.trim()) return
     setSaving(true); setFeedback('')
     const supabase = createClient()
-    const { error } = await supabase.from('politicians').insert(toRow(newForm))
+    // Ausdrücklich in der gerade verwalteten Stadt anlegen — sonst würde die
+    // Stadt aus dem Admin-Profil abgeleitet und läge bei einer anderen Stadt falsch.
+    const { error } = await supabase.from('politicians').insert({ ...toRow(newForm), city_id: city.id })
     setSaving(false)
     if (error) { setFeedback('Fehler: ' + error.message); return }
     setNewForm(EMPTY); setCreating(false)

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Flag, ExternalLink } from 'lucide-react'
+import { useCity } from '@/lib/city/context'
 
 type Report = {
   id: string
@@ -32,6 +33,7 @@ const FILTERS = ['offen', 'erledigt', 'verworfen', 'alle'] as const
 type Filter = typeof FILTERS[number]
 
 export default function AdminReports() {
+  const city = useCity()
   const [reports, setReports] = useState<Report[]>([])
   const [titles, setTitles] = useState<Record<string, string>>({})
   const [usernames, setUsernames] = useState<Record<string, string>>({})
@@ -51,15 +53,23 @@ export default function AdminReports() {
       if (!active) return
       if (error) { setTableMissing(true); setReports([]); setLoading(false); return }
       setTableMissing(false)
-      const rows = (data ?? []) as Report[]
-      setReports(rows)
+      const allRows = (data ?? []) as Report[]
 
-      const demandIds = [...new Set(rows.map(r => r.demand_id))]
-      const reporterIds = [...new Set(rows.map(r => r.reporter_id))]
-      if (demandIds.length) {
-        const { data: ds } = await supabase.from('demands').select('id, title').in('id', demandIds)
+      // Meldungen hängen an Forderungen — angezeigt werden nur die der
+      // gerade verwalteten Stadt.
+      let rows = allRows
+      const allDemandIds = [...new Set(allRows.map(r => r.demand_id))]
+      if (allDemandIds.length) {
+        const { data: ds } = await supabase
+          .from('demands').select('id, title').eq('city_id', city.id).in('id', allDemandIds)
+        const inCity = new Set((ds ?? []).map(d => d.id as string))
+        rows = allRows.filter(r => inCity.has(r.demand_id))
         if (active) setTitles(Object.fromEntries((ds ?? []).map(d => [d.id, d.title as string])))
       }
+      if (!active) return
+      setReports(rows)
+
+      const reporterIds = [...new Set(rows.map(r => r.reporter_id))]
       if (reporterIds.length) {
         const { data: ps } = await supabase.from('profiles').select('id, username').in('id', reporterIds)
         if (active) setUsernames(Object.fromEntries((ps ?? []).filter(p => p.username).map(p => [p.id, p.username as string])))
@@ -68,7 +78,7 @@ export default function AdminReports() {
     }
     load()
     return () => { active = false }
-  }, [filter, reloadKey])
+  }, [filter, reloadKey, city.id])
 
   async function setStatus(id: string, status: string) {
     const supabase = createClient()
