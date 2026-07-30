@@ -95,17 +95,30 @@ export default async function Dashboard() {
             /* Gäste: statt persönlicher Beteiligung eine Registrieren-Einladung */
             <div className="bg-blue-600 rounded-2xl px-6 py-6 mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-white">Mach mit in {city.name}</h2>
+                <h2 className="text-lg font-semibold text-white">
+                  {city.is_demo ? `Beispielansicht ${city.name}` : `Mach mit in ${city.name}`}
+                </h2>
                 <p className="text-blue-100 text-sm mt-1">
-                  Registriere dich kostenlos, um {tenant.labels.demandPlural} einzureichen, abzustimmen und deine eigene Beteiligung zu sehen.
+                  {city.is_demo
+                    ? `So sieht die Plattform für Bürgerinnen und Bürger aus. Alle ${tenant.labels.demandPlural} und Zahlen hier sind Beispieldaten.`
+                    : `Registriere dich kostenlos, um ${tenant.labels.demandPlural} einzureichen, abzustimmen und deine eigene Beteiligung zu sehen.`}
                 </p>
               </div>
-              <Link
-                href="/register"
-                className="shrink-0 inline-flex items-center justify-center px-5 py-2.5 bg-white text-blue-600 text-sm font-semibold rounded-xl hover:bg-blue-50 transition-colors"
-              >
-                Kostenlos registrieren
-              </Link>
+              {city.is_demo ? (
+                <Link
+                  href="/forderungen"
+                  className="shrink-0 inline-flex items-center justify-center px-5 py-2.5 bg-white text-blue-600 text-sm font-semibold rounded-xl hover:bg-blue-50 transition-colors"
+                >
+                  Beispiel-{tenant.labels.demandPlural} ansehen
+                </Link>
+              ) : (
+                <Link
+                  href="/register"
+                  className="shrink-0 inline-flex items-center justify-center px-5 py-2.5 bg-white text-blue-600 text-sm font-semibold rounded-xl hover:bg-blue-50 transition-colors"
+                >
+                  Kostenlos registrieren
+                </Link>
+              )}
             </div>
           )}
 

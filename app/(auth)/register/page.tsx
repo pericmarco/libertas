@@ -79,6 +79,25 @@ export default function Register() {
     setLoading(false)
   }
 
+  // In einer Vertriebs-Demo gibt es bewusst keine Konten — sonst entstünden
+  // Karteileichen, und die Zielgruppe soll ohnehin nur ansehen.
+  if (city.is_demo) {
+    return (
+      <main className="min-h-screen flex items-center justify-center px-6 bg-gray-50">
+        <div className="w-full max-w-md text-center bg-white rounded-2xl border border-gray-100 p-8">
+          <h1 className="text-xl font-bold text-gray-900 mb-2">Beispielansicht</h1>
+          <p className="text-sm text-gray-500 mb-6">
+            {city.name} ist eine Demo-Instanz — hier ist keine Registrierung nötig und auch nicht möglich.
+            Sie können sich alle Inhalte frei ansehen.
+          </p>
+          <Link href="/dashboard" className="inline-block px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors">
+            Plattform ansehen
+          </Link>
+        </div>
+      </main>
+    )
+  }
+
   if (success) {
     return (
       <main className="min-h-screen flex items-center justify-center px-6 bg-gray-50">

@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
-import { useCityBrand } from '@/lib/city/context'
+import { useCity, useCityBrand } from '@/lib/city/context'
 import { AGE_GROUPS } from '@/lib/constants'
 
 export default function Login() {
   const brand = useCityBrand()
+  const city = useCity()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -49,6 +50,24 @@ export default function Login() {
       router.push('/dashboard')
     }
     router.refresh()
+  }
+
+  // Demo-Instanz: keine Anmeldung — alles ist ohnehin frei einsehbar.
+  if (city.is_demo) {
+    return (
+      <main className="min-h-screen flex items-center justify-center px-6 bg-gray-50">
+        <div className="w-full max-w-md text-center bg-white rounded-2xl border border-gray-100 p-8">
+          <h1 className="text-xl font-bold text-gray-900 mb-2">Beispielansicht</h1>
+          <p className="text-sm text-gray-500 mb-6">
+            {city.name} ist eine Demo-Instanz — eine Anmeldung ist hier nicht nötig.
+            Sie können sich alle Inhalte frei ansehen.
+          </p>
+          <Link href="/dashboard" className="inline-block px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors">
+            Plattform ansehen
+          </Link>
+        </div>
+      </main>
+    )
   }
 
   return (

@@ -26,6 +26,8 @@ export type City = {
   logo_url: string | null
   primary_color: string
   show_powered_by: boolean
+  /** Vertriebs-Demo: keine Anmeldung, dauerhafter Beispiel-Hinweis. */
+  is_demo: boolean
 }
 
 // Notnagel, damit die Oberfläche nie ohne Branding dasteht.
@@ -37,6 +39,7 @@ export const FALLBACK_CITY: City = {
   logo_url: null,
   primary_color: '#2563EB',
   show_powered_by: true,
+  is_demo: false,
 }
 
 export type HostInfo = { slug: string | null; customDomain: string | null }

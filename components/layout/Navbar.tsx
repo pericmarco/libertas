@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { LayoutDashboard, Vote, Megaphone, Users, LogOut, TrendingUp, User as UserIcon, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
-import { useCityBrand } from '@/lib/city/context'
+import { useCity, useCityBrand } from '@/lib/city/context'
 import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 
@@ -30,6 +30,7 @@ const adminLink = { href: '/admin', label: 'Admin', icon: ShieldCheck }
 
 export default function Navbar() {
   const brand = useCityBrand()
+  const city = useCity()
   const pathname = usePathname()
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
@@ -75,6 +76,12 @@ export default function Navbar() {
           <Link href={user ? '/dashboard' : '/'} className="flex items-center gap-2">
             <Image src="/logo.svg" alt={`${brand} Logo`} width={32} height={32} className="w-8 h-8" priority unoptimized />
             <span className="font-semibold text-gray-900">{brand}</span>
+            {/* Demo-Instanz für den Vertrieb klar kennzeichnen */}
+            {city.is_demo && (
+              <span className="hidden sm:inline text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                Beispiel
+              </span>
+            )}
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
@@ -103,6 +110,10 @@ export default function Navbar() {
               <LogOut size={16} />
               <span className="hidden md:inline">Abmelden</span>
             </button>
+          ) : city.is_demo ? (
+            /* In der Demo gibt es bewusst keine Anmeldung — die Zielgruppe
+               will das Produkt ansehen, nicht ein Konto anlegen. */
+            <span className="text-xs text-gray-400 hidden sm:inline">Beispielansicht</span>
           ) : (
             <Link
               href="/login"
