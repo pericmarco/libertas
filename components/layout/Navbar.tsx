@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { LayoutDashboard, Vote, Megaphone, Users, LogOut, TrendingUp, User as UserIcon, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
+import { useCityBrand } from '@/lib/city/context'
 import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 
@@ -28,6 +29,7 @@ const baseLinks = NAV.filter(l => tenant.modules[l.module])
 const adminLink = { href: '/admin', label: 'Admin', icon: ShieldCheck }
 
 export default function Navbar() {
+  const brand = useCityBrand()
   const pathname = usePathname()
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
@@ -71,8 +73,8 @@ export default function Navbar() {
       <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-6 h-full flex items-center justify-between">
           <Link href={user ? '/dashboard' : '/'} className="flex items-center gap-2">
-            <Image src="/logo.svg" alt="Lybertas Logo" width={32} height={32} className="w-8 h-8" priority unoptimized />
-            <span className="font-semibold text-gray-900">Lybertas</span>
+            <Image src="/logo.svg" alt={`${brand} Logo`} width={32} height={32} className="w-8 h-8" priority unoptimized />
+            <span className="font-semibold text-gray-900">{brand}</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">

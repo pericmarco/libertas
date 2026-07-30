@@ -4,15 +4,15 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
-import { REGION_NAME } from '@/lib/constants'
 import { validatePassword } from '@/lib/password'
 import PasswordRequirements from '@/components/PasswordRequirements'
-import { useCity } from '@/lib/city/context'
+import { useCity, useCityBrand } from '@/lib/city/context'
 
 type District = { id: string; name: string; city: string }
 
 export default function Register() {
   const city = useCity()
+  const brand = useCityBrand()
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -26,13 +26,11 @@ export default function Register() {
   useEffect(() => {
     const supabase = createClient()
     async function load() {
-      const { data: region } = await supabase.from('regions').select('id').eq('name', REGION_NAME).single()
-      if (!region) return
-      const { data } = await supabase.from('districts').select('id, name, city').eq('region_id', region.id)
+      const { data } = await supabase.from('districts').select('id, name, city').eq('city_id', city.id)
       if (data) setDistricts(data)
     }
     load()
-  }, [])
+  }, [city.id])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -105,8 +103,8 @@ export default function Register() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <Image src="/logo.svg" alt="Lybertas Logo" width={32} height={32} className="w-8 h-8" priority unoptimized />
-            <span className="font-semibold text-gray-900">Lybertas</span>
+            <Image src="/logo.svg" alt={`${brand} Logo`} width={32} height={32} className="w-8 h-8" priority unoptimized />
+            <span className="font-semibold text-gray-900">{brand}</span>
           </Link>
           <h1 className="text-2xl font-bold text-gray-900">Konto erstellen</h1>
           <p className="text-gray-500 mt-1">Werde Teil deiner lokalen Demokratie</p>

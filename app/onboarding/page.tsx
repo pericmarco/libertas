@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
-import { AGE_GROUPS, GENDERS, REGION_NAME, USERNAME_REGEX, containsBlocked } from '@/lib/constants'
+import { AGE_GROUPS, GENDERS, USERNAME_REGEX, containsBlocked } from '@/lib/constants'
+import { useCity } from '@/lib/city/context'
 
 type District = { id: string; name: string }
 
 export default function Onboarding() {
+  const city = useCity()
   const [username, setUsername] = useState('')
   const [ageGroup, setAgeGroup] = useState('')
   const [gender, setGender] = useState('')
@@ -40,11 +42,8 @@ export default function Onboarding() {
       if (profile?.username) setUsername(profile.username)
       if (profile?.district_id) setDistrictId(profile.district_id)
 
-      const { data: region } = await supabase.from('regions').select('id').eq('name', REGION_NAME).single()
-      if (region) {
-        const { data: districtData } = await supabase.from('districts').select('id, name').eq('region_id', region.id)
-        if (districtData) setDistricts(districtData)
-      }
+      const { data: districtData } = await supabase.from('districts').select('id, name').eq('city_id', city.id)
+      if (districtData) setDistricts(districtData)
       setChecking(false)
     })
   }, [router])

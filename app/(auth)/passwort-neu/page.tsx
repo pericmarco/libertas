@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
+import { useCityBrand } from '@/lib/city/context'
 import { CheckCircle2 } from 'lucide-react'
 import { validatePassword } from '@/lib/password'
 import PasswordRequirements from '@/components/PasswordRequirements'
 
 export default function PasswortNeu() {
+  const brand = useCityBrand()
   const router = useRouter()
   const [ready, setReady] = useState(false)
   const [password, setPassword] = useState('')
@@ -47,8 +49,8 @@ export default function PasswortNeu() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <Image src="/logo.svg" alt="Lybertas Logo" width={32} height={32} className="w-8 h-8" priority unoptimized />
-            <span className="font-semibold text-gray-900">Lybertas</span>
+            <Image src="/logo.svg" alt={`${brand} Logo`} width={32} height={32} className="w-8 h-8" priority unoptimized />
+            <span className="font-semibold text-gray-900">{brand}</span>
           </Link>
           <h1 className="text-2xl font-bold text-gray-900">Neues Passwort setzen</h1>
           <p className="text-gray-500 mt-1">Wähle ein neues, sicheres Passwort</p>

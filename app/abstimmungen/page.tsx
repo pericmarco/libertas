@@ -10,7 +10,6 @@ import { ShieldCheck, CheckCircle2, Circle, Plus, Trash2, X } from 'lucide-react
 import { createClient } from '@/lib/supabase/client'
 import RepScoreBadge from '@/components/RepScoreBadge'
 import { computeRepScoreForProfiles } from '@/lib/repScore'
-import { REGION_NAME } from '@/lib/constants'
 import { useCity } from '@/lib/city/context'
 
 type Vote = {
@@ -78,11 +77,9 @@ export default function Abstimmungen() {
         if (me?.role === 'city') setCSender('Stadt Köln')
       }
 
-      const { data: region } = await supabase.from('regions').select('id').eq('name', REGION_NAME).single()
-      if (region) {
-        const { data: districtData } = await supabase.from('districts').select('id, name').eq('region_id', region.id)
-        setDistricts(districtData ?? [])
-      }
+      // Stadtteile der aufgerufenen Stadt (nicht mehr über den festen Regionsnamen)
+      const { data: districtData } = await supabase.from('districts').select('id, name').eq('city_id', city.id)
+      setDistricts(districtData ?? [])
 
       const [{ data: votesData }, { data: optionsData }] = await Promise.all([
         supabase.from('votes').select('*').eq('city_id', city.id).order('created_at', { ascending: false }),

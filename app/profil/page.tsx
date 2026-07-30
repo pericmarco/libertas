@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import Navbar from '@/components/layout/Navbar'
 import { createClient } from '@/lib/supabase/client'
-import { AGE_GROUPS, GENDERS, REGION_NAME, USERNAME_REGEX, containsBlocked } from '@/lib/constants'
+import { AGE_GROUPS, GENDERS, USERNAME_REGEX, containsBlocked } from '@/lib/constants'
+import { useCity } from '@/lib/city/context'
 import { validatePassword } from '@/lib/password'
 import PasswordRequirements from '@/components/PasswordRequirements'
 import { ShieldCheck, CheckCircle2, KeyRound, Mail } from 'lucide-react'
@@ -11,6 +12,7 @@ import { ShieldCheck, CheckCircle2, KeyRound, Mail } from 'lucide-react'
 type District = { id: string; name: string }
 
 export default function Profil() {
+  const city = useCity()
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<string>('citizen')
   const [fullName, setFullName] = useState('')
@@ -40,9 +42,9 @@ export default function Profil() {
       if (!userData.user) return
       setEmail(userData.user.email ?? '')
 
-      const [{ data: profile }, { data: region }] = await Promise.all([
+      const [{ data: profile }, { data: districtData }] = await Promise.all([
         supabase.from('profiles').select('full_name, username, role, age_group, gender, district_id').eq('id', userData.user.id).single(),
-        supabase.from('regions').select('id').eq('name', REGION_NAME).single(),
+        supabase.from('districts').select('id, name').eq('city_id', city.id),
       ])
 
       if (profile) {
@@ -54,14 +56,11 @@ export default function Profil() {
         if (profile.district_id) setDistrictId(profile.district_id)
       }
 
-      if (region) {
-        const { data: districtData } = await supabase.from('districts').select('id, name').eq('region_id', region.id)
-        if (districtData) setDistricts(districtData)
-      }
+      if (districtData) setDistricts(districtData)
       setLoading(false)
     }
     load()
-  }, [])
+  }, [city.id])
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()

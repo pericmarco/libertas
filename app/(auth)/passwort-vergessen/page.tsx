@@ -4,9 +4,11 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
+import { useCityBrand } from '@/lib/city/context'
 import { CheckCircle2, ChevronLeft } from 'lucide-react'
 
 export default function PasswortVergessen() {
+  const brand = useCityBrand()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
@@ -35,8 +37,8 @@ export default function PasswortVergessen() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <Image src="/logo.svg" alt="Lybertas Logo" width={32} height={32} className="w-8 h-8" priority unoptimized />
-            <span className="font-semibold text-gray-900">Lybertas</span>
+            <Image src="/logo.svg" alt={`${brand} Logo`} width={32} height={32} className="w-8 h-8" priority unoptimized />
+            <span className="font-semibold text-gray-900">{brand}</span>
           </Link>
           <h1 className="text-2xl font-bold text-gray-900">Passwort zurücksetzen</h1>
           <p className="text-gray-500 mt-1">Wir schicken dir einen Link per E-Mail</p>

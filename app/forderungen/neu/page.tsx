@@ -17,7 +17,8 @@ import type { MapPin as MapPinType } from '@/components/MapView'
 
 // Farbe für bereits gemeldete Mängel auf der Karte (Mangel-Akzent = Orange)
 const MANGEL_PIN_COLOR = '#EA580C'
-import { containsBlocked, REGION_NAME } from '@/lib/constants'
+import { containsBlocked } from '@/lib/constants'
+import { useCity } from '@/lib/city/context'
 import {
   type Anliegenart, ART_OPTIONS, ART_LABELS, ORTSTYPEN, SCOPE_LABELS,
   THEMENBEREICHE, themenForTags, MAX_TAGS, FREQUENZEN, GRUPPEN,
@@ -29,6 +30,7 @@ type District = { id: string; name: string }
 const STEPS = ['Art', 'Ort', 'Titel', 'Themen', 'Problem', 'Veränderung', 'Rückmeldung', 'Vorschau']
 
 export default function NeueForderung() {
+  const city = useCity()
   const router = useRouter()
 
   const [step, setStep] = useState(0)
@@ -77,13 +79,11 @@ export default function NeueForderung() {
   useEffect(() => {
     const supabase = createClient()
     async function load() {
-      const { data: region } = await supabase.from('regions').select('id').eq('name', REGION_NAME).single()
-      if (!region) return
-      const { data } = await supabase.from('districts').select('id, name').eq('region_id', region.id)
+      const { data } = await supabase.from('districts').select('id, name').eq('city_id', city.id)
       if (data) setDistricts(data)
     }
     load()
-  }, [])
+  }, [city.id])
 
   // Bestehende verortete Mängel einmalig laden, sobald "Mangel" gewählt ist
   useEffect(() => {

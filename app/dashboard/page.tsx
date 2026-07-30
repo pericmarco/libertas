@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge'
 import { MapPin, FileText, Users, Pencil, Newspaper, ExternalLink } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentCity } from '@/lib/city/server'
-import { REGION_NAME } from '@/lib/constants'
 import { tenant, t } from '@/lib/tenant'
 import ElectionsCard from '@/components/ElectionsCard'
 import StadtteilCard from '@/components/StadtteilCard'
@@ -20,16 +19,10 @@ export default async function Dashboard() {
   const { data: userData } = await supabase.auth.getUser()
   const uid = userData.user?.id ?? null
 
-  const { data: region } = await supabase
-    .from('regions')
-    .select('id')
-    .eq('name', REGION_NAME)
-    .single()
-
   const { data: districts } = await supabase
     .from('districts')
     .select('id, name')
-    .eq('region_id', region?.id ?? '')
+    .eq('city_id', city.id)
 
   const districtIds = districts?.map(d => d.id) ?? []
 
@@ -68,13 +61,13 @@ export default async function Dashboard() {
           <div className="mb-8">
             <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
               <MapPin size={14} />
-              <span>{REGION_NAME}</span>
+              <span>{city.name}</span>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">{uid ? t('dashboardTitle') : `${REGION_NAME} im Überblick`}</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{uid ? t('dashboardTitle') : `${city.name} im Überblick`}</h1>
             <p className="text-gray-500 mt-1">
               {tenant.productLine === 'campus'
                 ? 'Neuigkeiten und Anliegen an deinem Campus'
-                : (uid ? 'Aktuelle politische Themen in deinem Stadtbezirk' : 'Aktuelle politische Themen in Köln Innenstadt')}
+                : (uid ? 'Aktuelle politische Themen in deinem Stadtbezirk' : `Aktuelle politische Themen in ${city.name}`)}
             </p>
           </div>
 
@@ -102,7 +95,7 @@ export default async function Dashboard() {
             /* Gäste: statt persönlicher Beteiligung eine Registrieren-Einladung */
             <div className="bg-blue-600 rounded-2xl px-6 py-6 mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-white">Mach mit in {REGION_NAME}</h2>
+                <h2 className="text-lg font-semibold text-white">Mach mit in {city.name}</h2>
                 <p className="text-blue-100 text-sm mt-1">
                   Registriere dich kostenlos, um {tenant.labels.demandPlural} einzureichen, abzustimmen und deine eigene Beteiligung zu sehen.
                 </p>
@@ -116,17 +109,16 @@ export default async function Dashboard() {
             </div>
           )}
 
-          {/* City-spezifische Blöcke (Stadtteil-Kennzahlen, Wahlen, Ratsverteilung)
-              — für Campus ausgeblendet, da sie feste Köln-Daten tragen. */}
-          {tenant.productLine === 'city' && (
+          {/* Anstehende Wahlen — kommt aus der Datenbank, also pro Stadt korrekt */}
+          {tenant.productLine === 'city' && <ElectionsCard elections={elections ?? []} />}
+
+          {/* Stadtteil-Kennzahlen und Ratsverteilung tragen fest hinterlegte
+              KÖLNER Daten (amtliche Statistik, Ratswahl 2025). Sie dürfen
+              deshalb nur in Köln erscheinen — für jede weitere Stadt müssten
+              die Zahlen erst erhoben werden. */}
+          {tenant.productLine === 'city' && city.slug === 'koeln' && (
             <>
-              {/* Dein Stadtteil auf einen Blick (amtliche Kennzahlen + Ratswahl 2025) */}
               <StadtteilCard defaultName={meinStadtteil} />
-
-              {/* Anstehende Wahlen */}
-              <ElectionsCard elections={elections ?? []} />
-
-              {/* Politische Vertretung: Rat Köln + Bezirksvertretung Innenstadt */}
               <PolitischeVertretung />
             </>
           )}

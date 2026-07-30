@@ -1,8 +1,13 @@
 import Link from 'next/link'
+import { getCurrentCity } from '@/lib/city/server'
+import { brandName } from '@/lib/city/host'
 import Image from 'next/image'
 import { Megaphone, Vote, BarChart2, ChevronRight, MapPin, CheckCircle } from 'lucide-react'
 
-export default function Home() {
+export default async function Home() {
+  const city = await getCurrentCity()
+  const brand = brandName(city)
+
   return (
     <main className="min-h-screen bg-white">
 
@@ -10,8 +15,8 @@ export default function Home() {
       <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white/80 backdrop-blur-md border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-6 h-full flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Image src="/logo.svg" alt="Lybertas Logo" width={32} height={32} className="w-8 h-8" priority unoptimized />
-            <span className="font-semibold text-gray-900">Lybertas</span>
+            <Image src="/logo.svg" alt={`${brand} Logo`} width={32} height={32} className="w-8 h-8" priority unoptimized />
+            <span className="font-semibold text-gray-900">{brand}</span>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/forderungen" className="hidden sm:inline text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
@@ -32,7 +37,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 text-sm font-medium rounded-full mb-8">
             <MapPin size={14} />
-            Köln Innenstadt · Pilotprojekt 2026
+            {city.name} · Pilotprojekt 2026
           </div>
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 tracking-tight leading-tight">
             Deine Stimme zählt.<br />
@@ -140,7 +145,7 @@ export default function Home() {
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-white mb-4">Mach mit beim Pilotprojekt</h2>
           <p className="text-blue-100 mb-8 leading-relaxed">
-            Lybertas startet jetzt in Köln Innenstadt. Sei dabei und hilf dabei lokale Demokratie neu zu gestalten.
+            {brand} startet jetzt in {city.name}. Sei dabei und hilf dabei lokale Demokratie neu zu gestalten.
           </p>
           <Link href="/register" className="inline-flex items-center gap-2 px-8 py-4 bg-white text-blue-600 rounded-xl font-semibold hover:bg-blue-50 transition-colors text-lg">
             Kostenlos registrieren
@@ -153,8 +158,8 @@ export default function Home() {
       <footer className="py-8 px-6 border-t border-gray-100">
         <div className="max-w-6xl mx-auto flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between text-sm text-gray-400">
           <div className="flex items-center gap-2">
-            <Image src="/logo.svg" alt="Lybertas Logo" width={24} height={24} className="w-6 h-6" unoptimized />
-            <span>Lybertas · Köln 2026</span>
+            <Image src="/logo.svg" alt={`${brand} Logo`} width={24} height={24} className="w-6 h-6" unoptimized />
+            <span>{brand} · {city.name} 2026</span>
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-2">
             <Link href="/login" className="hover:text-gray-600 transition-colors">Anmelden</Link>
