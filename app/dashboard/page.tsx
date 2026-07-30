@@ -129,7 +129,7 @@ export default async function Dashboard() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
                   <Newspaper size={16} className="text-gray-400" />
-                  {t('newsTitle')}
+                  {tenant.productLine === 'campus' ? t('newsTitle') : `Aktuelles aus ${city.name}`}
                 </CardTitle>
               </div>
             </CardHeader>

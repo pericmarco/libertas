@@ -44,7 +44,7 @@ export default async function Home() {
             <span className="text-blue-600">Wirklich.</span>
           </h1>
           <p className="text-xl text-gray-500 mb-10 leading-relaxed max-w-2xl mx-auto">
-            Lybertas bringt Demokratie in deinen Alltag. Reiche Forderungen ein, unterstütze Anliegen deiner Nachbarn und stimme über lokale Themen ab — direkt in deinem Stadtteil.
+            {brand} bringt Demokratie in deinen Alltag. Reiche Forderungen ein, unterstütze Anliegen deiner Nachbarn und stimme über lokale Themen ab — direkt in deinem Stadtteil.
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
             <Link href="/register" className="flex items-center gap-2 px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors text-lg">
@@ -68,7 +68,7 @@ export default async function Home() {
       <section className="py-20 px-6 bg-gray-50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
-            <h2 className="text-3xl font-bold text-gray-900 mb-3">Was du bei Lybertas tun kannst</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-3">Was du bei {brand} tun kannst</h2>
             <p className="text-gray-500">Drei einfache Wege um wirklich mitzumachen</p>
           </div>
 
