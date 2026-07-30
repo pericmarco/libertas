@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client'
 import RepScoreBadge from '@/components/RepScoreBadge'
 import { computeRepScoreForProfiles } from '@/lib/repScore'
 import { REGION_NAME } from '@/lib/constants'
+import { useCity } from '@/lib/city/context'
 
 type Vote = {
   id: string
@@ -34,6 +35,7 @@ type VoteOption = {
 }
 
 export default function Abstimmungen() {
+  const city = useCity()
   const [tab, setTab] = useState<'buerger' | 'partner'>('partner')
   const [votes, setVotes] = useState<Vote[]>([])
   const [options, setOptions] = useState<VoteOption[]>([])
@@ -83,7 +85,7 @@ export default function Abstimmungen() {
       }
 
       const [{ data: votesData }, { data: optionsData }] = await Promise.all([
-        supabase.from('votes').select('*').order('created_at', { ascending: false }),
+        supabase.from('votes').select('*').eq('city_id', city.id).order('created_at', { ascending: false }),
         supabase.from('vote_options').select('*'),
       ])
       setVotes(votesData ?? [])
@@ -107,7 +109,7 @@ export default function Abstimmungen() {
       setLoading(false)
     }
     load()
-  }, [])
+  }, [city.id])
 
   function getOptions(voteId: string) {
     const opts = options.filter(o => o.vote_id === voteId)

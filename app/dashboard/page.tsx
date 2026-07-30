@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { MapPin, FileText, Users, Pencil, Newspaper, ExternalLink } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { getCurrentCity } from '@/lib/city/server'
 import { REGION_NAME } from '@/lib/constants'
 import { tenant, t } from '@/lib/tenant'
 import ElectionsCard from '@/components/ElectionsCard'
@@ -12,6 +13,9 @@ import Link from 'next/link'
 
 export default async function Dashboard() {
   const supabase = await createClient()
+
+  // Alles auf dieser Seite zeigt ausschließlich Inhalte der aufgerufenen Stadt.
+  const city = await getCurrentCity()
 
   const { data: userData } = await supabase.auth.getUser()
   const uid = userData.user?.id ?? null
@@ -38,11 +42,11 @@ export default async function Dashboard() {
     { count: unterstuetzt },
     { count: eingereicht },
   ] = await Promise.all([
-    supabase.from('topics').select('*').order('created_at', { ascending: false }),
+    supabase.from('topics').select('*').eq('city_id', city.id).order('created_at', { ascending: false }),
     supabase.from('news').select('*').in('district_id', districtIds).order('published_at', { ascending: false }).limit(4),
-    supabase.from('elections').select('id, title, election_date, expected_year, description'),
+    supabase.from('elections').select('id, title, election_date, expected_year, description').eq('city_id', city.id),
     uid ? supabase.from('profiles').select('district_id').eq('id', uid).single() : Promise.resolve({ data: null }),
-    supabase.from('demands').select('id', { count: 'exact', head: true }),
+    supabase.from('demands').select('id', { count: 'exact', head: true }).eq('city_id', city.id),
     uid ? supabase.from('demand_supports').select('demand_id', { count: 'exact', head: true }).eq('user_id', uid) : Promise.resolve({ count: 0 }),
     uid ? supabase.from('demands').select('id', { count: 'exact', head: true }).eq('user_id', uid) : Promise.resolve({ count: 0 }),
   ])

@@ -12,6 +12,7 @@ import LockedDemandTeaser from '@/components/LockedDemandTeaser'
 import ForderungenMapCard from '@/components/ForderungenMapCard'
 import type { MapPin } from '@/components/MapView'
 import { tenant } from '@/lib/tenant'
+import { useCity } from '@/lib/city/context'
 
 // Wie viele Forderungen ein nicht angemeldeter Besucher voll sehen darf,
 // bevor der Rest als gesperrte Teaser erscheint.
@@ -51,6 +52,7 @@ function areasForDemand(d: Demand): string[] {
 }
 
 export default function Forderungen() {
+  const city = useCity()
   const [demands, setDemands] = useState<Demand[]>([])
   const [positions, setPositions] = useState<Record<string, string>>({})
   const [textCounts, setTextCounts] = useState<Record<string, number>>({})
@@ -70,6 +72,7 @@ export default function Forderungen() {
 
       const [{ data: demandsData }, { data: argsData }] = await Promise.all([
         supabase.from('demands').select('id, title, description, category, tags, relevance_score, status')
+          .eq('city_id', city.id)
           .neq('status', 'zurückgezogen')
           // Mängelmeldungen gehen ans Lybertas-Team, nicht in die öffentliche Liste
           .or('submission_type.is.null,submission_type.neq.mangel')
@@ -83,6 +86,7 @@ export default function Forderungen() {
       // noch, bleibt die Karte einfach ohne echte Pins → Demo-Ansicht).
       const { data: geoData, error: geoErr } = await supabase.from('demands')
         .select('id, title, category, status, lat, lng')
+        .eq('city_id', city.id)
         .neq('status', 'zurückgezogen')
         .or('submission_type.is.null,submission_type.neq.mangel')
         .not('lat', 'is', null)
@@ -118,7 +122,7 @@ export default function Forderungen() {
       setLoading(false)
     }
     load()
-  }, [])
+  }, [city.id])
 
   async function toggleSupport(e: React.MouseEvent, demandId: string) {
     e.preventDefault()

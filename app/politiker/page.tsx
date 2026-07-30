@@ -7,8 +7,10 @@ import Navbar from '@/components/layout/Navbar'
 import { Search, BadgeCheck, MessageCircle, ChevronRight, Landmark } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Politician, partyColor, onPartyText, initials } from '@/lib/politiker'
+import { useCity } from '@/lib/city/context'
 
 export default function PolitikerVerzeichnis() {
+  const city = useCity()
   const [politicians, setPoliticians] = useState<Politician[]>([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
@@ -16,15 +18,16 @@ export default function PolitikerVerzeichnis() {
 
   useEffect(() => {
     const supabase = createClient()
+    // Nur die Mandatsträger:innen der aufgerufenen Stadt.
     supabase
-      .rpc('politicians_public')
+      .rpc('politicians_public', city.id ? { p_city_id: city.id } : {})
       .order('verified', { ascending: false })
       .order('name')
       .then(({ data }) => {
         if (data) setPoliticians(data as Politician[])
         setLoading(false)
       })
-  }, [])
+  }, [city.id])
 
   const parties = useMemo(
     () => [...new Set(politicians.map(p => p.party).filter(Boolean) as string[])].sort(),

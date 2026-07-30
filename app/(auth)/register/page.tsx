@@ -7,10 +7,12 @@ import { createClient } from '@/lib/supabase/client'
 import { REGION_NAME } from '@/lib/constants'
 import { validatePassword } from '@/lib/password'
 import PasswordRequirements from '@/components/PasswordRequirements'
+import { useCity } from '@/lib/city/context'
 
 type District = { id: string; name: string; city: string }
 
 export default function Register() {
+  const city = useCity()
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -60,6 +62,9 @@ export default function Register() {
         data: {
           full_name: fullName.trim() || null,
           district_id: districtId || null,
+          // Stadt der aufgerufenen Subdomain — der Trigger legt das Profil
+          // damit in der richtigen Stadt an.
+          city_slug: city.slug,
           terms_accepted: 'true',
           consent_version: '1',
         },
