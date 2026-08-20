@@ -216,7 +216,7 @@ export default function BeispielPolitiker() {
           </div>
 
           {tab === 'Umfragen' && (
-            <div className="mt-4 flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:-mx-6 sm:px-6 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="mt-4 flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {DEMO_SURVEYS.map(s => {
                 const Icon = s.icon
                 return (
