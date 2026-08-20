@@ -44,7 +44,11 @@ export default function Profil() {
 
       const [{ data: profile }, { data: districtData }] = await Promise.all([
         supabase.from('profiles').select('full_name, username, role, age_group, gender, district_id').eq('id', userData.user.id).single(),
-        supabase.from('districts').select('id, name').eq('city_id', city.id),
+        // Nur Stadtteile, die einer Region zugeordnet sind. Damit fallen
+        // Alt-Seed-Stadtteile ohne Region (z. B. Ehrenfeld/Lindenthal, die
+        // nicht zum abgedeckten Stadtbezirk Innenstadt gehören) heraus, für
+        // die es im Dashboard keine Detaildaten gibt.
+        supabase.from('districts').select('id, name').eq('city_id', city.id).not('region_id', 'is', null),
       ])
 
       if (profile) {
@@ -53,7 +57,12 @@ export default function Profil() {
         setRole(profile.role ?? 'citizen')
         if (profile.age_group && AGE_GROUPS.includes(profile.age_group)) setAgeGroup(profile.age_group)
         if (profile.gender) setGender(profile.gender)
-        if (profile.district_id) setDistrictId(profile.district_id)
+        // Gespeicherten Stadtteil nur übernehmen, wenn er noch auswählbar ist
+        // (ein alter Eintrag außerhalb des abgedeckten Bezirks — z. B.
+        // Ehrenfeld — muss dann neu gewählt werden).
+        if (profile.district_id && (districtData ?? []).some(d => d.id === profile.district_id)) {
+          setDistrictId(profile.district_id)
+        }
       }
 
       if (districtData) setDistricts(districtData)

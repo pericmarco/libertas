@@ -38,10 +38,14 @@ export default async function Dashboard() {
   const { data: userData } = await supabase.auth.getUser()
   const uid = userData.user?.id ?? null
 
+  // Nur Stadtteile mit Regionszuordnung (der abgedeckte Stadtbezirk). So
+  // bleiben Alt-Seed-Stadtteile ohne Detaildaten (z. B. Ehrenfeld/Lindenthal)
+  // außen vor und „mein Stadtteil" zeigt nie einen ungedeckten Stadtteil an.
   const { data: districts } = await supabase
     .from('districts')
     .select('id, name')
     .eq('city_id', city.id)
+    .not('region_id', 'is', null)
 
   const districtIds = districts?.map(d => d.id) ?? []
 
