@@ -108,7 +108,7 @@ export default function BeispielPolitiker() {
           {/* Funktion & Zuständigkeit */}
           <div className="rounded-2xl border border-gray-100 bg-white p-6">
             <h2 className="text-base font-semibold text-gray-900">Funktion & Zuständigkeit</h2>
-            <div className="mt-4 flex flex-col gap-4 sm:flex-row">
+            <div className="mt-4 flex flex-col gap-4">
               <div className="flex flex-1 items-start gap-2.5">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600"><Briefcase size={16} /></div>
                 <div className="min-w-0">

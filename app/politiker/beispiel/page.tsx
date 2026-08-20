@@ -64,7 +64,7 @@ export default function BeispielPartei() {
           {/* Steckbrief */}
           <div className="rounded-2xl border border-gray-100 bg-white p-6">
             <h2 className="text-base font-semibold text-gray-900">Steckbrief</h2>
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="mt-4 grid grid-cols-1 gap-4">
               {[
                 { icon: Calendar, label: 'Gegründet', value: DEMO_PARTY.founded },
                 { icon: Compass, label: 'Ausrichtung', value: DEMO_PARTY.ausrichtung },
