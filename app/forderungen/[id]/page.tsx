@@ -82,7 +82,7 @@ const ROLE_BADGES: Record<string, { label: string; badge: string }> = {
 
 const POSITION_META: Record<PositionType, { icon: typeof ThumbsUp; label: string; desc: string; badge: string; box: string }> = {
   unterstützend: { icon: ThumbsUp,      label: 'Unterstützung',    desc: 'Ich finde diese Forderung wichtig. Begründung optional.', badge: 'bg-green-100 text-green-700', box: 'bg-green-50 border-green-100' },
-  gegenargument: { icon: MessageSquare, label: 'Gegenargument',    desc: 'Ich sehe das anders. Begründung optional.',              badge: 'bg-red-100 text-red-600',     box: 'bg-red-50 border-red-100' },
+  gegenargument: { icon: MessageSquare, label: 'Gegenargument',    desc: 'Ich sehe das anders. Begründung optional.',              badge: 'bg-orange-100 text-orange-700', box: 'bg-orange-50 border-orange-100' },
   alternative:   { icon: Lightbulb,     label: 'Alternative',      desc: 'Ich schlage einen anderen Weg vor. Text erforderlich.',  badge: 'bg-blue-100 text-blue-700',   box: 'bg-blue-50 border-blue-100' },
 }
 
@@ -132,7 +132,9 @@ export default function ForderungDetail() {
   const [roles, setRoles] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
-  const [activeContribType, setActiveContribType] = useState<PositionType>('unterstützend')
+  // Kombinierte Diskussion: ein Positions-Filter (alle/…) + separate Sortierung
+  const [posFilter, setPosFilter] = useState<PositionType | 'alle'>('alle')
+  const [sortOrder, setSortOrder] = useState<'relevant' | 'neu' | 'alt'>('relevant')
   const [rep, setRep] = useState<{ score: number; participants: number }>({ score: 0, participants: 0 })
   const [showDetails, setShowDetails] = useState(false)
   const [showResponses, setShowResponses] = useState(false)
@@ -230,6 +232,13 @@ export default function ForderungDetail() {
         setUserLikes(mine)
       }
       setLoading(false)
+
+      // Aus dem Feed heraus (#diskussion) die Diskussion direkt öffnen —
+      // nur für echte Forderungen, nicht für Mängelmeldungen.
+      if (typeof window !== 'undefined' && window.location.hash === '#diskussion'
+          && demandData && demandData.submission_type !== 'mangel') {
+        setDiscussionOpen(true)
+      }
     }
     load()
   }, [id])
@@ -417,8 +426,12 @@ export default function ForderungDetail() {
     alternative:   textArgs.filter(c => c.type === 'alternative').length,
   }
   const visibleContribs = textArgs
-    .filter(c => c.type === activeContribType)
-    .sort((a, b) => (likeCounts[b.id] ?? 0) - (likeCounts[a.id] ?? 0))
+    .filter(c => posFilter === 'alle' || c.type === posFilter)
+    .sort((a, b) => {
+      if (sortOrder === 'neu') return (b.created_at ?? '').localeCompare(a.created_at ?? '')
+      if (sortOrder === 'alt') return (a.created_at ?? '').localeCompare(b.created_at ?? '')
+      return (likeCounts[b.id] ?? 0) - (likeCounts[a.id] ?? 0) // relevant
+    })
 
   const canSave = selectedType !== null &&
     (selectedType !== 'alternative' || draftText.trim().length >= 10) &&
@@ -687,22 +700,52 @@ export default function ForderungDetail() {
                 </button>
               </div>
               <div className="max-w-2xl mx-auto px-4 sm:px-6 pb-3">
-                <div className="flex gap-1 p-1 bg-gray-100 rounded-xl w-fit">
-              {(['unterstützend', 'gegenargument', 'alternative'] as PositionType[]).map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveContribType(tab)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${activeContribType === tab ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                >
-                  {POSITION_META[tab].label} ({contribCounts[tab]})
-                </button>
-              ))}
+                {/* Sortierung (bestimmt die Reihenfolge) */}
+                <div className="mb-2.5 flex items-center justify-between gap-3">
+                  <span className="text-xs text-gray-400">{textArgs.length} {textArgs.length === 1 ? 'Beitrag' : 'Beiträge'}</span>
+                  <div className="relative">
+                    <select
+                      value={sortOrder}
+                      onChange={e => setSortOrder(e.target.value as 'relevant' | 'neu' | 'alt')}
+                      aria-label="Sortierung"
+                      className="appearance-none rounded-lg border border-gray-200 bg-white pl-3 pr-8 py-1.5 text-xs font-medium text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="relevant">Relevanteste zuerst</option>
+                      <option value="neu">Neueste zuerst</option>
+                      <option value="alt">Älteste zuerst</option>
+                    </select>
+                    <ChevronDown size={13} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  </div>
+                </div>
+                {/* Positions-Filter (bestimmt, welche Positionen gezeigt werden) */}
+                <div className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {([
+                    { key: 'alle', label: 'Alle', count: textArgs.length, on: 'bg-blue-600 text-white border-blue-600', off: 'hover:border-blue-300' },
+                    { key: 'unterstützend', label: 'Unterstützung', count: contribCounts.unterstützend, on: 'bg-green-100 text-green-700 border-green-200', off: 'hover:border-green-300' },
+                    { key: 'gegenargument', label: 'Gegenargument', count: contribCounts.gegenargument, on: 'bg-orange-100 text-orange-700 border-orange-200', off: 'hover:border-orange-300' },
+                    { key: 'alternative', label: 'Alternative', count: contribCounts.alternative, on: 'bg-blue-100 text-blue-700 border-blue-200', off: 'hover:border-blue-300' },
+                  ] as const).map(f => {
+                    const active = posFilter === f.key
+                    return (
+                      <button
+                        key={f.key}
+                        onClick={() => setPosFilter(f.key as PositionType | 'alle')}
+                        className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                          active ? f.on : `bg-white text-gray-600 border-gray-200 ${f.off}`
+                        }`}
+                      >
+                        {f.label} <span className="tabular-nums opacity-70">{f.count}</span>
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
             </div>
             <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 pb-44 flex flex-col gap-3">
               {visibleContribs.length === 0 ? (
-                <div className="text-sm text-gray-400 py-10 text-center">Noch keine Beiträge in dieser Kategorie.</div>
+                <div className="text-sm text-gray-400 py-10 text-center">
+                  {posFilter === 'alle' ? 'Noch keine Beiträge — sei die erste Stimme.' : 'Keine Beiträge mit dieser Position.'}
+                </div>
               ) : visibleContribs.map(c => {
                 const meta = POSITION_META[c.type as PositionType]
                 const isOwn = c.user_id === userId
