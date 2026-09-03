@@ -100,6 +100,23 @@ Fokus-Ring kein grauer Rand durchscheint. Textareas ergänzen
 
 ## Layout & Navigation
 
+- **Hauptnavigation (5 Punkte):** Feed · Karte · ➕ (zentraler FAB) ·
+  Abstimmungen · Überblick. Der Feed (`/feed`) ist die Startseite. Der
+  blaue Plus-FAB (mobil erhöht, am Desktop „+ Beitrag") öffnet das
+  Erstell-Bottom-Sheet (`components/PlusMenu`). „Forderungen", „Politiker",
+  „Wirkung", „Dashboard" haben **keinen** eigenen Nav-Punkt mehr — ihre
+  Routen bleiben erreichbar (aus Feed/Plus/Überblick verlinkt); Politik +
+  Dashboard sind unter **Überblick** (`/ueberblick`) gebündelt. Profil/
+  Abmelden liegen oben rechts.
+- **Feed** vereint Inhaltstypen zur Laufzeit aus bestehenden Tabellen
+  (`lib/feed`, `components/feed/*`): Forderungen, Stadt-/Politik-Umfragen,
+  Infos (später Mängel, Projekte, Petitionen, Bürgerideen). Karten einheitlich
+  (`rounded-2xl border-gray-100`, dezenter Schatten), aber je Typ erkennbar.
+  Lokale Filter oben: „Für dich" / Stadtteil / „Ganz <Stadt>".
+- **Positions-/Diskussionsfarben** (Feed-Zähler + Diskussion): Unterstützung
+  **grün**, Gegenargument **orange**, Alternative **blau** (dezent, mit
+  Textlabel — nie nur über Farbe). Die Diskussion zeigt alle Positionen
+  gemeinsam mit Filter-Chips (Alle/…) + separater Sortierung.
 - Fixe Top-Bar `h-16` (Desktop-Nav), fixe Bottom-Nav 64 px auf Mobile
   (`md:hidden`), interne Seiten nutzen `<main class="pt-16 …">`
 - **Mobile-Regel:** `globals.css` gibt `main.pt-16` auf Mobile
