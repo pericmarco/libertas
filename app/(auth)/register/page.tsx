@@ -7,12 +7,14 @@ import { createClient } from '@/lib/supabase/client'
 import { validatePassword } from '@/lib/password'
 import PasswordRequirements from '@/components/PasswordRequirements'
 import { useCity, useCityBrand } from '@/lib/city/context'
+import { USERNAME_REGEX, containsBlocked } from '@/lib/constants'
 
 type District = { id: string; name: string; city: string }
 
 export default function Register() {
   const city = useCity()
   const brand = useCityBrand()
+  const [username, setUsername] = useState('')
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -42,6 +44,16 @@ export default function Register() {
       return
     }
 
+    const uname = username.trim()
+    if (!USERNAME_REGEX.test(uname)) {
+      setError('Nutzername: 3–24 Zeichen, nur Buchstaben, Zahlen, Punkt und Unterstrich.')
+      return
+    }
+    if (containsBlocked(uname)) {
+      setError('Dieser Nutzername ist nicht zulässig. Bitte wähle einen anderen.')
+      return
+    }
+
     const pwError = validatePassword(password)
     if (pwError) { setError(pwError); return }
 
@@ -58,6 +70,7 @@ export default function Register() {
         // Onboarding abgefragt. terms_accepted/consent_version → Einwilligungs-
         // Nachweis (Trigger setzt daraus consent_at + consent_version im Profil).
         data: {
+          username: uname,
           full_name: fullName.trim() || null,
           district_id: districtId || null,
           // Stadt der aufgerufenen Subdomain — der Trigger legt das Profil
@@ -132,16 +145,29 @@ export default function Register() {
         <div className="bg-white rounded-2xl border border-gray-100 p-6">
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Vollständiger Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Nutzername</label>
+              <input
+                type="text"
+                placeholder="z. B. koelner_jeck"
+                value={username}
+                onChange={e => { setUsername(e.target.value); setError('') }}
+                required
+                minLength={3}
+                maxLength={24}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <p className="text-xs text-gray-400 mt-1.5">Dein <strong>öffentliches</strong> Pseudonym — unter diesem Namen erscheinen deine Beiträge.</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Vollständiger Name <span className="font-normal text-gray-400">(optional)</span></label>
               <input
                 type="text"
                 placeholder="Max Mustermann"
                 value={fullName}
                 onChange={e => setFullName(e.target.value)}
-                required
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-              <p className="text-xs text-gray-400 mt-1.5">Bleibt <strong>privat</strong> und wird niemals öffentlich angezeigt. Wir speichern ihn nur intern.</p>
+              <p className="text-xs text-gray-400 mt-1.5">Bleibt <strong>privat</strong>. Du kannst später im Profil wählen, ob dein Name öffentlich erscheinen soll.</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">E-Mail</label>

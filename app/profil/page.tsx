@@ -7,6 +7,7 @@ import { AGE_GROUPS, GENDERS, USERNAME_REGEX, containsBlocked } from '@/lib/cons
 import { useCity } from '@/lib/city/context'
 import { validatePassword } from '@/lib/password'
 import PasswordRequirements from '@/components/PasswordRequirements'
+import ProfileNotificationSettings from '@/components/ProfileNotificationSettings'
 import { ShieldCheck, CheckCircle2, KeyRound, Mail } from 'lucide-react'
 
 type District = { id: string; name: string }
@@ -359,6 +360,8 @@ export default function Profil() {
               )}
             </div>
           </form>
+
+          <ProfileNotificationSettings />
 
           {/* Rechtliches — auch für eingeloggte Nutzer erreichbar */}
           <div className="flex gap-5 justify-center text-xs text-gray-400 mt-10 pb-4">
