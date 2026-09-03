@@ -47,7 +47,7 @@ export default function Login() {
     if (!hasCompleteProfile) {
       router.push('/onboarding')
     } else {
-      router.push('/dashboard')
+      router.push('/feed')
     }
     router.refresh()
   }

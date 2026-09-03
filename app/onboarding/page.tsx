@@ -35,7 +35,7 @@ export default function Onboarding() {
         .single()
 
       if (profile?.age_group && AGE_GROUPS.includes(profile.age_group) && profile?.gender && profile?.district_id) {
-        router.push('/dashboard')
+        router.push('/feed')
         return
       }
 
@@ -88,7 +88,7 @@ export default function Onboarding() {
       return
     }
 
-    router.push('/dashboard')
+    router.push('/feed')
   }
 
   if (checking) {

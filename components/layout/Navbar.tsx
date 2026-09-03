@@ -3,30 +3,19 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, Vote, Megaphone, Users, LogOut, TrendingUp, User as UserIcon, ShieldCheck } from 'lucide-react'
+import { LayoutGrid, Map, ClipboardCheck, BarChart3, Plus, LogOut, User as UserIcon, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { useCity, useCityBrand } from '@/lib/city/context'
 import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
-
+import PlusMenu from '@/components/PlusMenu'
 import { tenant } from '@/lib/tenant'
-import type { ModuleKey } from '@/lib/tenant'
 
-// Navigation der aktiven Produktlinie — nach Modulen gefiltert, Labels je
-// Produktlinie. City zeigt Politiker/Wirkung, Campus nicht (dafür anderes
-// Wording: Anliegen / Umfragen).
-const NAV: { href: string; module: ModuleKey; label: string; icon: typeof LayoutDashboard }[] = [
-  { href: '/dashboard',    module: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/forderungen',  module: 'anliegen',  label: tenant.labels.demandPlural, icon: Megaphone },
-  { href: '/abstimmungen', module: 'umfragen',  label: tenant.productLine === 'campus' ? 'Umfragen' : 'Priorisierung', icon: Vote },
-  { href: '/politiker',    module: 'politiker', label: 'Politiker', icon: Users },
-  { href: '/wirkung',      module: 'wirkung',   label: 'Wirkung', icon: TrendingUp },
-  { href: '/profil',       module: 'profil',    label: 'Profil', icon: UserIcon },
-]
-const baseLinks = NAV.filter(l => tenant.modules[l.module])
-
-const adminLink = { href: '/admin', label: 'Admin', icon: ShieldCheck }
+// Neue Hauptnavigation: Feed · Karte · ➕ · Abstimmungen · Überblick.
+// „Forderungen", „Politiker", „Wirkung", „Dashboard" haben keinen eigenen
+// Punkt mehr — ihre Routen bleiben erreichbar (aus Feed/Plus/Überblick verlinkt).
+type NavItem = { href: string; label: string; icon: typeof LayoutGrid; show?: boolean }
 
 export default function Navbar() {
   const brand = useCityBrand()
@@ -34,32 +23,48 @@ export default function Navbar() {
   const pathname = usePathname()
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
-  const [isAdmin, setIsAdmin] = useState(false)
+  const [role, setRole] = useState<string>('citizen')
+  const [verified, setVerified] = useState(false)
+  const [plusOpen, setPlusOpen] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(async ({ data }) => {
       setUser(data.user)
       if (data.user) {
-        const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single()
-        setIsAdmin(profile?.role === 'admin')
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role, politician_verified')
+          .eq('id', data.user.id)
+          .single()
+        setRole(profile?.role ?? 'citizen')
+        setVerified(profile?.politician_verified === true)
       }
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
-      if (!session?.user) setIsAdmin(false)
+      if (!session?.user) { setRole('citizen'); setVerified(false) }
     })
 
     return () => subscription.unsubscribe()
   }, [])
 
-  // Nicht angemeldete Besucher sehen nur die öffentlich zugänglichen Tabs —
-  // sonst würden die übrigen Tabs sie nur zum Login umleiten (Sackgasse).
-  const PUBLIC_NAV_HREFS = ['/dashboard', '/forderungen', '/abstimmungen', '/politiker']
-  const links = user
-    ? (isAdmin ? [...baseLinks, adminLink] : baseLinks)
-    : baseLinks.filter(l => PUBLIC_NAV_HREFS.includes(l.href))
+  const isAdmin = role === 'admin'
+  // Verifizierte institutionelle Accounts dürfen Umfragen/Projekte veröffentlichen.
+  const canOfficial = role === 'admin' || role === 'city' || (role === 'politician' && verified)
+
+  const leftItems: NavItem[] = [
+    { href: '/feed', label: 'Feed', icon: LayoutGrid },
+    { href: '/karte', label: 'Karte', icon: Map, show: tenant.modules.karte },
+  ]
+  const rightItems: NavItem[] = [
+    { href: '/abstimmungen', label: 'Abstimmen', icon: ClipboardCheck },
+    { href: '/ueberblick', label: 'Überblick', icon: BarChart3 },
+  ]
+  const left = leftItems.filter(i => i.show !== false)
+  const right = rightItems.filter(i => i.show !== false)
+  const topLinks = [...left, ...right]
 
   async function handleLogout() {
     const supabase = createClient()
@@ -68,15 +73,32 @@ export default function Navbar() {
     router.refresh()
   }
 
+  const navLink = (active: boolean) =>
+    cn('flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+      active ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50')
+
+  const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/')
+
+  const cell = (item: NavItem) => (
+    <Link
+      key={item.href}
+      href={item.href}
+      className={cn('flex flex-col items-center justify-center gap-1 transition-colors',
+        isActive(item.href) ? 'text-blue-600' : 'text-gray-500 hover:text-gray-900')}
+    >
+      <item.icon size={20} strokeWidth={isActive(item.href) ? 2.5 : 1.8} />
+      <span className="text-[10px] font-medium max-w-full truncate px-0.5">{item.label}</span>
+    </Link>
+  )
+
   return (
     <>
-      {/* Desktop Top Navbar */}
+      {/* Desktop Top-Bar */}
       <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-6 h-full flex items-center justify-between">
-          <Link href={user ? '/dashboard' : '/'} className="flex items-center gap-2">
+          <Link href={user ? '/feed' : '/'} className="flex items-center gap-2">
             <Image src="/logo.svg" alt={`${brand} Logo`} width={32} height={32} className="w-8 h-8" priority unoptimized />
             <span className="font-semibold text-gray-900">{brand}</span>
-            {/* Demo-Instanz für den Vertrieb klar kennzeichnen */}
             {city.is_demo && (
               <span className="hidden sm:inline text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
                 Beispiel
@@ -85,70 +107,70 @@ export default function Navbar() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
-            {links.map(({ href, label, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                  pathname === href
-                    ? 'bg-blue-50 text-blue-600'
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-                )}
-              >
-                <Icon size={16} />
-                {label}
+            {topLinks.map(item => (
+              <Link key={item.href} href={item.href} className={navLink(isActive(item.href))}>
+                <item.icon size={16} />
+                {item.label}
               </Link>
             ))}
+            {isAdmin && (
+              <Link href="/admin" className={navLink(isActive('/admin'))}>
+                <ShieldCheck size={16} /> Admin
+              </Link>
+            )}
           </nav>
 
-          {user ? (
+          <div className="flex items-center gap-2">
+            {/* „+ Beitrag" öffnet dasselbe Menü wie der mobile FAB */}
             <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+              onClick={() => setPlusOpen(true)}
+              className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
             >
-              <LogOut size={16} />
-              <span className="hidden md:inline">Abmelden</span>
+              <Plus size={16} /> Beitrag
             </button>
-          ) : city.is_demo ? (
-            /* In der Demo gibt es bewusst keine Anmeldung — die Zielgruppe
-               will das Produkt ansehen, nicht ein Konto anlegen. */
-            <span className="text-xs text-gray-400 hidden sm:inline">Beispielansicht</span>
-          ) : (
-            <Link
-              href="/login"
-              className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
-            >
-              Anmelden
-            </Link>
-          )}
+            {user ? (
+              <>
+                <Link href="/profil" aria-label="Profil" className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors">
+                  <UserIcon size={18} />
+                </Link>
+                <button onClick={handleLogout} aria-label="Abmelden" className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors">
+                  <LogOut size={18} />
+                </button>
+              </>
+            ) : city.is_demo ? (
+              <span className="text-xs text-gray-400 hidden sm:inline">Beispielansicht</span>
+            ) : (
+              <Link href="/login" className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
+                Anmelden
+              </Link>
+            )}
+          </div>
         </div>
       </header>
 
-      {/* Mobile Bottom Navigation */}
+      {/* Mobile Bottom-Navigation mit zentralem Plus-FAB */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 pb-safe">
-        <div className="grid h-16" style={{ gridTemplateColumns: `repeat(${links.length}, minmax(0, 1fr))` }}>
-          {links.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                'flex flex-col items-center justify-center gap-1 transition-colors',
-                pathname === href
-                  ? 'text-blue-600'
-                  : 'text-gray-500 hover:text-gray-900'
-              )}
+        <div className="grid grid-cols-5 h-16">
+          {left.map(cell)}
+          {left.length < 2 && <span />}
+
+          {/* zentraler FAB — erhöht über der Leiste */}
+          <div className="relative flex items-center justify-center">
+            <button
+              onClick={() => setPlusOpen(true)}
+              aria-label="Beitrag erstellen"
+              className="absolute -top-5 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-600/30 hover:bg-blue-700 active:scale-95 transition-all"
             >
-              <Icon size={20} strokeWidth={pathname === href ? 2.5 : 1.8} />
-              <span className="text-[10px] font-medium max-w-full truncate px-0.5">{label}</span>
-            </Link>
-          ))}
+              <Plus size={26} />
+            </button>
+          </div>
+
+          {right.map(cell)}
+          {right.length < 2 && <span />}
         </div>
       </nav>
 
-      {/* Der Platz für die Bottom-Nav wird global in globals.css reserviert
-          (main.pt-16 bekommt auf Mobile padding-bottom) — ein Spacer hier
-          würde oben statt unten landen, da die Navbar vor <main> gerendert wird. */}
+      <PlusMenu open={plusOpen} onClose={() => setPlusOpen(false)} loggedIn={!!user} canOfficial={canOfficial} />
     </>
   )
 }
