@@ -1,14 +1,9 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import dynamic from 'next/dynamic'
 import { Building2, Lightbulb, Wrench, BarChart3 } from 'lucide-react'
 import type { LngLat, MapPin } from '@/components/MapView'
-
-const MapView = dynamic(() => import('@/components/MapView'), {
-  ssr: false,
-  loading: () => <div className="h-full w-full animate-pulse bg-gray-100" />,
-})
+import MapPanel from '@/components/kommune/MapPanel'
 
 const CENTER: LngLat = { lng: 6.83, lat: 51.10 }
 
@@ -55,9 +50,7 @@ export default function KommuneKarte() {
         })}
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white">
-        <MapView pins={pins} cooperative center={CENTER} zoom={14} className="h-[58vh] min-h-[340px] w-full" />
-      </div>
+      <MapPanel pins={pins} center={CENTER} zoom={14} title="Beteiligungskarte" className="h-[58vh] min-h-[340px] w-full" />
     </main>
   )
 }
