@@ -37,6 +37,7 @@ export default function MunicipalNav() {
       {city.is_demo && (
         <div className="bg-amber-50 text-amber-800 text-center text-[11px] font-medium py-1 px-4 border-b border-amber-100">
           Beispielportal · So könnte das Beteiligungsportal Ihrer Kommune mit Lybertas aussehen
+          <Link href="/admin" className="ml-2 font-semibold text-amber-900 underline underline-offset-2 hover:text-amber-950">→ Verwaltungsansicht</Link>
         </div>
       )}
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
