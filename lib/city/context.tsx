@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext } from 'react'
-import { FALLBACK_CITY, brandName, type City } from './host'
+import { FALLBACK_CITY, brandName, isMunicipal, type City } from './host'
 
 // Die aktive Stadt wird serverseitig aufgelöst und hier an alle
 // Client-Komponenten weitergereicht:
@@ -23,4 +23,9 @@ export function useCity(): City {
 /** Anzeigename der aktiven Stadt-Marke — „Lybertas", solange keine gesetzt ist. */
 export function useCityBrand(): string {
   return brandName(useCity())
+}
+
+/** True, wenn die aktive Stadt das kommunale Beteiligungsportal nutzt. */
+export function useIsMunicipal(): boolean {
+  return isMunicipal(useCity())
 }

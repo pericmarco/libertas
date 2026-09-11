@@ -18,6 +18,24 @@ export const DEFAULT_CITY_SLUG = 'koeln'
 // Subdomains, die niemals eine Stadt bezeichnen.
 const RESERVED = new Set(['www', 'app', 'api', 'admin', 'mail', 'staging', 'preview', 'dev'])
 
+// ─────────────────────────────────────────
+// Produktlinie pro Stadt (NICHT die globale tenant-Env!):
+//   'network'   → das Lybertas-Netzwerk (Feed/Vision) — app.lybertas.de/Köln.
+//   'municipal' → kommunales Beteiligungsportal (Route-Tree /kommune).
+//
+// Quelle der Wahrheit ist langfristig die DB-Spalte cities.product (Migration
+// 032). Bis die eingespielt ist, greift diese Code-Fallback-Liste, damit die
+// Demo sofort funktioniert. Netzstädte (koeln …) sind NIE in der Liste →
+// app.lybertas.de bleibt garantiert 'network'.
+// ─────────────────────────────────────────
+export type Product = 'network' | 'municipal'
+
+export const MUNICIPAL_SLUGS = new Set<string>(['musterstadt'])
+
+export function productForSlug(slug: string | null | undefined): Product {
+  return slug && MUNICIPAL_SLUGS.has(slug) ? 'municipal' : 'network'
+}
+
 export type City = {
   id: string
   slug: string
@@ -28,6 +46,13 @@ export type City = {
   show_powered_by: boolean
   /** Vertriebs-Demo: keine Anmeldung, dauerhafter Beispiel-Hinweis. */
   is_demo: boolean
+  /** Produktlinie dieser Stadt — steuert Layout/Navigation/Route-Tree. */
+  product: Product
+}
+
+/** Nutzt diese Stadt die kommunale Beteiligungs-Erfahrung? */
+export function isMunicipal(city: City): boolean {
+  return city.product === 'municipal'
 }
 
 // Notnagel, damit die Oberfläche nie ohne Branding dasteht.
@@ -40,6 +65,7 @@ export const FALLBACK_CITY: City = {
   primary_color: '#2563EB',
   show_powered_by: true,
   is_demo: false,
+  product: 'network',
 }
 
 export type HostInfo = { slug: string | null; customDomain: string | null }

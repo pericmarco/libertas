@@ -1,6 +1,6 @@
 import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
-import { parseHost, DEFAULT_CITY_SLUG, FALLBACK_CITY, type City } from './host'
+import { parseHost, DEFAULT_CITY_SLUG, FALLBACK_CITY, productForSlug, type City, type Product } from './host'
 
 // Aktive Stadt für die laufende Anfrage — serverseitig aus dem Host aufgelöst.
 //
@@ -23,8 +23,10 @@ export async function getCurrentCity(): Promise<City> {
       p_domain: customDomain,
     })
 
-    const row = (Array.isArray(data) ? data[0] : data) as City | undefined
-    return row ?? FALLBACK_CITY
+    const row = (Array.isArray(data) ? data[0] : data) as (Omit<City, 'product'> & { product?: Product }) | undefined
+    if (!row) return FALLBACK_CITY
+    // Produktlinie: DB-Spalte (Migration 032), sonst Code-Fallback per Slug.
+    return { ...row, product: row.product ?? productForSlug(row.slug) }
   } catch {
     // Nie wegen der Stadt-Auflösung die Seite abstürzen lassen.
     return FALLBACK_CITY

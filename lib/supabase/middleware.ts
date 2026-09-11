@@ -1,5 +1,19 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { parseHost, productForSlug } from '@/lib/city/host'
+
+// Pfade, die auf einem Kommunal-Host NICHT nach /kommune umgeschrieben werden:
+// geteilte Auth-/Rechts-/Asset-/API-Routen und der Kommunal-Baum selbst.
+const NO_MUNI_REWRITE = [
+  '/kommune', '/api', '/auth', '/_next', '/login', '/register',
+  '/passwort-vergessen', '/passwort-neu', '/impressum', '/datenschutz',
+  '/manifest', '/icon', '/apple-icon', '/robots', '/sitemap', '/favicon',
+]
+
+function shouldRewriteToKommune(pathname: string): boolean {
+  if (pathname.includes('.')) return false // Dateien (Assets) nie umschreiben
+  return !NO_MUNI_REWRITE.some(p => pathname === p || pathname.startsWith(p + '/'))
+}
 
 const PUBLIC_PATHS = [
   '/', '/login', '/register', '/passwort-vergessen', '/impressum', '/datenschutz',
@@ -66,6 +80,26 @@ export async function updateSession(request: NextRequest) {
     } catch (err) {
       console.error('Proxy auth check failed, treating as unauthenticated:', err)
     }
+  }
+
+  // ── Kommunal-Host (z. B. musterstadt.lybertas.de): eigener Route-Tree ──
+  // Nur für 'municipal'-Städte aktiv → Netzwerk-Hosts (app.lybertas.de/Köln)
+  // laufen komplett unverändert durch den bestehenden Zweig darunter.
+  const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host')
+  const { slug } = parseHost(host)
+  if (productForSlug(slug) === 'municipal') {
+    const pathname = request.nextUrl.pathname
+    if (shouldRewriteToKommune(pathname)) {
+      const rewriteUrl = request.nextUrl.clone()
+      rewriteUrl.pathname = '/kommune' + (pathname === '/' ? '' : pathname)
+      const res = NextResponse.rewrite(rewriteUrl, { request })
+      // Aufgefrischte Auth-Cookies mitnehmen.
+      supabaseResponse.cookies.getAll().forEach(c => res.cookies.set(c))
+      return res
+    }
+    // Geteilte Pfade (Login/Impressum/Assets) laufen normal; die Kommunal-Demo
+    // ist öffentlich, daher hier keine Login-Umleitung.
+    return supabaseResponse
   }
 
   if (!user && !isPublicPath(request.nextUrl.pathname)) {
