@@ -32,6 +32,7 @@ export type ParticipationProcess = {
   level: Beteiligungsstufe
   accent: string           // Tailwind-Akzentklassen fürs Hero-Icon
   emoji: string
+  image?: string           // optionales Titelbild (Pfad unter /public)
   modules: ModuleType[]
   reactionMode: ReactionMode
   stats: { teilnehmende: number; beitraege: number; reaktionen: number }
@@ -152,6 +153,52 @@ export const PROCESSES: ParticipationProcess[] = [
     stats: { teilnehmende: 611, beitraege: 143, reaktionen: 489 },
   },
 ]
+
+// Zusätzliche, bild-hinterlegte Bürger-Beteiligungen (kleinere Anliegen).
+PROCESSES.push(
+  {
+    slug: 'sitzbaenke-stadtpark',
+    title: 'Mehr Sitzbänke im Stadtpark',
+    subtitle: 'Wo fehlen Ihnen Sitzgelegenheiten zum Verweilen?',
+    description:
+      'Der Stadtpark ist ein beliebter Treffpunkt — doch an vielen Stellen fehlen Sitzbänke. Markieren Sie auf der Karte, wo neue Bänke stehen sollten, und bringen Sie Ihre Ideen ein.',
+    status: 'beteiligung_laeuft',
+    department: 'Grünflächenamt', contact: 'Herr Klein', district: 'Stadtpark',
+    start: '2026-09-01', end: '2026-10-31', level: 'Konsultation',
+    accent: 'bg-green-50 text-green-600', emoji: '🪑', image: '/muster/sitzbaenke-stadtpark.jpg',
+    modules: ['information', 'ideen', 'karte', 'ergebnisse'],
+    reactionMode: 'support',
+    stats: { teilnehmende: 234, beitraege: 41, reaktionen: 186 },
+  },
+  {
+    slug: 'sicherer-schulweg',
+    title: 'Sicherer Schulweg an der Hauptstraße',
+    subtitle: 'Wie machen wir den Schulweg für Kinder sicherer?',
+    description:
+      'Viele Kinder queren die Hauptstraße auf dem Weg zur Grundschule. Eltern und Anwohner:innen berichten von gefährlichen Stellen. Teilen Sie Ihre Beobachtungen und Vorschläge — von Zebrastreifen bis Tempo 30.',
+    status: 'beteiligung_laeuft',
+    department: 'Amt für Verkehr', contact: 'Herr Baumann', district: 'Innenstadt',
+    start: '2026-08-20', end: '2026-11-14', level: 'Konsultation',
+    accent: 'bg-amber-50 text-amber-600', emoji: '🚸', image: '/muster/schulweg-hauptstrasse.jpg',
+    modules: ['information', 'ideen', 'karte', 'umfrage', 'ergebnisse'],
+    reactionMode: 'sca',
+    stats: { teilnehmende: 472, beitraege: 88, reaktionen: 263 },
+  },
+  {
+    slug: 'buslinie-4',
+    title: 'Bessere Taktung der Buslinie 4',
+    subtitle: 'Wie oft sollte die Linie 4 künftig fahren?',
+    description:
+      'Die Buslinie 4 verbindet die Wohngebiete mit der Innenstadt. Viele Fahrgäste wünschen sich einen dichteren Takt. In einer kurzen Umfrage können Sie Ihre Prioritäten setzen.',
+    status: 'in_auswertung',
+    department: 'Amt für Verkehr', contact: 'Frau Sommer', district: 'Gesamtstadt',
+    start: '2026-07-01', end: '2026-08-31', level: 'Konsultation',
+    accent: 'bg-sky-50 text-sky-600', emoji: '🚌', image: '/muster/buslinie-4.jpg',
+    modules: ['information', 'umfrage', 'ergebnisse'],
+    reactionMode: 'comments',
+    stats: { teilnehmende: 543, beitraege: 0, reaktionen: 0 },
+  },
+)
 
 export function getProcess(slug: string): ParticipationProcess | undefined {
   return PROCESSES.find(p => p.slug === slug)

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useParams } from 'next/navigation'
 import {
   ChevronLeft, Building2, UserRound, MapPin, CalendarClock, Layers, MessageSquareHeart, Plus,
@@ -48,7 +49,13 @@ export default function ProcessDetail() {
       </Link>
 
       {/* Hero */}
-      <div className="rounded-2xl border border-gray-100 bg-white p-6">
+      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white">
+        {p.image && (
+          <div className="relative h-52 w-full sm:h-64">
+            <Image src={p.image} alt="" fill sizes="(max-width: 896px) 100vw, 896px" className="object-cover" priority />
+          </div>
+        )}
+        <div className="p-6">
         <div className="flex flex-wrap items-center gap-2">
           <span className={`flex h-10 w-10 items-center justify-center rounded-xl text-xl ${p.accent}`}>{p.emoji}</span>
           <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${st.badge}`}>{st.label}</span>
@@ -67,6 +74,7 @@ export default function ProcessDetail() {
               </div>
             </div>
           ))}
+        </div>
         </div>
       </div>
 
