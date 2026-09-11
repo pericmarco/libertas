@@ -3,13 +3,14 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutGrid, Map, ClipboardCheck, BarChart3, Plus, LogOut, User as UserIcon, ShieldCheck } from 'lucide-react'
+import { LayoutGrid, Map, ClipboardCheck, BarChart3, Plus, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { useCity, useCityBrand } from '@/lib/city/context'
 import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import PlusMenu from '@/components/PlusMenu'
+import MainMenu from '@/components/layout/MainMenu'
 import { tenant } from '@/lib/tenant'
 
 // Neue Hauptnavigation: Feed · Karte · ➕ · Abstimmungen · Überblick.
@@ -128,22 +129,15 @@ export default function Navbar() {
             >
               <Plus size={16} /> Beitrag
             </button>
-            {user ? (
-              <>
-                <Link href="/profil" aria-label="Profil" className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors">
-                  <UserIcon size={18} />
-                </Link>
-                <button onClick={handleLogout} aria-label="Abmelden" className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors">
-                  <LogOut size={18} />
-                </button>
-              </>
-            ) : city.is_demo ? (
-              <span className="text-xs text-gray-400 hidden sm:inline">Beispielansicht</span>
-            ) : (
-              <Link href="/login" className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
-                Anmelden
-              </Link>
-            )}
+
+            {/* Alles Weitere (Profil, Admin, Info & Rechtliches, Abmelden)
+                liegt im Hauptmenü — wie bei großen Plattformen üblich. */}
+            <MainMenu
+              loggedIn={!!user}
+              isAdmin={isAdmin}
+              isDemo={city.is_demo}
+              onLogout={handleLogout}
+            />
           </div>
         </div>
       </header>

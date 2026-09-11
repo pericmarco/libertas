@@ -210,6 +210,10 @@ export default async function Home() {
                 <Link href="/register" className="hover:text-gray-600 transition-colors">Registrieren</Link>
               </>
             )}
+            <Link href="/hilfe" className="hover:text-gray-600 transition-colors">Hilfe</Link>
+            <Link href="/community-richtlinien" className="hover:text-gray-600 transition-colors">Community-Richtlinien</Link>
+            <Link href="/nutzungsbedingungen" className="hover:text-gray-600 transition-colors">Nutzungsbedingungen</Link>
+            <Link href="/barrierefreiheit" className="hover:text-gray-600 transition-colors">Barrierefreiheit</Link>
             <Link href="/impressum" className="hover:text-gray-600 transition-colors">Impressum</Link>
             <Link href="/datenschutz" className="hover:text-gray-600 transition-colors">Datenschutz</Link>
           </div>

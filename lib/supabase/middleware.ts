@@ -3,6 +3,9 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 const PUBLIC_PATHS = [
   '/', '/login', '/register', '/passwort-vergessen', '/impressum', '/datenschutz',
+  // Info- und Rechtsseiten: müssen ohne Anmeldung lesbar sein. Die
+  // Barrierefreiheitserklärung verlangt das nach BITV 2.0 sogar ausdrücklich.
+  '/nutzungsbedingungen', '/community-richtlinien', '/barrierefreiheit', '/hilfe',
   // Öffentliche Lese-Ansicht (ohne Login): Dashboard-Überblick,
   // Forderungsübersicht + Stadtumfragen. Mitmachen (Position, Unterstützen,
   // Abstimmen, Einreichen) erfordert weiter eine Anmeldung; die Seiten

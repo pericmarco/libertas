@@ -108,6 +108,19 @@ Fokus-Ring kein grauer Rand durchscheint. Textareas ergänzen
   Routen bleiben erreichbar (aus Feed/Plus/Überblick verlinkt); Politik +
   Dashboard sind unter **Überblick** (`/ueberblick`) gebündelt. Profil/
   Abmelden liegen oben rechts.
+- **Hauptmenü (☰ oben rechts):** `components/layout/MainMenu` — Dropdown nach
+  Plattform-Muster. Enthält Profil und Admin (nur angemeldet), darunter den
+  Block „Info & Rechtliches" (Hilfe & FAQ, Community-Richtlinien,
+  Nutzungsbedingungen, Barrierefreiheit, Datenschutz, Impressum) und zuletzt
+  Abmelden bzw. Anmelden. Schließt bei Escape, Klick außerhalb und
+  Seitenwechsel; `aria-expanded`/`aria-controls` gesetzt, Fokus kehrt zum
+  Knopf zurück. In Demo-Städten entfällt der Anmelden-Eintrag.
+- **Info-/Rechtsseiten** nutzen `components/LegalPage` (+ `Section`):
+  graue Seite, weiße Karte, Titel `text-2xl`, Rechtstexte ab `lg`
+  zweispaltig (`columns`-Prop, für die FAQ auf `false`). Die
+  Barrierefreiheitserklärung muss nach BITV 2.0 von **jeder** Seite
+  erreichbar sein — deshalb liegt sie im Hauptmenü *und* im Fuß der
+  Startseite.
 - **Feed** vereint Inhaltstypen zur Laufzeit aus bestehenden Tabellen
   (`lib/feed`, `components/feed/*`): Forderungen, Stadt-/Politik-Umfragen,
   Infos (später Mängel, Projekte, Petitionen, Bürgerideen). Karten einheitlich
