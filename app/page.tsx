@@ -3,10 +3,22 @@ import { getCurrentCity } from '@/lib/city/server'
 import { brandName } from '@/lib/city/host'
 import Image from 'next/image'
 import { Megaphone, Vote, BarChart2, ChevronRight, MapPin, CheckCircle, Info } from 'lucide-react'
+import { createClient } from '@/lib/supabase/server'
 
 export default async function Home() {
   const city = await getCurrentCity()
   const brand = brandName(city)
+
+  // Die Startseite ist die Werbeseite — wer schon angemeldet ist, darf hier
+  // aber nicht „Anmelden/Registrieren" lesen und sich für abgemeldet halten.
+  // Für Angemeldete führt jeder Weg von hier in die Plattform.
+  let loggedIn = false
+  try {
+    const supabase = await createClient()
+    loggedIn = !!(await supabase.auth.getUser()).data.user
+  } catch {
+    // Die Startseite muss auch ohne funktionierende Auth-Abfrage stehen.
+  }
 
   return (
     <main className="min-h-screen bg-white">
@@ -36,7 +48,12 @@ export default async function Home() {
             <Link href="/forderungen" className="hidden sm:inline text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
               Ansehen
             </Link>
-            {city.is_demo ? (
+            {loggedIn ? (
+              /* Angemeldet: zurück in die Plattform statt Anmelde-Aufforderung */
+              <Link href="/feed" className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors">
+                Zur Plattform
+              </Link>
+            ) : city.is_demo ? (
               /* Demo: kein Konto, direkter Weg in die Plattform */
               <Link href="/dashboard" className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors">
                 Plattform ansehen
@@ -71,10 +88,10 @@ export default async function Home() {
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
             <Link
-              href={city.is_demo ? '/dashboard' : '/register'}
+              href={loggedIn ? '/feed' : city.is_demo ? '/dashboard' : '/register'}
               className="flex items-center gap-2 px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors text-lg"
             >
-              {city.is_demo ? 'Plattform ansehen' : 'Jetzt mitmachen'}
+              {loggedIn ? 'Zur Plattform' : city.is_demo ? 'Plattform ansehen' : 'Jetzt mitmachen'}
               <ChevronRight size={18} />
             </Link>
             <Link href="/forderungen" className="px-8 py-4 bg-white text-gray-700 border border-gray-200 rounded-xl font-semibold hover:bg-gray-50 transition-colors text-lg">
@@ -82,9 +99,11 @@ export default async function Home() {
             </Link>
           </div>
           <p className="text-sm text-gray-400 mt-4">
-            {city.is_demo
-              ? 'Sie können sich frei umsehen — in dieser Beispielansicht ist kein Konto nötig.'
-              : 'Schau dich erst um — Forderungen und Stadtumfragen sind auch ohne Konto einsehbar.'}
+            {loggedIn
+              ? 'Du bist angemeldet — es geht direkt weiter, wo du aufgehört hast.'
+              : city.is_demo
+                ? 'Sie können sich frei umsehen — in dieser Beispielansicht ist kein Konto nötig.'
+                : 'Schau dich erst um — Forderungen und Stadtumfragen sind auch ohne Konto einsehbar.'}
           </p>
           <div className="flex items-center justify-center gap-6 mt-6 text-sm font-medium text-gray-400">
             <span className="flex items-center gap-1.5"><CheckCircle size={14} className="text-blue-400" /> Transparenz</span>
@@ -174,18 +193,22 @@ export default async function Home() {
       <section className="py-20 px-6 bg-blue-600">
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-white mb-4">
-            {city.is_demo ? 'Interesse für Ihre Kommune?' : 'Mach mit beim Pilotprojekt'}
+            {loggedIn
+              ? 'Schön, dass du dabei bist'
+              : city.is_demo ? 'Interesse für Ihre Kommune?' : 'Mach mit beim Pilotprojekt'}
           </h2>
           <p className="text-blue-100 mb-8 leading-relaxed">
-            {city.is_demo
-              ? 'Diese Beispielstadt zeigt, wie Ihre Beteiligungsplattform aussehen könnte — unter Ihrem Namen, in Ihren Farben, mit Ihren Stadtteilen. Sprechen Sie uns gerne an.'
-              : `${brand} startet jetzt in ${city.name}. Sei dabei und hilf dabei lokale Demokratie neu zu gestalten.`}
+            {loggedIn
+              ? `Im Feed siehst du, was gerade in ${city.name} passiert — und worüber gerade abgestimmt wird.`
+              : city.is_demo
+                ? 'Diese Beispielstadt zeigt, wie Ihre Beteiligungsplattform aussehen könnte — unter Ihrem Namen, in Ihren Farben, mit Ihren Stadtteilen. Sprechen Sie uns gerne an.'
+                : `${brand} startet jetzt in ${city.name}. Sei dabei und hilf dabei lokale Demokratie neu zu gestalten.`}
           </p>
           <Link
-            href={city.is_demo ? 'mailto:info@lybertas.de' : '/register'}
+            href={loggedIn ? '/feed' : city.is_demo ? 'mailto:info@lybertas.de' : '/register'}
             className="inline-flex items-center gap-2 px-8 py-4 bg-white text-blue-600 rounded-xl font-semibold hover:bg-blue-50 transition-colors text-lg"
           >
-            {city.is_demo ? 'Kontakt aufnehmen' : 'Kostenlos registrieren'}
+            {loggedIn ? 'Zum Feed' : city.is_demo ? 'Kontakt aufnehmen' : 'Kostenlos registrieren'}
             <ChevronRight size={18} />
           </Link>
         </div>
@@ -204,7 +227,9 @@ export default async function Home() {
             )}
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-2">
-            {!city.is_demo && (
+            {loggedIn ? (
+              <Link href="/feed" className="hover:text-gray-600 transition-colors">Zur Plattform</Link>
+            ) : !city.is_demo && (
               <>
                 <Link href="/login" className="hover:text-gray-600 transition-colors">Anmelden</Link>
                 <Link href="/register" className="hover:text-gray-600 transition-colors">Registrieren</Link>

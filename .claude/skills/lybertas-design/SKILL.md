@@ -117,10 +117,21 @@ Fokus-Ring kein grauer Rand durchscheint. Textareas ergänzen
   Knopf zurück. In Demo-Städten entfällt der Anmelden-Eintrag.
 - **Info-/Rechtsseiten** nutzen `components/LegalPage` (+ `Section`):
   graue Seite, weiße Karte, Titel `text-2xl`, Rechtstexte ab `lg`
-  zweispaltig (`columns`-Prop, für die FAQ auf `false`). Die
+  zweispaltig (`columns`-Prop, für die FAQ auf `false`). Gilt für **alle**
+  sechs Seiten — Hilfe, Community-Richtlinien, Nutzungsbedingungen,
+  Barrierefreiheit, Impressum, Datenschutz. Die
   Barrierefreiheitserklärung muss nach BITV 2.0 von **jeder** Seite
   erreichbar sein — deshalb liegt sie im Hauptmenü *und* im Fuß der
   Startseite.
+- **Angemeldete verlassen nie die Plattform.** `LegalPage` prüft serverseitig
+  die Sitzung: Wer angemeldet ist, bekommt die `Navbar` und einen echten
+  Zurück-Knopf (`components/BackLink`, `router.back()` mit Ausweichziel);
+  wer nicht angemeldet ist, die schlichte Hülle mit „Zurück zur Startseite".
+  Grund: Ein fester Link auf `/` warf Angemeldete auf die Werbeseite mit
+  „Anmelden/Registrieren" — das las sich wie eine Abmeldung.
+  Aus demselben Grund zeigt `app/page.tsx` Angemeldeten „Zur Plattform"
+  statt „Anmelden/Registrieren". **Regel: Keine Seite darf einer
+  angemeldeten Person eine Anmelde-Aufforderung zeigen.**
 - **Feed** vereint Inhaltstypen zur Laufzeit aus bestehenden Tabellen
   (`lib/feed`, `components/feed/*`): Forderungen, Stadt-/Politik-Umfragen,
   Infos (später Mängel, Projekte, Petitionen, Bürgerideen). Karten einheitlich
