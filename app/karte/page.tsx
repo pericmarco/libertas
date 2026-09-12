@@ -1,24 +1,19 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import { createClient } from '@/lib/supabase/client'
 import { useCity } from '@/lib/city/context'
 import { tenant } from '@/lib/tenant'
 import type { MapPin } from '@/components/MapView'
+import MapPanel from '@/components/MapPanel'
 import {
   Megaphone, Wrench, BarChart3, Building2, Newspaper, X, Landmark, UserRound, MapPin as PinIcon, ChevronRight,
 } from 'lucide-react'
 import {
   STADTTEILE, BEZIRK, PARTEI_FARBEN, ergebnisKompakt, type Stadtteil,
 } from '@/lib/stadtteilDaten'
-
-const MapView = dynamic(() => import('@/components/MapView'), {
-  ssr: false,
-  loading: () => <div className="h-full w-full bg-gray-100 animate-pulse" />,
-})
 
 const FORDERUNG_COLOR = '#2563EB'
 const MANGEL_COLOR = '#EA580C'
@@ -129,9 +124,7 @@ export default function KartePage() {
             })}
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white">
-            <MapView pins={pins} cooperative className="h-[52vh] min-h-[320px] w-full" />
-          </div>
+          <MapPanel pins={pins} title="Karte" className="h-[52vh] min-h-[320px] w-full" />
 
           {/* Stadtteile — anklickbar (Info-Bottom-Sheet). Echte klickbare
               Flächen (GeoJSON-Polygone) folgen als nächste Ausbaustufe. */}

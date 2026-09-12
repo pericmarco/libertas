@@ -1,15 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import dynamic from 'next/dynamic'
 import { ChevronLeft, ChevronRight, Camera, CheckCircle2, MapPin, Circle } from 'lucide-react'
 import { MAENGEL, MANGEL_STATUS } from '@/lib/kommune/admin'
 import type { LngLat } from '@/components/MapView'
-
-const MapView = dynamic(() => import('@/components/MapView'), {
-  ssr: false,
-  loading: () => <div className="h-64 w-full animate-pulse bg-gray-100" />,
-})
+import MapPanel from '@/components/MapPanel'
 
 // Fiktives Zentrum „Musterstadt"
 const CENTER: LngLat = { lng: 6.83, lat: 51.10 }
@@ -79,9 +74,7 @@ export default function Maengelmelder() {
 
       {step === 0 && (
         <div className="flex flex-col gap-4">
-          <div className="overflow-hidden rounded-2xl border border-gray-100">
-            <MapView picker maxPins={1} geolocate cooperative center={CENTER} zoom={13} value={pin ? [pin] : []} onChange={pins => setPin(pins[0] ?? null)} className="h-64 w-full" />
-          </div>
+          <MapPanel picker maxPins={1} geolocate title="Standort wählen" center={CENTER} zoom={13} value={pin ? [pin] : []} onChange={pins => setPin(pins[0] ?? null)} className="h-64 w-full" />
           <div className="flex items-center gap-2 text-sm text-gray-500"><MapPin size={15} className="text-blue-500" /> {pin ? 'Standort auf der Karte gesetzt' : 'Tippen Sie den Ort auf der Karte an oder nutzen Sie „Mein Standort".'}</div>
           <div>
             <label className="mb-1.5 block text-sm font-medium text-gray-700">Adresse / Beschreibung des Orts</label>

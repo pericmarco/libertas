@@ -3,16 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
 import Navbar from '@/components/layout/Navbar'
 import { ChevronLeft, ChevronDown, CheckCircle, Circle, Info, Pencil, MapPin, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-
-// Karte nur clientseitig und erst bei Bedarf laden (maplibre ist groß).
-const MapView = dynamic(() => import('@/components/MapView'), {
-  ssr: false,
-  loading: () => <div className="h-64 w-full rounded-xl bg-gray-100 animate-pulse" />,
-})
+import MapPanel from '@/components/MapPanel'
 import type { MapPin as MapPinType } from '@/components/MapView'
 
 // Farbe für bereits gemeldete Mängel auf der Karte (Mangel-Akzent = Orange)
@@ -449,14 +443,15 @@ export default function NeueForderung() {
                       )}
                     </p>
                   </div>
-                  <MapView
+                  <MapPanel
+                    bare
                     picker
                     maxPins={1}
                     value={pins}
                     onChange={setPins}
                     pins={art === 'mangel' ? mangelPins ?? undefined : undefined}
-                    cooperative
                     geolocate
+                    title="Ort wählen"
                     className="h-80 w-full"
                   />
                 </div>
@@ -485,7 +480,7 @@ export default function NeueForderung() {
                       Tippe mehrere Punkte an.{pins.length > 0 && ` ${pins.length} ${pins.length === 1 ? 'Punkt' : 'Punkte'} gesetzt.`}
                     </p>
                   </div>
-                  <MapView picker maxPins={12} value={pins} onChange={setPins} cooperative geolocate className="h-80 w-full" />
+                  <MapPanel bare picker maxPins={12} value={pins} onChange={setPins} geolocate title="Orte markieren" className="h-80 w-full" />
                 </div>
               )}
             </div>

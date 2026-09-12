@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { Building2, Lightbulb, Wrench, BarChart3 } from 'lucide-react'
 import type { LngLat, MapPin } from '@/components/MapView'
-import MapPanel from '@/components/kommune/MapPanel'
+import MapPanel from '@/components/MapPanel'
 
 const CENTER: LngLat = { lng: 6.83, lat: 51.10 }
 

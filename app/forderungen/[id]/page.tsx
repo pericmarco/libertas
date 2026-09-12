@@ -3,16 +3,11 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
 import Navbar from '@/components/layout/Navbar'
 import { ChevronLeft, ChevronRight, ThumbsUp, MessageSquare, Lightbulb, ShieldCheck, CheckCircle, Circle, AlertCircle, Heart, Undo2, ChevronDown, Wrench, Info, X, MapPin, Lock, LogIn } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
-// Karte nur clientseitig und erst bei Bedarf laden.
-const MapView = dynamic(() => import('@/components/MapView'), {
-  ssr: false,
-  loading: () => <div className="h-64 w-full bg-gray-100 animate-pulse" />,
-})
+import MapPanel from '@/components/MapPanel'
 import RepScoreBadge from '@/components/RepScoreBadge'
 import ReportDemand from '@/components/ReportDemand'
 import { computeRepScoreForUsers } from '@/lib/repScore'
@@ -525,12 +520,13 @@ export default function ForderungDetail() {
               <div className="px-6 pt-5 pb-3 flex items-center gap-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                 <MapPin size={13} /> Ort
               </div>
-              <MapView
+              <MapPanel
+                bare
+                title="Ort"
                 pins={ortPins}
                 center={{ lng: ortPins[0].lng, lat: ortPins[0].lat }}
                 zoom={15}
                 fit={ortPins.length > 1}
-                cooperative
                 className="h-64 w-full"
               />
               {demand.location && <p className="px-6 py-3 text-sm text-gray-600">{demand.location}</p>}
