@@ -1,162 +1,117 @@
 'use client'
 
-import { useState } from 'react'
-import { ChevronLeft, ChevronRight, Camera, CheckCircle2, MapPin, Circle } from 'lucide-react'
-import { MAENGEL, MANGEL_STATUS } from '@/lib/kommune/admin'
-import type { LngLat } from '@/components/MapView'
+import { useMemo, useState } from 'react'
+import Link from 'next/link'
+import { Wrench, Plus, MapPin, ThumbsUp, Clock } from 'lucide-react'
+import { MAENGEL, MANGEL_STATUS, type MangelStatus } from '@/lib/kommune/admin'
+import type { LngLat, MapPin as MapPinT } from '@/components/MapView'
 import MapPanel from '@/components/MapPanel'
+import SortBar, { type SortOption } from '@/components/kommune/SortBar'
 
-// Fiktives Zentrum „Musterstadt"
 const CENTER: LngLat = { lng: 6.83, lat: 51.10 }
+const FLOW: MangelStatus[] = ['neu', 'zugewiesen', 'in_bearbeitung', 'erledigt']
 
-const KATEGORIEN = [
-  { key: 'strasse', emoji: '🛣️', label: 'Straße' },
-  { key: 'beleuchtung', emoji: '💡', label: 'Beleuchtung' },
-  { key: 'muell', emoji: '🗑️', label: 'Müll' },
-  { key: 'gruen', emoji: '🌳', label: 'Grünanlage' },
-  { key: 'spielplatz', emoji: '🎠', label: 'Spielplatz' },
-  { key: 'verkehr', emoji: '🚦', label: 'Verkehr' },
-  { key: 'schild', emoji: '🚸', label: 'Beschilderung' },
-  { key: 'sonstiges', emoji: '➕', label: 'Sonstiges' },
+type Sort = 'neueste' | 'relevanteste' | 'offen'
+const SORTS: SortOption<Sort>[] = [
+  { key: 'neueste', label: 'Neueste' },
+  { key: 'relevanteste', label: 'Relevanteste' },
+  { key: 'offen', label: 'Offene zuerst' },
 ]
 
-const STEPS = ['Ort', 'Kategorie', 'Beschreibung', 'Foto', 'Prüfen']
-const TRACK = ['Eingegangen', 'Zuständige Stelle', 'In Bearbeitung', 'Erledigt']
+function relDays(iso: string): string {
+  const d = Math.round((Date.now() - new Date(iso + 'T12:00:00').getTime()) / 86_400_000)
+  if (d <= 0) return 'heute'
+  if (d === 1) return 'gestern'
+  return `vor ${d} Tagen`
+}
 
-export default function Maengelmelder() {
-  const [step, setStep] = useState(0)
-  const [pin, setPin] = useState<LngLat | null>(null)
-  const [address, setAddress] = useState('')
-  const [kategorie, setKategorie] = useState<string | null>(null)
-  const [beschreibung, setBeschreibung] = useState('')
-  const [photo, setPhoto] = useState<string | null>(null)
-  const [ref, setRef] = useState<string | null>(null)
+export default function MaengelUebersicht() {
+  const [status, setStatus] = useState<MangelStatus | 'alle'>('alle')
+  const [sort, setSort] = useState<Sort>('neueste')
 
-  function submit() {
-    setRef('M-' + Math.floor(1000 + Math.random() * 9000))
-  }
+  const list = useMemo(() => {
+    const filtered = MAENGEL.filter(m => status === 'alle' || m.status === status)
+    const sorted = [...filtered]
+    if (sort === 'neueste') sorted.sort((a, b) => (a.created < b.created ? 1 : -1))
+    else if (sort === 'relevanteste') sorted.sort((a, b) => b.support - a.support)
+    else sorted.sort((a, b) => FLOW.indexOf(a.status) - FLOW.indexOf(b.status) || (a.created < b.created ? 1 : -1))
+    return sorted
+  }, [status, sort])
 
-  const canNext = [
-    !!pin || address.trim().length > 2,     // Ort
-    !!kategorie,                            // Kategorie
-    beschreibung.trim().length >= 5,        // Beschreibung
-    true,                                   // Foto optional
-    true,
-  ][step]
-
-  if (ref) {
-    return (
-      <main className="mx-auto max-w-lg px-4 sm:px-6 py-12 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100"><CheckCircle2 size={30} className="text-green-600" /></div>
-        <h1 className="text-2xl font-bold text-gray-900">Meldung eingegangen</h1>
-        <p className="mt-1 text-gray-500">Ihre Meldung <strong>{ref}</strong> wurde erfasst. So geht es weiter:</p>
-        <ol className="mx-auto mt-6 flex max-w-xs flex-col gap-3 text-left">
-          {TRACK.map((t, i) => (
-            <li key={t} className="flex items-center gap-3">
-              {i === 0 ? <CheckCircle2 size={18} className="shrink-0 text-green-600" /> : <Circle size={18} className="shrink-0 text-gray-200" />}
-              <span className={`text-sm ${i === 0 ? 'font-semibold text-gray-900' : 'text-gray-400'}`}>{t}</span>
-            </li>
-          ))}
-        </ol>
-        <p className="mt-6 text-xs text-gray-400">Demo · Meldung wird nicht dauerhaft gespeichert.</p>
-        <a href="/maengel" className="mt-6 inline-block rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors">Weitere Meldung</a>
-      </main>
-    )
-  }
+  const pins: MapPinT[] = useMemo(() => list.map(m => ({
+    id: m.id, lng: m.lng, lat: m.lat, title: m.title,
+    meta: `${m.category} · ${MANGEL_STATUS[m.status].label}`,
+    color: MANGEL_STATUS[m.status].dot,
+  })), [list])
 
   return (
-    <main className="mx-auto max-w-2xl px-4 sm:px-6 py-8">
-      <h1 className="text-2xl font-bold text-gray-900">Mangel melden</h1>
-      <p className="mt-0.5 text-sm text-gray-500">Schritt {step + 1} von {STEPS.length} · {STEPS[step]}</p>
-      <div className="mt-4 mb-6 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
-        <div className="h-full rounded-full bg-blue-500 transition-all" style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
+    <main className="mx-auto max-w-4xl px-4 sm:px-6 py-8">
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
+            <Wrench size={22} className="text-blue-600" /> Mängelmelder
+          </h1>
+          <p className="mt-0.5 text-sm text-gray-500">Bereits gemeldete Schäden im Stadtgebiet – und was daraus wird.</p>
+        </div>
+        <Link href="/maengel/neu" className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700">
+          <Plus size={16} /> Mangel melden
+        </Link>
       </div>
 
-      {step === 0 && (
-        <div className="flex flex-col gap-4">
-          <MapPanel picker maxPins={1} geolocate title="Standort wählen" center={CENTER} zoom={13} value={pin ? [pin] : []} onChange={pins => setPin(pins[0] ?? null)} className="h-64 w-full" />
-          <div className="flex items-center gap-2 text-sm text-gray-500"><MapPin size={15} className="text-blue-500" /> {pin ? 'Standort auf der Karte gesetzt' : 'Tippen Sie den Ort auf der Karte an oder nutzen Sie „Mein Standort".'}</div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">Adresse / Beschreibung des Orts</label>
-            <input value={address} onChange={e => setAddress(e.target.value)} placeholder="z. B. Hauptstraße 42, vor der Bäckerei" className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-          </div>
-        </div>
-      )}
+      {/* Karte aller Meldungen */}
+      <MapPanel pins={pins} center={CENTER} zoom={13} title="Gemeldete Mängel" className="h-[46vh] min-h-[300px] w-full" />
 
-      {step === 1 && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {KATEGORIEN.map(k => (
-            <button key={k.key} onClick={() => setKategorie(k.key)}
-              className={`flex flex-col items-center gap-2 rounded-2xl border p-4 transition-all ${kategorie === k.key ? 'border-blue-400 bg-blue-50/60 ring-1 ring-blue-200' : 'border-gray-200 hover:border-blue-300'}`}>
-              <span className="text-2xl">{k.emoji}</span>
-              <span className="text-sm font-medium text-gray-800">{k.label}</span>
+      {/* Statusfilter */}
+      <div className="mt-5 mb-2 flex flex-wrap gap-2">
+        {(['alle', ...FLOW] as const).map(f => {
+          const on = status === f
+          const count = f === 'alle' ? MAENGEL.length : MAENGEL.filter(m => m.status === f).length
+          return (
+            <button key={f} onClick={() => setStatus(f)}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${on ? 'border-transparent bg-blue-600 text-white' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}`}>
+              {f !== 'alle' && <span className="h-2 w-2 rounded-full" style={{ backgroundColor: MANGEL_STATUS[f].dot }} />}
+              {f === 'alle' ? 'Alle' : MANGEL_STATUS[f].label}
+              <span className={`text-xs ${on ? 'text-blue-100' : 'text-gray-400'}`}>{count}</span>
             </button>
-          ))}
-        </div>
-      )}
+          )
+        })}
+      </div>
 
-      {step === 2 && (
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-gray-700">Was ist das Problem?</label>
-          <textarea value={beschreibung} onChange={e => setBeschreibung(e.target.value)} rows={5} placeholder="Beschreiben Sie den Mangel möglichst genau…" className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-        </div>
-      )}
+      {/* Sortierung */}
+      <div className="mb-4">
+        <SortBar options={SORTS} value={sort} onChange={setSort} />
+      </div>
 
-      {step === 3 && (
-        <div className="flex flex-col gap-3">
-          <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-gray-300 px-6 py-10 text-center hover:border-blue-300">
-            <Camera size={24} className="text-gray-400" />
-            <span className="text-sm font-medium text-gray-700">Foto aufnehmen oder auswählen</span>
-            <span className="text-xs text-gray-400">optional · JPG/PNG</span>
-            <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) setPhoto(URL.createObjectURL(f)) }} />
-          </label>
-          {photo && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={photo} alt="Vorschau" className="max-h-64 w-full rounded-2xl border border-gray-100 object-cover" />
-          )}
-        </div>
-      )}
-
-      {step === 4 && (
-        <div className="rounded-2xl border border-gray-100 bg-white p-6">
-          <h2 className="text-base font-semibold text-gray-900">Prüfen & senden</h2>
-          <dl className="mt-3 divide-y divide-gray-50 text-sm">
-            <div className="flex justify-between gap-4 py-2"><dt className="text-gray-400">Ort</dt><dd className="text-right font-medium text-gray-900">{address || (pin ? 'Auf Karte gesetzt' : '—')}</dd></div>
-            <div className="flex justify-between gap-4 py-2"><dt className="text-gray-400">Kategorie</dt><dd className="text-right font-medium text-gray-900">{KATEGORIEN.find(k => k.key === kategorie)?.label ?? '—'}</dd></div>
-            <div className="flex justify-between gap-4 py-2"><dt className="text-gray-400">Beschreibung</dt><dd className="max-w-[70%] text-right font-medium text-gray-900">{beschreibung || '—'}</dd></div>
-            <div className="flex justify-between gap-4 py-2"><dt className="text-gray-400">Foto</dt><dd className="text-right font-medium text-gray-900">{photo ? 'angehängt' : '—'}</dd></div>
-          </dl>
-        </div>
-      )}
-
-      <div className="mt-6 flex items-center justify-between">
-        {step > 0 ? (
-          <button onClick={() => setStep(s => s - 1)} className="inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"><ChevronLeft size={15} /> Zurück</button>
-        ) : <span />}
-        {step < STEPS.length - 1 ? (
-          <button onClick={() => canNext && setStep(s => s + 1)} disabled={!canNext} className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">Weiter <ChevronRight size={15} /></button>
-        ) : (
-          <button onClick={submit} className="rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition-colors">Meldung absenden</button>
+      {/* Liste */}
+      <div className="flex flex-col gap-3">
+        {list.map(m => (
+          <div key={m.id} className="flex items-center gap-4 rounded-2xl border border-gray-100 bg-white p-4">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: MANGEL_STATUS[m.status].dot + '1a', color: MANGEL_STATUS[m.status].dot }}>
+              <MapPin size={18} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${MANGEL_STATUS[m.status].badge}`}>{MANGEL_STATUS[m.status].label}</span>
+                <span className="text-xs text-gray-400">{m.category}</span>
+              </div>
+              <div className="mt-0.5 truncate font-semibold text-gray-900">{m.title}</div>
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-4 gap-y-0.5 text-sm text-gray-500">
+                <span className="inline-flex items-center gap-1"><MapPin size={13} /> {m.location}</span>
+                <span className="inline-flex items-center gap-1"><Clock size={13} /> {relDays(m.created)}</span>
+              </div>
+            </div>
+            <div className="shrink-0 text-right">
+              <div className="inline-flex items-center gap-1 text-sm font-semibold text-gray-700"><ThumbsUp size={14} className="text-gray-400" /> {m.support}</div>
+              <div className="text-[10px] text-gray-400">auch betroffen</div>
+            </div>
+          </div>
+        ))}
+        {list.length === 0 && (
+          <p className="rounded-2xl border border-dashed border-gray-200 py-12 text-center text-sm text-gray-400">Keine Meldungen mit diesem Status.</p>
         )}
       </div>
 
-      {/* Öffentliche Meldungen in der Nähe */}
-      {step === 0 && (
-        <section className="mt-10">
-          <h2 className="mb-3 text-sm font-semibold text-gray-900">Bereits gemeldet in der Nähe</h2>
-          <div className="flex flex-col gap-2">
-            {MAENGEL.slice(0, 4).map(m => (
-              <div key={m.id} className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3">
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-medium text-gray-900">{m.title}</div>
-                  <div className="text-xs text-gray-400">{m.location} · {m.category}</div>
-                </div>
-                <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${MANGEL_STATUS[m.status].badge}`}>{MANGEL_STATUS[m.status].label}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      <p className="mt-8 text-center text-xs text-gray-400">Beispielhafte Meldungen · alle Inhalte sind fiktiv</p>
     </main>
   )
 }
