@@ -3,7 +3,7 @@ import Image from 'next/image'
 import { getCurrentCity } from '@/lib/city/server'
 import { PROCESSES } from '@/lib/kommune/demo'
 import ProcessCard from '@/components/kommune/ProcessCard'
-import { Wrench, ArrowRight, Megaphone, BarChart3, Map as MapIcon } from 'lucide-react'
+import { Wrench, ArrowRight, Megaphone, BarChart3, Map as MapIcon, CalendarDays } from 'lucide-react'
 
 // Kommunale Startseite (musterstadt.lybertas.de/). Öffentlich sichtbares
 // „Schaufenster" des Beteiligungsportals.
@@ -73,8 +73,9 @@ export default async function MunicipalStart() {
       )}
 
       {/* Schnellzugriffe */}
-      <section className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <section className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
+          { href: '/veranstaltungen', icon: CalendarDays, tint: 'bg-blue-50 text-blue-600', title: 'Veranstaltungen', desc: 'Termine, Werkstätten und Infoabende.' },
           { href: '/vorhaben', icon: Megaphone, tint: 'bg-purple-50 text-purple-600', title: 'Vorhaben der Stadt', desc: 'Was die Verwaltung plant und umsetzt.' },
           { href: '/karte', icon: MapIcon, tint: 'bg-sky-50 text-sky-600', title: 'Beteiligungskarte', desc: 'Vorhaben, Ideen und Mängel im Stadtgebiet.' },
           { href: '/ergebnisse', icon: BarChart3, tint: 'bg-emerald-50 text-emerald-600', title: 'Ergebnisse', desc: 'Was aus Ihrer Beteiligung geworden ist.' },

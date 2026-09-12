@@ -16,6 +16,7 @@ const NAV = [
   { href: '/', label: 'Start' },
   { href: '/beteiligungen', label: 'Beteiligungen' },
   { href: '/vorhaben', label: 'Vorhaben' },
+  { href: '/veranstaltungen', label: 'Termine' },
   { href: '/karte', label: 'Karte' },
   { href: '/maengel', label: 'Mängel melden' },
   { href: '/ergebnisse', label: 'Ergebnisse' },
