@@ -15,15 +15,28 @@ export default async function MunicipalStart() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-10">
-      {/* Hero */}
-      <section className="rounded-3xl bg-gradient-to-br from-blue-600 to-blue-500 px-6 py-10 sm:px-10 sm:py-14 text-white">
+      {/* Hero — Farbwelt aus dem Logo abgeleitet: Navy-Basis (seriös, kräftig),
+          Logo-Blau als Glanz oben rechts, Logo-Grün als ruhiger Verlauf von
+          unten links (der Hügel unter der Stadt im Logo). Weiße Schrift bleibt
+          auf der dunklen Navy-Basis durchgehend gut lesbar. */}
+      <section
+        className="relative overflow-hidden rounded-3xl px-6 py-10 sm:px-10 sm:py-14 text-white"
+        style={{
+          backgroundColor: '#153860',
+          backgroundImage: [
+            'radial-gradient(120% 135% at 6% 118%, rgba(76,166,64,0.45) 0%, rgba(76,166,64,0.12) 34%, rgba(76,166,64,0) 62%)',
+            'radial-gradient(95% 120% at 100% -10%, rgba(43,124,191,0.55) 0%, rgba(43,124,191,0) 58%)',
+            'linear-gradient(135deg, #10305a 0%, #163f6c 46%, #1d5183 100%)',
+          ].join(', '),
+        }}
+      >
         <h1 className="max-w-2xl text-3xl sm:text-4xl font-bold leading-tight">{brand} gemeinsam gestalten.</h1>
-        <p className="mt-3 max-w-xl text-blue-50 text-lg">Informieren. Mitreden. Ideen einbringen.</p>
+        <p className="mt-3 max-w-xl text-white/85 text-lg">Informieren. Mitreden. Ideen einbringen.</p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <Link href="/beteiligungen" className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50">
+          <Link href="/beteiligungen" className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[#153860] shadow-sm transition-colors hover:bg-blue-50">
             Jetzt beteiligen <ArrowRight size={16} />
           </Link>
-          <Link href="/maengel" className="inline-flex items-center gap-2 rounded-xl bg-blue-500/40 px-5 py-3 text-sm font-semibold text-white ring-1 ring-white/40 transition-colors hover:bg-blue-500/60">
+          <Link href="/maengel" className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-5 py-3 text-sm font-semibold text-white ring-1 ring-white/40 backdrop-blur-sm transition-colors hover:bg-white/20">
             <Wrench size={16} /> Mangel melden
           </Link>
         </div>
