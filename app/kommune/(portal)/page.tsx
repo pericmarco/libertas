@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { getCurrentCity } from '@/lib/city/server'
 import { PROCESSES } from '@/lib/kommune/demo'
 import ProcessCard from '@/components/kommune/ProcessCard'
@@ -30,6 +31,11 @@ export default async function MunicipalStart() {
           ].join(', '),
         }}
       >
+        {/* Logo auf weißem „Badge" — die Logo-Marken sind Navy/Grün und würden
+            auf dem dunklen Verlauf verschwinden; das Logo selbst bleibt unverändert. */}
+        <span className="mb-6 inline-flex items-center rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-black/5">
+          <Image src="/muster/logo-musterstadt.png" alt={`${brand} · Beteiligungsportal`} width={230} height={45} priority className="h-9 w-auto sm:h-11" />
+        </span>
         <h1 className="max-w-2xl text-3xl sm:text-4xl font-bold leading-tight">{brand} gemeinsam gestalten.</h1>
         <p className="mt-3 max-w-xl text-white/85 text-lg">Informieren. Mitreden. Ideen einbringen.</p>
         <div className="mt-6 flex flex-wrap gap-3">
