@@ -13,6 +13,7 @@ import IdeaCard from '@/components/kommune/IdeaCard'
 import KartendialogTab from '@/components/kommune/KartendialogTab'
 import BuergerbudgetTab from '@/components/kommune/BuergerbudgetTab'
 import DokumentTab from '@/components/kommune/DokumentTab'
+import FragenTab from '@/components/kommune/FragenTab'
 
 const TAB_LABEL: Record<ModuleType, string> = {
   information: 'Überblick', ideen: 'Mitmachen', karte: 'Karte', umfrage: 'Umfrage',
@@ -104,9 +105,9 @@ export default function ProcessDetail() {
         {tab === 'varianten' && <VariantenTab slug={p.slug} />}
         {tab === 'buergerbudget' && <BuergerbudgetTab slug={p.slug} />}
         {tab === 'dokument' && <DokumentTab slug={p.slug} />}
+        {tab === 'fragen' && <FragenTab slug={p.slug} />}
         {tab === 'termine' && <TermineTab slug={p.slug} />}
         {tab === 'ergebnisse' && <ErgebnisseTab slug={p.slug} status={p.status} />}
-        {tab === 'fragen' && <SoonTab label={TAB_LABEL[tab]} />}
       </div>
     </main>
   )
