@@ -31,6 +31,7 @@ export type FeedUmfrage = {
   district: string | null
   totalVotes: number
   endsAt: string | null
+  image: string | null
   createdAt: string
 }
 

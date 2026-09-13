@@ -21,6 +21,7 @@ type Vote = {
   is_partner_vote: boolean
   partner_name: string | null
   target_district_id: string | null
+  image_url: string | null
 }
 
 type District = { id: string; name: string }
@@ -333,6 +334,10 @@ export default function Abstimmungen() {
 
                 return (
                   <Card key={vote.id}>
+                    {vote.image_url && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={vote.image_url} alt="" className="aspect-[16/9] w-full rounded-t-xl object-cover" />
+                    )}
                     <CardHeader>
                       {/* Auf Mobile stapeln Titel und Badge, ab sm nebeneinander — sonst quetscht das Badge den Titel */}
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
