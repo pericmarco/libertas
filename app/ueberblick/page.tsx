@@ -15,7 +15,7 @@ export default async function Stadt() {
     { href: '/events', icon: CalendarDays, color: '#2563EB', title: 'Events', subtitle: 'Was in deiner Stadt ansteht' },
     { href: '/politik-kompass', icon: Compass, color: '#059669', title: 'Politik-Kompass', subtitle: 'Sitzverteilung, Wahlen & wer regiert' },
     { href: '/wirkung', icon: TrendingUp, color: '#16A34A', title: 'Wirkung', subtitle: 'Was aus Beteiligung geworden ist' },
-    { href: '/dashboard', icon: LayoutDashboard, color: '#4F46E5', title: 'Dashboard', subtitle: 'Deine Zahlen im Detail' },
+    { href: '/dashboard', icon: LayoutDashboard, color: '#4F46E5', title: 'Meine Beteiligung', subtitle: 'Deine Anliegen, dein Status' },
   ]
 
   return (
