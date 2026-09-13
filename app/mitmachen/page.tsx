@@ -1,7 +1,7 @@
 import Navbar from '@/components/layout/Navbar'
 import Link from 'next/link'
 import { getCurrentCity } from '@/lib/city/server'
-import { Megaphone, Vote, Wrench, Building2, ChevronRight, type LucideIcon } from 'lucide-react'
+import { Megaphone, Vote, Wrench, Building2, Landmark, ChevronRight, type LucideIcon } from 'lucide-react'
 
 // „Mitmachen" bündelt alle Beteiligungsformate an einem Ort. Ersetzt den
 // früheren Einzelpunkt „Abstimmungen" — dieser lebt jetzt als eines von
@@ -39,6 +39,13 @@ export default async function Mitmachen() {
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Jetzt aktiv</h2>
           <div className="flex flex-col gap-3">
             <FormatCard
+              href="/beteiligungen"
+              icon={Landmark}
+              tint="bg-blue-50 text-blue-600"
+              title="Beteiligungsverfahren"
+              desc="Offizielle Verfahren der Stadt — informieren, auf der Karte mitreden, Ideen einbringen."
+            />
+            <FormatCard
               href="/forderungen"
               icon={Megaphone}
               tint="bg-blue-50 text-blue-600"
@@ -69,11 +76,10 @@ export default async function Mitmachen() {
                 <Building2 size={20} strokeWidth={1.9} />
               </span>
               <div className="min-w-0">
-                <div className="font-semibold text-gray-900">Beteiligungsverfahren, Bürgerbudget & Vorhaben</div>
+                <div className="font-semibold text-gray-900">Bürgerbudget, Varianten & Vorhaben</div>
                 <p className="mt-0.5 text-sm leading-relaxed text-gray-500">
-                  Wenn deine Stadt Lybertas nutzt, kannst du hier direkt an offiziellen Verfahren teilnehmen:
-                  Kartendialoge, Variantenvergleiche, Bürgerbudgets, Dokumenten-Dialoge und mehr — dieselben
-                  Werkzeuge wie im kommunalen Portal, nur mitten in deinem Feed.
+                  Weitere Beteiligungsmodule folgen Schritt für Schritt: Variantenvergleiche, Bürgerbudgets,
+                  Dokumenten-Dialoge und mehr — dieselben Werkzeuge wie im kommunalen Portal, nur mitten in deinem Feed.
                 </p>
               </div>
             </div>

@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Megaphone, Wrench, BarChart3, CalendarDays, Building2, FileText, Lightbulb, X, Lock, ChevronRight } from 'lucide-react'
+import { Megaphone, Wrench, BarChart3, CalendarDays, Landmark, Building2, FileText, Lightbulb, X, Lock, ChevronRight } from 'lucide-react'
 
 // Zentrales Erstell-Menü hinter dem Plus-Button. Bündelt die vorhandenen
 // Formulare und zeigt geplante Beitragsarten transparent als „Bald verfügbar".
@@ -25,6 +25,7 @@ const KINDS: Kind[] = [
   { key: 'mangel', label: 'Mangel melden', desc: 'Einen konkreten Missstand vor Ort melden.', icon: Wrench, tint: 'bg-orange-50 text-orange-600', href: '/forderungen/neu' },
   { key: 'umfrage', label: 'Umfrage erstellen', desc: 'Die Bürgerschaft zu einer Frage abstimmen lassen.', icon: BarChart3, tint: 'bg-emerald-50 text-emerald-600', official: true, href: '/abstimmungen' },
   { key: 'veranstaltung', label: 'Veranstaltung', desc: 'Einen öffentlichen Termin ankündigen — erscheint im Feed.', icon: CalendarDays, tint: 'bg-purple-50 text-purple-600', official: true, href: '/veranstaltungen/neu' },
+  { key: 'verfahren', label: 'Beteiligungsverfahren', desc: 'Ein offizielles Verfahren mit Karte, Ideen & mehr starten.', icon: Landmark, tint: 'bg-blue-50 text-blue-600', official: true, href: '/beteiligungen/neu' },
   { key: 'projekt', label: 'Projekt von Stadt & Politik', desc: 'Ein Vorhaben vorstellen und zur Diskussion stellen.', icon: Building2, tint: 'bg-purple-50 text-purple-600', official: true, soon: true },
   { key: 'petition', label: 'Petition', desc: 'Ein formelles Anliegen mit Unterschriften.', icon: FileText, tint: 'bg-gray-100 text-gray-500', soon: true },
   { key: 'idee', label: 'Bürgeridee', desc: 'Eine kreative Idee oder ein Konzept für deinen Ort.', icon: Lightbulb, tint: 'bg-gray-100 text-gray-500', soon: true },

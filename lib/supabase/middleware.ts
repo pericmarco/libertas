@@ -24,7 +24,7 @@ const PUBLIC_PATHS = [
   // Forderungsübersicht + Stadtumfragen. Mitmachen (Position, Unterstützen,
   // Abstimmen, Einreichen) erfordert weiter eine Anmeldung; die Seiten
   // selbst leiten dann zur Registrierung.
-  '/dashboard', '/forderungen', '/abstimmungen', '/politiker',
+  '/dashboard', '/forderungen', '/abstimmungen', '/politiker', '/beteiligungen',
   // Neue Hauptnavigation (öffentlich lesbar wie oben): Feed, Karte, Mitmachen, Stadt
   '/feed', '/karte', '/mitmachen', '/ueberblick',
   // PWA-Assets müssen ohne Login ladbar sein
@@ -36,6 +36,8 @@ function isPublicPath(pathname: string) {
   // Forderungs-Detailseiten sind öffentlich lesbar — aber NICHT das
   // Einreichungsformular (/forderungen/neu), das eine Anmeldung braucht.
   if (pathname.startsWith('/forderungen/') && pathname !== '/forderungen/neu') return true
+  // Beteiligungsverfahren: Liste + Detail öffentlich, Anlegen (/neu) nur angemeldet
+  if (pathname.startsWith('/beteiligungen/') && pathname !== '/beteiligungen/neu') return true
   // Frontend-only Demo-Profile (Partei + Politiker) — ohne Login teilbar (Marketing)
   if (pathname.startsWith('/politiker/beispiel')) return true
   // Politiker-Verzeichnis + Detailseiten sind öffentlich lesbar — aber NICHT
