@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
-import { ChevronLeft, ChevronDown, CheckCircle, Circle, Info, Pencil, MapPin, X } from 'lucide-react'
+import { ChevronLeft, ChevronDown, CheckCircle, Circle, Info, Pencil, MapPin, X, Camera } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import MapPanel from '@/components/MapPanel'
 import type { MapPin as MapPinType } from '@/components/MapView'
@@ -13,6 +13,11 @@ import type { MapPin as MapPinType } from '@/components/MapView'
 const MANGEL_PIN_COLOR = '#EA580C'
 import { containsBlocked } from '@/lib/constants'
 import { useCity } from '@/lib/city/context'
+
+// Storage-Pfad für ein hochgeladenes Foto (Datums-Logik gekapselt, nicht im Render-Body).
+function makeImagePath(uid: string, i: number, ext: string): string {
+  return `${uid}/${Date.now()}-${i}.${ext}`
+}
 import {
   type Anliegenart, ART_OPTIONS, ART_LABELS, ORTSTYPEN, SCOPE_LABELS,
   THEMENBEREICHE, themenForTags, MAX_TAGS, FREQUENZEN, GRUPPEN,
@@ -67,8 +72,20 @@ export default function NeueForderung() {
   // Schritt 7: Rückmeldung
   const [feedback, setFeedback] = useState('')
 
+  const [photos, setPhotos] = useState<{ file: File; url: string }[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  function addPhotos(files: FileList | null) {
+    if (!files) return
+    const room = 4 - photos.length
+    const next = Array.from(files).slice(0, room).map(file => ({ file, url: URL.createObjectURL(file) }))
+    setPhotos(prev => [...prev, ...next].slice(0, 4))
+  }
+  function removePhoto(url: string) {
+    setPhotos(prev => prev.filter(p => p.url !== url))
+    URL.revokeObjectURL(url)
+  }
 
   useEffect(() => {
     const supabase = createClient()
@@ -207,6 +224,19 @@ export default function NeueForderung() {
 
     setSubmitting(true)
 
+    // Fotos in den Storage laden (best effort — Einreichen soll nie am Upload scheitern).
+    const imageUrls: string[] = []
+    for (let i = 0; i < photos.length; i++) {
+      const f = photos[i].file
+      const ext = (f.name.split('.').pop() || 'jpg').toLowerCase()
+      const path = makeImagePath(userData.user.id, i, ext)
+      const { error: upErr } = await supabase.storage.from('demand-images').upload(path, f, { upsert: false })
+      if (!upErr) {
+        const { data: pub } = supabase.storage.from('demand-images').getPublicUrl(path)
+        if (pub?.publicUrl) imageUrls.push(pub.publicUrl)
+      }
+    }
+
     const baseRecord = {
       title: titleTrimmed,
       description: problem.trim(),
@@ -235,14 +265,16 @@ export default function NeueForderung() {
     const geo = geoRelevant && geoPins.length > 0
       ? { lat: geoPins[0].lat, lng: geoPins[0].lng, locations: geoPins }
       : {}
+    const extra = imageUrls.length > 0 ? { image_urls: imageUrls } : {}
+    const optional = { ...geo, ...extra }
 
     let { data, error: dbError } = await supabase.from('demands')
-      .insert({ ...baseRecord, ...geo }).select('id').single()
+      .insert({ ...baseRecord, ...optional }).select('id').single()
 
-    // Fallback: sind die Geo-Spalten noch nicht angelegt (Migration noch
-    // nicht eingespielt), ohne Koordinaten erneut einreichen — das
-    // Einreichen soll nie an der Karte scheitern.
-    if (dbError && Object.keys(geo).length > 0 && /lat|lng|locations|column|schema cache/i.test(dbError.message)) {
+    // Fallback: sind optionale Spalten (Geo, image_urls) noch nicht angelegt
+    // (Migration noch nicht eingespielt), ohne sie erneut einreichen — das
+    // Einreichen soll nie an Karte oder Fotos scheitern.
+    if (dbError && Object.keys(optional).length > 0 && /lat|lng|locations|image_urls|column|schema cache/i.test(dbError.message)) {
       ;({ data, error: dbError } = await supabase.from('demands').insert(baseRecord).select('id').single())
     }
 
@@ -499,7 +531,7 @@ export default function NeueForderung() {
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 <p className="text-xs text-gray-400 mt-2">
-                  Ein guter Titel nennt kurz Problem, Ort und Ziel. Vermeide reine Empörung wie „Unfassbar!!!" oder „Endlich handeln".
+                  Ein guter Titel nennt kurz Problem, Ort und Ziel. Vermeide reine Empörung wie „Unfassbar!!!“ oder „Endlich handeln“.
                 </p>
               </div>
 
@@ -727,6 +759,33 @@ export default function NeueForderung() {
                   </div>
                 ))}
               </div>
+              {/* Fotos (optional) */}
+              <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                <div className="text-sm font-semibold text-gray-900">Fotos <span className="font-normal text-gray-400">(optional)</span></div>
+                <p className="mt-0.5 text-xs text-gray-500">
+                  {art === 'mangel' ? 'Ein Foto hilft der Verwaltung, den Mangel einzuordnen.' : 'Bilder machen dein Anliegen greifbarer.'} Bis zu 4 Bilder.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-3">
+                  {photos.map((p, i) => (
+                    <div key={p.url} className="relative h-20 w-20 overflow-hidden rounded-xl border border-gray-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={p.url} alt={`Foto ${i + 1}`} className="h-full w-full object-cover" />
+                      <button onClick={() => removePhoto(p.url)} aria-label="Foto entfernen"
+                        className="absolute right-1 top-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-black/55 text-white hover:bg-black/75">
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  {photos.length < 4 && (
+                    <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-gray-300 text-gray-400 hover:border-blue-300 hover:text-blue-500">
+                      <Camera size={20} />
+                      <span className="text-[10px] font-medium">Foto</span>
+                      <input type="file" accept="image/*" multiple className="hidden" onChange={e => { addPhotos(e.target.files); e.target.value = '' }} />
+                    </label>
+                  )}
+                </div>
+              </div>
+
               <p className="text-xs text-gray-400">
                 {art === 'mangel'
                   ? 'Deine Mängelmeldung geht an das Lybertas-Team und wird an die zuständige Stelle weitergeleitet. Sie erscheint nicht in der öffentlichen Forderungsliste.'

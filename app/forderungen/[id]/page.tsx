@@ -95,6 +95,7 @@ type Demand = {
   lat: number | null
   lng: number | null
   locations: { lat: number; lng: number }[] | null
+  image_urls: string[] | null
   frequency: string | null
   affected_groups: string[] | null
   impacts: string[] | null
@@ -546,6 +547,20 @@ export default function ForderungDetail() {
               </div>
             </div>
           </div>
+
+          {demand.image_urls && demand.image_urls.length > 0 && (
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
+              <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Fotos</div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {demand.image_urls.map((url, i) => (
+                  <a key={url} href={url} target="_blank" rel="noopener noreferrer" className="block aspect-[4/3] overflow-hidden rounded-xl border border-gray-100">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt={`Foto ${i + 1}`} className="h-full w-full object-cover transition-transform hover:scale-[1.03]" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Deine Position (nicht bei zurückgezogenen Forderungen oder Mängelmeldungen) */}
           {!isZurueckgezogen && !isMangel && ownPosition && !editingPosition ? (
