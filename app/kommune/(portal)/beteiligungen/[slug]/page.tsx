@@ -11,6 +11,8 @@ import { getProcess, STATUS_META, REACTION_LABEL, daysLeft, formatDate, type Mod
 import { IDEAS, POLLS, VARIANTS, EVENTS, RESULTS, type Idea } from '@/lib/kommune/detail'
 import IdeaCard from '@/components/kommune/IdeaCard'
 import KartendialogTab from '@/components/kommune/KartendialogTab'
+import BuergerbudgetTab from '@/components/kommune/BuergerbudgetTab'
+import DokumentTab from '@/components/kommune/DokumentTab'
 
 const TAB_LABEL: Record<ModuleType, string> = {
   information: 'Überblick', ideen: 'Mitmachen', karte: 'Karte', umfrage: 'Umfrage',
@@ -100,11 +102,11 @@ export default function ProcessDetail() {
         {tab === 'umfrage' && <UmfrageTab slug={p.slug} />}
         {tab === 'karte' && <KartendialogTab slug={p.slug} />}
         {tab === 'varianten' && <VariantenTab slug={p.slug} />}
+        {tab === 'buergerbudget' && <BuergerbudgetTab slug={p.slug} />}
+        {tab === 'dokument' && <DokumentTab slug={p.slug} />}
         {tab === 'termine' && <TermineTab slug={p.slug} />}
         {tab === 'ergebnisse' && <ErgebnisseTab slug={p.slug} status={p.status} />}
-        {(tab === 'fragen' || tab === 'buergerbudget' || tab === 'dokument') && (
-          <SoonTab label={TAB_LABEL[tab]} />
-        )}
+        {tab === 'fragen' && <SoonTab label={TAB_LABEL[tab]} />}
       </div>
     </main>
   )

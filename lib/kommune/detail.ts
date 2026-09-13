@@ -125,6 +125,11 @@ export const EVENTS: Record<string, EventItem[]> = {
   bahnhofsvorplatz: [
     { title: 'Vor-Ort-Rundgang Bahnhofsvorplatz', date: '2026-10-15', time: '17:00', place: 'Treffpunkt Haupteingang', kind: 'Ortstermin' },
   ],
+  'buergerbudget-2027': [
+    { title: 'Auftaktveranstaltung Bürgerbudget', date: '2027-01-14', time: '18:00', place: 'Rathaus, Ratssaal', kind: 'Infoabend' },
+    { title: 'Online-Sprechstunde zur Antragstellung', date: '2027-01-28', time: '19:00', place: 'Online (Videokonferenz)', kind: 'Online-Event' },
+    { title: 'Start der öffentlichen Abstimmung', date: '2027-03-15', time: '10:00', place: 'Marktplatz & online', kind: 'Aktionstag' },
+  ],
 }
 
 export const RESULTS: Record<string, ResultBlock> = {
