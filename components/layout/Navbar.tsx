@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import PlusMenu from '@/components/PlusMenu'
 import MainMenu from '@/components/layout/MainMenu'
+import CitySwitcher from '@/components/layout/CitySwitcher'
 import { tenant } from '@/lib/tenant'
 
 // Hauptnavigation: Feed · Karte · ➕ · Mitmachen · Stadt.
@@ -105,15 +106,13 @@ export default function Navbar() {
       {/* Desktop Top-Bar */}
       <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-6 h-full flex items-center justify-between">
-          <Link href={user ? '/feed' : '/'} className="flex items-center gap-2">
-            <Image src="/logo.svg" alt={`${brand} Logo`} width={32} height={32} className="w-8 h-8" priority unoptimized />
-            <span className="font-semibold text-gray-900">{brand}</span>
-            {city.is_demo && (
-              <span className="hidden sm:inline text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                Beispiel
-              </span>
-            )}
-          </Link>
+          <div className="flex items-center gap-2 min-w-0">
+            <Link href={user ? '/feed' : '/'} className="flex items-center gap-2 shrink-0">
+              <Image src="/logo.svg" alt={`${brand} Logo`} width={32} height={32} className="w-8 h-8" priority unoptimized />
+              <span className="hidden sm:inline font-semibold text-gray-900">{brand}</span>
+            </Link>
+            <CitySwitcher />
+          </div>
 
           <nav className="hidden md:flex items-center gap-1">
             {topLinks.map(item => (

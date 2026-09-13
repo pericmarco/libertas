@@ -4,7 +4,25 @@ import { createClient } from '@/lib/supabase/server'
 import { getCurrentCity } from '@/lib/city/server'
 import { areasForDemand, type FeedItem } from '@/lib/feed'
 import Link from 'next/link'
-import { LogIn } from 'lucide-react'
+import { LogIn, Sparkles, Vote, CalendarClock } from 'lucide-react'
+
+// „Heute in deiner Stadt" — echte Signale aus den geladenen Daten. Als
+// Modul-Funktion (nicht im Render-Body), damit die Datums-Logik gekapselt ist.
+function todayHighlights(
+  demands: { created_at: string | null }[],
+  votes: { ends_at: string | null; title: string }[],
+) {
+  const todayStr = new Date().toISOString().slice(0, 10)
+  const now = Date.now()
+  const neueHeute = demands.filter(d => (d.created_at ?? '').slice(0, 10) === todayStr).length
+  const aktiveUmfragen = votes.filter(v => !v.ends_at || new Date(v.ends_at).getTime() > now).length
+  const baldFrist = votes
+    .filter(v => v.ends_at && new Date(v.ends_at).getTime() > now)
+    .map(v => ({ title: v.title, days: Math.ceil((new Date(v.ends_at as string).getTime() - now) / 86_400_000) }))
+    .filter(v => v.days <= 5)
+    .sort((a, b) => a.days - b.days)[0]
+  return { neueHeute, aktiveUmfragen, baldFrist, hatHighlights: neueHeute > 0 || aktiveUmfragen > 0 || !!baldFrist }
+}
 
 export default async function Feed() {
   const supabase = await createClient()
@@ -108,17 +126,45 @@ export default async function Feed() {
 
   items.sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
 
+  const { neueHeute, aktiveUmfragen, baldFrist, hatHighlights } = todayHighlights(demandsData ?? [], votesData ?? [])
+
   return (
     <>
       <Navbar />
       <main className="pt-16 min-h-screen bg-gray-50">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
-          <div className="mb-5">
+          <div className="mb-4">
             <h1 className="text-2xl font-bold text-gray-900">Was bei dir passiert</h1>
             <p className="text-gray-500 mt-0.5 text-sm">
               {city.is_demo ? `Beispielansicht · ${city.name}` : `Aus ${city.name}${meinStadtteil ? ` und ${meinStadtteil}` : ''}`}
             </p>
           </div>
+
+          {/* „Heute in deiner Stadt" — kompakter Tages-Überblick aus echten Signalen */}
+          <section className="mb-5 rounded-2xl border border-gray-100 bg-white p-4 sm:p-5">
+            <div className="text-xs font-semibold uppercase tracking-wide text-blue-600">Heute in {city.name}</div>
+            {hatHighlights ? (
+              <div className="mt-2.5 flex flex-wrap gap-2">
+                {neueHeute > 0 && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700">
+                    <Sparkles size={14} /> {neueHeute} {neueHeute === 1 ? 'neuer Beitrag' : 'neue Beiträge'} heute
+                  </span>
+                )}
+                {aktiveUmfragen > 0 && (
+                  <Link href="/abstimmungen" className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100">
+                    <Vote size={14} /> {aktiveUmfragen} {aktiveUmfragen === 1 ? 'Abstimmung läuft' : 'Abstimmungen laufen'}
+                  </Link>
+                )}
+                {baldFrist && (
+                  <Link href="/abstimmungen" className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-100">
+                    <CalendarClock size={14} /> „{baldFrist.title.length > 28 ? baldFrist.title.slice(0, 28) + '…' : baldFrist.title}“ endet in {baldFrist.days} {baldFrist.days === 1 ? 'Tag' : 'Tagen'}
+                  </Link>
+                )}
+              </div>
+            ) : (
+              <p className="mt-1.5 text-sm text-gray-500">Schau dich um, was deine Nachbarschaft gerade bewegt — und bring dich ein.</p>
+            )}
+          </section>
 
           {!uid && !city.is_demo && (
             <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
