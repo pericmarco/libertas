@@ -35,6 +35,9 @@ export type ParticipationProcess = {
   image?: string           // optionales Titelbild (Pfad unter /public)
   modules: ModuleType[]
   reactionMode: ReactionMode
+  // Wann werden Ergebnisse sichtbar? live = Zwischenstand jederzeit öffentlich,
+  // nach = erst nach Abschluss, verwaltung = zunächst nur intern.
+  resultsMode?: 'live' | 'nach' | 'verwaltung'
   stats: { teilnehmende: number; beitraege: number; reaktionen: number }
 }
 
@@ -80,8 +83,10 @@ export const PROCESSES: ParticipationProcess[] = [
     start: '2026-09-01', end: '2026-10-19',
     level: 'Mitentscheidung',
     accent: 'bg-blue-50 text-blue-600', emoji: '🏛️', image: '/muster/marktplatz.jpg',
-    modules: ['information', 'ideen', 'karte', 'varianten', 'umfrage', 'fragen', 'termine', 'ergebnisse'],
+    // Flaggschiff-Verfahren: alle Module aktiv, ideal zum Vorführen. Ergebnisse live.
+    modules: ['information', 'ideen', 'karte', 'varianten', 'umfrage', 'buergerbudget', 'dokument', 'fragen', 'termine', 'ergebnisse'],
     reactionMode: 'sca',
+    resultsMode: 'live',
     stats: { teilnehmende: 842, beitraege: 124, reaktionen: 317 },
   },
   {

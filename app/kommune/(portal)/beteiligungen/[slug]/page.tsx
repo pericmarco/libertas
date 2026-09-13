@@ -14,6 +14,7 @@ import KartendialogTab from '@/components/kommune/KartendialogTab'
 import BuergerbudgetTab from '@/components/kommune/BuergerbudgetTab'
 import DokumentTab from '@/components/kommune/DokumentTab'
 import FragenTab from '@/components/kommune/FragenTab'
+import LiveErgebnisseTab from '@/components/kommune/LiveErgebnisseTab'
 
 const TAB_LABEL: Record<ModuleType, string> = {
   information: 'Überblick', ideen: 'Mitmachen', karte: 'Karte', umfrage: 'Umfrage',
@@ -107,7 +108,7 @@ export default function ProcessDetail() {
         {tab === 'dokument' && <DokumentTab slug={p.slug} />}
         {tab === 'fragen' && <FragenTab slug={p.slug} />}
         {tab === 'termine' && <TermineTab slug={p.slug} />}
-        {tab === 'ergebnisse' && <ErgebnisseTab slug={p.slug} status={p.status} />}
+        {tab === 'ergebnisse' && <ErgebnisseTab p={p} />}
       </div>
     </main>
   )
@@ -231,14 +232,32 @@ function TermineTab({ slug }: { slug: string }) {
   )
 }
 
-function ErgebnisseTab({ slug, status }: { slug: string; status: string }) {
+function ErgebnisseTab({ p }: { p: ParticipationProcess }) {
+  const { slug, status } = p
+  const closed = status === 'in_auswertung' || status === 'abgeschlossen'
   const r = RESULTS[slug]
+
+  // Laufendes Verfahren: Sichtbarkeit richtet sich nach der Admin-Einstellung.
+  if (!closed) {
+    if (p.resultsMode === 'live') return <LiveErgebnisseTab p={p} />
+    if (p.resultsMode === 'verwaltung') {
+      return (
+        <div className="rounded-2xl border border-gray-100 bg-white px-6 py-10 text-center text-sm text-gray-500">
+          Die Ergebnisse dieses Verfahrens werden zunächst intern ausgewertet und nach Abschluss veröffentlicht.
+        </div>
+      )
+    }
+    return (
+      <div className="rounded-2xl border border-gray-100 bg-white px-6 py-10 text-center text-sm text-gray-500">
+        Die Beteiligung läuft noch — die Ergebnisse werden nach Abschluss ausgewertet und hier veröffentlicht.
+      </div>
+    )
+  }
+
   if (!r) {
     return (
       <div className="rounded-2xl border border-gray-100 bg-white px-6 py-10 text-center text-sm text-gray-500">
-        {status === 'beteiligung_laeuft'
-          ? 'Die Beteiligung läuft noch — die Ergebnisse werden nach Abschluss ausgewertet und hier veröffentlicht.'
-          : 'Für dieses Verfahren liegen noch keine Ergebnisse vor.'}
+        Für dieses Verfahren liegen noch keine Ergebnisse vor.
       </div>
     )
   }

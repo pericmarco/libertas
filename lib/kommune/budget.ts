@@ -30,6 +30,21 @@ export type BudgetPot = {
 }
 
 export const BUDGETS: Record<string, BudgetPot> = {
+  // Ausstattungsbudget für den neu gestalteten Marktplatz – Bürger:innen
+  // priorisieren, wofür das Möblierungsbudget eingesetzt wird.
+  marktplatz: {
+    total: 80_000,
+    currency: 'EUR',
+    phaseNote: 'Ausstattungsbudget für die Möblierung des neuen Marktplatzes · Priorisierung bis 19.10.2026',
+    projects: [
+      { id: 'mp1', title: 'Trinkbrunnen als Treffpunkt', description: 'Ein zentraler Trinkwasserbrunnen mit Sitzkante als Mittelpunkt des Platzes.', category: 'Soziales', cost: 22_000, district: 'Innenstadt', supports: 214 },
+      { id: 'mp2', title: 'Zehn große Sitzbänke aus Holz', description: 'Robuste Bänke mit Rückenlehne, verteilt über den ganzen Platz.', category: 'Stadtgrün', cost: 18_000, district: 'Innenstadt', supports: 187 },
+      { id: 'mp3', title: 'Wasserspiel für Kinder', description: 'Bodendüsen mit Fontänen zum Abkühlen an heißen Tagen.', category: 'Sport', cost: 28_000, district: 'Innenstadt', supports: 231 },
+      { id: 'mp4', title: 'Mobile Pflanzkübel & Staudenbeete', description: 'Begrünung mit insektenfreundlichen Stauden in versetzbaren Kübeln.', category: 'Stadtgrün', cost: 12_000, district: 'Innenstadt', supports: 156 },
+      { id: 'mp5', title: 'Bühne für den Wochenmarkt & Feste', description: 'Eine kleine feste Plattform für Markt, Musik und Veranstaltungen.', category: 'Kultur', cost: 26_000, district: 'Innenstadt', supports: 142 },
+      { id: 'mp6', title: 'Überdachte Fahrradbügel', description: '30 überdachte Abstellplätze am Rand des Platzes.', category: 'Verkehr', cost: 14_000, district: 'Innenstadt', supports: 168 },
+    ],
+  },
   'buergerbudget-2027': {
     total: 250_000,
     currency: 'EUR',

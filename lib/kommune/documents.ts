@@ -12,6 +12,26 @@ export type DocumentDialog = {
 }
 
 export const DOCUMENTS: Record<string, DocumentDialog> = {
+  marktplatz: {
+    files: [
+      { title: 'Entwurf Gestaltungsplan Marktplatz', kind: 'PDF', pages: 32, size: '4,4 MB' },
+      { title: 'Baumgutachten Bestand (Anlage)', kind: 'PDF', pages: 12, size: '1,8 MB' },
+    ],
+    intro: 'Der Gestaltungsplan liegt als Entwurf vor. Kommentieren Sie gezielt die einzelnen Abschnitte – Ihre Hinweise fließen in die Überarbeitung ein.',
+    sections: [
+      { id: 'm1', nr: '1', title: 'Bestand & Analyse', summary: 'Heutige Nutzung, Verkehr, Bestandsbäume und Problemstellen.', comments: [
+        { id: 'mc1', author: 'anonym', date: '2026-09-06', text: 'Die alte Linde an der Nordseite sollte unbedingt erhalten bleiben.' },
+      ] },
+      { id: 'm2', nr: '2', title: 'Gestaltungsidee & Materialien', summary: 'Leitidee, Bodenbeläge, Möblierung und Beleuchtungskonzept.', comments: [
+        { id: 'mc2', author: 'anonym', date: '2026-09-08', text: 'Heller Naturstein heizt sich weniger auf – gute Wahl fürs Klima.' },
+      ] },
+      { id: 'm3', nr: '3', title: 'Grün & Wasser', summary: 'Neue Bäume, Pflanzflächen und das geplante Wasserspiel.', comments: [] },
+      { id: 'm4', nr: '4', title: 'Verkehr & Anlieferung', summary: 'Verkehrsberuhigung, Marktlogistik, Rettungswege und Radverkehr.', comments: [
+        { id: 'mc3', author: 'anonym', date: '2026-09-09', text: 'Bitte die Anlieferung für den Markt morgens weiterhin ermöglichen.' },
+      ] },
+      { id: 'm5', nr: '5', title: 'Möblierung & Ausstattung', summary: 'Bänke, Brunnen, Fahrradbügel – Grundlage für das Ausstattungsbudget.', comments: [] },
+    ],
+  },
   'mobilitaet-2035': {
     files: [
       { title: 'Entwurf Mobilitätskonzept 2035', kind: 'PDF', pages: 84, size: '6,2 MB' },
