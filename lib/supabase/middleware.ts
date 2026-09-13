@@ -26,7 +26,7 @@ const PUBLIC_PATHS = [
   // selbst leiten dann zur Registrierung.
   '/dashboard', '/forderungen', '/abstimmungen', '/politiker', '/beteiligungen',
   // Neue Hauptnavigation (öffentlich lesbar wie oben): Feed, Karte, Mitmachen, Stadt
-  '/feed', '/karte', '/mitmachen', '/ueberblick',
+  '/feed', '/karte', '/mitmachen', '/ueberblick', '/events', '/politik-kompass',
   // PWA-Assets müssen ohne Login ladbar sein
   '/manifest.webmanifest', '/icon', '/apple-icon',
 ]
