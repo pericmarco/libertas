@@ -96,6 +96,7 @@ type Demand = {
   lng: number | null
   locations: { lat: number; lng: number }[] | null
   image_urls: string[] | null
+  video_url: string | null
   edited_at: string | null
   frequency: string | null
   affected_groups: string[] | null
@@ -556,6 +557,13 @@ export default function ForderungDetail() {
               </div>
             </div>
           </div>
+
+          {demand.video_url && (
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
+              <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Video</div>
+              <video src={demand.video_url} controls preload="metadata" className="w-full max-h-[70vh] rounded-xl border border-gray-100 bg-black" />
+            </div>
+          )}
 
           {demand.image_urls && demand.image_urls.length > 0 && (
             <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">

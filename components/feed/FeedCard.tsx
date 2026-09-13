@@ -78,7 +78,11 @@ function ForderungCard({ item }: { item: Extract<FeedItem, { type: 'forderung' }
         <h3 className="text-lg font-semibold leading-snug text-gray-900 hover:text-blue-700 transition-colors">{item.title}</h3>
       </Link>
 
-      {item.image && (
+      {item.video ? (
+        <div className="mt-3 overflow-hidden rounded-xl border border-gray-100 bg-black">
+          <video src={item.video} controls preload="metadata" className="max-h-[70vh] w-full" />
+        </div>
+      ) : item.image && (
         <Link href={`/forderungen/${item.id}`} className="mt-3 block overflow-hidden rounded-xl border border-gray-100">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={item.image} alt="" className="aspect-[16/9] w-full object-cover transition-transform hover:scale-[1.02]" loading="lazy" />

@@ -18,6 +18,7 @@ export type FeedForderung = {
   alternatives: number
   beitraege: number
   image: string | null
+  video: string | null
   createdAt: string
 }
 

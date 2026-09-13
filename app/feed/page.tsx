@@ -77,21 +77,30 @@ export default async function Feed() {
   // getrennt von der Haupt-Abfrage: fehlt eine Tabelle/Spalte noch (Migration
   // nicht eingespielt), bleibt der Feed intakt — nur ohne Events/Thumbnails.
   const demandIds = (demandsData ?? []).map(d => d.id)
-  const [{ data: eventsData }, { data: imgRows }] = await Promise.all([
+  const [{ data: eventsData }, { data: imgRows }, { data: vidRows }] = await Promise.all([
     supabase.from('events')
       .select('id, title, description, kind, starts_at, ends_at, location, online, organizer, district_id, created_at')
       .eq('city_id', city.id)
       .gte('starts_at', startOfTodayIso())
       .order('starts_at', { ascending: true })
       .limit(20),
+    // Bilder und Videos getrennt: fehlt eine Spalte noch, bricht nur die eine
+    // Zusatz-Abfrage — die andere (und der ganze Feed) bleibt intakt.
     demandIds.length
       ? supabase.from('demands').select('id, image_urls').in('id', demandIds)
       : Promise.resolve({ data: [] as { id: string; image_urls: string[] | null }[] }),
+    demandIds.length
+      ? supabase.from('demands').select('id, video_url').in('id', demandIds)
+      : Promise.resolve({ data: [] as { id: string; video_url: string | null }[] }),
   ])
   const imgMap = new Map<string, string>()
   for (const r of imgRows ?? []) {
     const first = Array.isArray(r.image_urls) ? r.image_urls[0] : null
     if (first) imgMap.set(r.id, first)
+  }
+  const vidMap = new Map<string, string>()
+  for (const r of vidRows ?? []) {
+    if (r.video_url) vidMap.set(r.id, r.video_url)
   }
 
   const meinStadtteil = districtName(profile?.district_id ?? null)
@@ -125,6 +134,7 @@ export default async function Feed() {
       alternatives: c.alternatives,
       beitraege: c.beitraege,
       image: imgMap.get(d.id) ?? null,
+      video: vidMap.get(d.id) ?? null,
       createdAt: d.created_at,
     })
   }

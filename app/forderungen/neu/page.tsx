@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
-import { ChevronLeft, ChevronDown, CheckCircle, Circle, Info, Pencil, MapPin, X, Camera } from 'lucide-react'
+import { ChevronLeft, ChevronDown, CheckCircle, Circle, Info, Pencil, MapPin, X, Camera, Video } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import MapPanel from '@/components/MapPanel'
 import type { MapPin as MapPinType } from '@/components/MapView'
@@ -17,6 +17,21 @@ import { useCity } from '@/lib/city/context'
 // Storage-Pfad für ein hochgeladenes Foto (Datums-Logik gekapselt, nicht im Render-Body).
 function makeImagePath(uid: string, i: number, ext: string): string {
   return `${uid}/${Date.now()}-${i}.${ext}`
+}
+function makeVideoPath(uid: string, ext: string): string {
+  return `${uid}/${Date.now()}.${ext}`
+}
+const MAX_VIDEO_BYTES = 50 * 1024 * 1024
+const MAX_VIDEO_SECONDS = 62
+// Video-Dauer aus den Metadaten lesen (Browser). Liefert Sekunden oder null.
+function getVideoDuration(file: File): Promise<number | null> {
+  return new Promise(resolve => {
+    const v = document.createElement('video')
+    v.preload = 'metadata'
+    v.onloadedmetadata = () => { const d = v.duration; URL.revokeObjectURL(v.src); resolve(Number.isFinite(d) ? d : null) }
+    v.onerror = () => resolve(null)
+    v.src = URL.createObjectURL(file)
+  })
 }
 import {
   type Anliegenart, ART_OPTIONS, ART_LABELS, ORTSTYPEN, SCOPE_LABELS,
@@ -73,6 +88,8 @@ export default function NeueForderung() {
   const [feedback, setFeedback] = useState('')
 
   const [photos, setPhotos] = useState<{ file: File; url: string }[]>([])
+  const [video, setVideo] = useState<{ file: File; url: string } | null>(null)
+  const [videoErr, setVideoErr] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
@@ -85,6 +102,20 @@ export default function NeueForderung() {
   function removePhoto(url: string) {
     setPhotos(prev => prev.filter(p => p.url !== url))
     URL.revokeObjectURL(url)
+  }
+  async function pickVideo(files: FileList | null) {
+    const f = files?.[0]
+    if (!f) return
+    setVideoErr('')
+    if (f.size > MAX_VIDEO_BYTES) { setVideoErr('Das Video ist zu groß (max. 50 MB).'); return }
+    const dur = await getVideoDuration(f)
+    if (dur != null && dur > MAX_VIDEO_SECONDS) { setVideoErr('Das Video ist zu lang (max. 60 Sekunden).'); return }
+    if (video) URL.revokeObjectURL(video.url)
+    setVideo({ file: f, url: URL.createObjectURL(f) })
+  }
+  function removeVideo() {
+    if (video) URL.revokeObjectURL(video.url)
+    setVideo(null); setVideoErr('')
   }
 
   useEffect(() => {
@@ -237,6 +268,18 @@ export default function NeueForderung() {
       }
     }
 
+    // Video in den Storage laden (best effort)
+    let videoUrl: string | null = null
+    if (video) {
+      const ext = (video.file.name.split('.').pop() || 'mp4').toLowerCase()
+      const path = makeVideoPath(userData.user.id, ext)
+      const { error: vErr } = await supabase.storage.from('demand-videos').upload(path, video.file, { upsert: false })
+      if (!vErr) {
+        const { data: pub } = supabase.storage.from('demand-videos').getPublicUrl(path)
+        videoUrl = pub?.publicUrl ?? null
+      }
+    }
+
     const baseRecord = {
       title: titleTrimmed,
       description: problem.trim(),
@@ -265,16 +308,19 @@ export default function NeueForderung() {
     const geo = geoRelevant && geoPins.length > 0
       ? { lat: geoPins[0].lat, lng: geoPins[0].lng, locations: geoPins }
       : {}
-    const extra = imageUrls.length > 0 ? { image_urls: imageUrls } : {}
+    const extra = {
+      ...(imageUrls.length > 0 ? { image_urls: imageUrls } : {}),
+      ...(videoUrl ? { video_url: videoUrl } : {}),
+    }
     const optional = { ...geo, ...extra }
 
     let { data, error: dbError } = await supabase.from('demands')
       .insert({ ...baseRecord, ...optional }).select('id').single()
 
-    // Fallback: sind optionale Spalten (Geo, image_urls) noch nicht angelegt
-    // (Migration noch nicht eingespielt), ohne sie erneut einreichen — das
-    // Einreichen soll nie an Karte oder Fotos scheitern.
-    if (dbError && Object.keys(optional).length > 0 && /lat|lng|locations|image_urls|column|schema cache/i.test(dbError.message)) {
+    // Fallback: sind optionale Spalten (Geo, image_urls, video_url) noch nicht
+    // angelegt (Migration noch nicht eingespielt), ohne sie erneut einreichen —
+    // das Einreichen soll nie an Karte, Fotos oder Video scheitern.
+    if (dbError && Object.keys(optional).length > 0 && /lat|lng|locations|image_urls|video_url|column|schema cache/i.test(dbError.message)) {
       ;({ data, error: dbError } = await supabase.from('demands').insert(baseRecord).select('id').single())
     }
 
@@ -783,6 +829,26 @@ export default function NeueForderung() {
                       <input type="file" accept="image/*" multiple className="hidden" onChange={e => { addPhotos(e.target.files); e.target.value = '' }} />
                     </label>
                   )}
+                </div>
+
+                {/* Video (optional, 1 Clip) */}
+                <div className="mt-4 border-t border-gray-50 pt-4">
+                  <div className="text-sm font-semibold text-gray-900">Video <span className="font-normal text-gray-400">(optional)</span></div>
+                  <p className="mt-0.5 text-xs text-gray-500">Ein kurzer Clip · max. 60 Sekunden · bis 50 MB.</p>
+                  <div className="mt-3">
+                    {video ? (
+                      <div className="relative w-full max-w-xs overflow-hidden rounded-xl border border-gray-100">
+                        <video src={video.url} controls preload="metadata" className="w-full" />
+                        <button onClick={removeVideo} aria-label="Video entfernen" className="absolute right-2 top-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-white hover:bg-black/75"><X size={13} /></button>
+                      </div>
+                    ) : (
+                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-500 hover:border-blue-300 hover:text-blue-500">
+                        <Video size={16} /> Video auswählen
+                        <input type="file" accept="video/*" className="hidden" onChange={e => { pickVideo(e.target.files); e.target.value = '' }} />
+                      </label>
+                    )}
+                    {videoErr && <p className="mt-2 text-xs text-red-600">{videoErr}</p>}
+                  </div>
                 </div>
               </div>
 
