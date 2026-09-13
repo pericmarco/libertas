@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
-import { ChevronLeft, ChevronRight, ThumbsUp, MessageSquare, Lightbulb, ShieldCheck, CheckCircle, Circle, AlertCircle, Heart, Undo2, ChevronDown, Wrench, Info, X, MapPin, Lock, LogIn } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ThumbsUp, MessageSquare, Lightbulb, ShieldCheck, CheckCircle, Circle, AlertCircle, Heart, Undo2, ChevronDown, Wrench, Info, X, MapPin, Lock, LogIn, Pencil } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 import MapPanel from '@/components/MapPanel'
@@ -96,6 +96,7 @@ type Demand = {
   lng: number | null
   locations: { lat: number; lng: number }[] | null
   image_urls: string[] | null
+  edited_at: string | null
   frequency: string | null
   affected_groups: string[] | null
   impacts: string[] | null
@@ -467,7 +468,15 @@ export default function ForderungDetail() {
                 </span>
               )}
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-3">{demand.title}</h1>
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <h1 className="text-2xl font-bold text-gray-900">{demand.title}</h1>
+              {!!userId && demand.user_id === userId && (
+                <Link href={`/forderungen/${demand.id}/bearbeiten`} className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:border-blue-300 hover:text-blue-600">
+                  <Pencil size={13} /> Bearbeiten
+                </Link>
+              )}
+            </div>
+            {demand.edited_at && <div className="-mt-2 mb-2 text-xs text-gray-400">bearbeitet</div>}
             {demand.tags && demand.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-3">
                 {demand.tags.map(t => (

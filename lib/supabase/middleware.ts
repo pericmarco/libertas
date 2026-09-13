@@ -35,7 +35,7 @@ function isPublicPath(pathname: string) {
   if (PUBLIC_PATHS.includes(pathname) || pathname.startsWith('/auth/callback')) return true
   // Forderungs-Detailseiten sind öffentlich lesbar — aber NICHT das
   // Einreichungsformular (/forderungen/neu), das eine Anmeldung braucht.
-  if (pathname.startsWith('/forderungen/') && pathname !== '/forderungen/neu') return true
+  if (pathname.startsWith('/forderungen/') && pathname !== '/forderungen/neu' && !pathname.endsWith('/bearbeiten')) return true
   // Beteiligungsverfahren: Liste + Detail öffentlich, Anlegen (/neu) nur angemeldet
   if (pathname.startsWith('/beteiligungen/') && pathname !== '/beteiligungen/neu') return true
   // Frontend-only Demo-Profile (Partei + Politiker) — ohne Login teilbar (Marketing)
