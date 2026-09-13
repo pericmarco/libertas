@@ -6,6 +6,7 @@ import {
   Car, Shield, Leaf, Home, Users, GraduationCap, Building2, Tag,
   MessageSquare, ChevronRight, ThumbsUp, ThumbsDown, Lightbulb,
   Landmark, BadgeCheck, Newspaper, ExternalLink, ArrowRight, CalendarClock,
+  CalendarDays, MapPin, Video,
   type LucideIcon,
 } from 'lucide-react'
 import type { FeedItem } from '@/lib/feed'
@@ -36,6 +37,7 @@ const STATUS_STYLE: Record<string, string> = {
 export default function FeedCard({ item, isDemo }: { item: FeedItem; isDemo?: boolean }) {
   if (item.type === 'forderung') return <ForderungCard item={item} />
   if (item.type === 'umfrage') return <UmfrageCard item={item} isDemo={isDemo} />
+  if (item.type === 'event') return <EventCard item={item} />
   return <InfoCard item={item} />
 }
 
@@ -155,6 +157,38 @@ function UmfrageCard({ item, isDemo }: { item: Extract<FeedItem, { type: 'umfrag
         Jetzt abstimmen
         <ArrowRight size={16} />
       </Link>
+    </CardShell>
+  )
+}
+
+function EventCard({ item }: { item: Extract<FeedItem, { type: 'event' }> }) {
+  const start = new Date(item.startsAt)
+  const mon = start.toLocaleDateString('de-DE', { month: 'short' })
+  const day = start.getDate()
+  const time = start.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+  return (
+    <CardShell>
+      <div className="flex items-start gap-4">
+        <div className="flex w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-purple-50 py-2 text-purple-700">
+          <span className="text-[10px] font-semibold uppercase leading-none">{mon}</span>
+          <span className="text-xl font-bold leading-tight">{day}</span>
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-purple-700">{item.kind}</span>
+            <span className="inline-flex items-center gap-1 text-xs text-gray-400"><CalendarDays size={12} /> Veranstaltung{item.district ? ` · ${item.district}` : ''}</span>
+          </div>
+          <h3 className="mt-1 font-semibold leading-snug text-gray-900">{item.title}</h3>
+          {item.description && <p className="mt-1 text-sm leading-relaxed text-gray-500 line-clamp-2">{item.description}</p>}
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
+            <span className="inline-flex items-center gap-1"><CalendarClock size={13} /> {time} Uhr</span>
+            <span className="inline-flex items-center gap-1">
+              {item.online ? <Video size={13} /> : <MapPin size={13} />} {item.online ? 'Online' : (item.location ?? 'Vor Ort')}
+            </span>
+            {item.organizer && <span className="inline-flex items-center gap-1"><Landmark size={13} /> {item.organizer}</span>}
+          </div>
+        </div>
+      </div>
     </CardShell>
   )
 }

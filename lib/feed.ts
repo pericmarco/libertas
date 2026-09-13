@@ -44,7 +44,21 @@ export type FeedInfo = {
   createdAt: string
 }
 
-export type FeedItem = FeedForderung | FeedUmfrage | FeedInfo
+export type FeedEvent = {
+  type: 'event'
+  id: string
+  title: string
+  description: string | null
+  kind: string
+  startsAt: string
+  endsAt: string | null
+  location: string | null
+  online: boolean
+  organizer: string | null
+  district: string | null
+  createdAt: string
+}
+export type FeedItem = FeedForderung | FeedUmfrage | FeedInfo | FeedEvent
 
 // Alt-Forderungen (vor dem Tag-System) auf die neuen Themenbereiche abbilden.
 const OLD_CATEGORY_TO_BEREICH: Record<string, string> = {

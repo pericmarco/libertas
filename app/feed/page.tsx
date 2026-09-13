@@ -6,11 +6,16 @@ import { areasForDemand, type FeedItem } from '@/lib/feed'
 import Link from 'next/link'
 import { LogIn, Sparkles, Vote, CalendarClock } from 'lucide-react'
 
-// „Heute in deiner Stadt" — echte Signale aus den geladenen Daten. Als
-// Modul-Funktion (nicht im Render-Body), damit die Datums-Logik gekapselt ist.
+// Datums-Logik gekapselt in Modul-Funktionen (nicht im Render-Body).
+function startOfTodayIso(): string {
+  const d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString()
+}
+
+// „Heute in deiner Stadt" — echte Signale aus den geladenen Daten.
 function todayHighlights(
   demands: { created_at: string | null }[],
   votes: { ends_at: string | null; title: string }[],
+  events: { starts_at: string; title: string }[],
 ) {
   const todayStr = new Date().toISOString().slice(0, 10)
   const now = Date.now()
@@ -21,7 +26,13 @@ function todayHighlights(
     .map(v => ({ title: v.title, days: Math.ceil((new Date(v.ends_at as string).getTime() - now) / 86_400_000) }))
     .filter(v => v.days <= 5)
     .sort((a, b) => a.days - b.days)[0]
-  return { neueHeute, aktiveUmfragen, baldFrist, hatHighlights: neueHeute > 0 || aktiveUmfragen > 0 || !!baldFrist }
+  const eventToday = events
+    .filter(e => (e.starts_at ?? '').slice(0, 10) === todayStr)
+    .sort((a, b) => a.starts_at.localeCompare(b.starts_at))[0]
+  return {
+    neueHeute, aktiveUmfragen, baldFrist, eventToday,
+    hatHighlights: neueHeute > 0 || aktiveUmfragen > 0 || !!baldFrist || !!eventToday,
+  }
 }
 
 export default async function Feed() {
@@ -61,6 +72,15 @@ export default async function Feed() {
             .in('district_id', districtIds).order('published_at', { ascending: false }).limit(8)
         : Promise.resolve({ data: [] as never[] }),
     ])
+
+  // Veranstaltungen (ab heute). Graceful: fehlt die Tabelle noch (Migration
+  // nicht eingespielt), liefert Supabase einen Fehler → data null → keine Events.
+  const { data: eventsData } = await supabase.from('events')
+    .select('id, title, description, kind, starts_at, ends_at, location, online, organizer, district_id, created_at')
+    .eq('city_id', city.id)
+    .gte('starts_at', startOfTodayIso())
+    .order('starts_at', { ascending: true })
+    .limit(20)
 
   const meinStadtteil = districtName(profile?.district_id ?? null)
 
@@ -110,6 +130,25 @@ export default async function Feed() {
     })
   }
 
+  for (const e of eventsData ?? []) {
+    items.push({
+      type: 'event',
+      id: e.id,
+      title: e.title,
+      description: e.description,
+      kind: e.kind,
+      startsAt: e.starts_at,
+      endsAt: e.ends_at,
+      location: e.location,
+      online: e.online ?? false,
+      organizer: e.organizer,
+      district: districtName(e.district_id ?? null),
+      // Einsortierung nach Ankündigungszeitpunkt, nicht nach Termin — sonst
+      // würden künftige Events den Feed dauerhaft nach oben drängen.
+      createdAt: e.created_at ?? e.starts_at,
+    })
+  }
+
   for (const n of newsData ?? []) {
     items.push({
       type: 'info',
@@ -126,7 +165,7 @@ export default async function Feed() {
 
   items.sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
 
-  const { neueHeute, aktiveUmfragen, baldFrist, hatHighlights } = todayHighlights(demandsData ?? [], votesData ?? [])
+  const { neueHeute, aktiveUmfragen, baldFrist, eventToday, hatHighlights } = todayHighlights(demandsData ?? [], votesData ?? [], eventsData ?? [])
 
   return (
     <>
@@ -145,6 +184,11 @@ export default async function Feed() {
             <div className="text-xs font-semibold uppercase tracking-wide text-blue-600">Heute in {city.name}</div>
             {hatHighlights ? (
               <div className="mt-2.5 flex flex-wrap gap-2">
+                {eventToday && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-50 px-3 py-1.5 text-sm font-medium text-purple-700">
+                    <CalendarClock size={14} /> Heute: {eventToday.title.length > 26 ? eventToday.title.slice(0, 26) + '…' : eventToday.title} · {new Date(eventToday.starts_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr
+                  </span>
+                )}
                 {neueHeute > 0 && (
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700">
                     <Sparkles size={14} /> {neueHeute} {neueHeute === 1 ? 'neuer Beitrag' : 'neue Beiträge'} heute
