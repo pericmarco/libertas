@@ -73,14 +73,26 @@ export default async function Feed() {
         : Promise.resolve({ data: [] as never[] }),
     ])
 
-  // Veranstaltungen (ab heute). Graceful: fehlt die Tabelle noch (Migration
-  // nicht eingespielt), liefert Supabase einen Fehler → data null → keine Events.
-  const { data: eventsData } = await supabase.from('events')
-    .select('id, title, description, kind, starts_at, ends_at, location, online, organizer, district_id, created_at')
-    .eq('city_id', city.id)
-    .gte('starts_at', startOfTodayIso())
-    .order('starts_at', { ascending: true })
-    .limit(20)
+  // Veranstaltungen (ab heute) + Bilder der Forderungen. Beide best-effort und
+  // getrennt von der Haupt-Abfrage: fehlt eine Tabelle/Spalte noch (Migration
+  // nicht eingespielt), bleibt der Feed intakt — nur ohne Events/Thumbnails.
+  const demandIds = (demandsData ?? []).map(d => d.id)
+  const [{ data: eventsData }, { data: imgRows }] = await Promise.all([
+    supabase.from('events')
+      .select('id, title, description, kind, starts_at, ends_at, location, online, organizer, district_id, created_at')
+      .eq('city_id', city.id)
+      .gte('starts_at', startOfTodayIso())
+      .order('starts_at', { ascending: true })
+      .limit(20),
+    demandIds.length
+      ? supabase.from('demands').select('id, image_urls').in('id', demandIds)
+      : Promise.resolve({ data: [] as { id: string; image_urls: string[] | null }[] }),
+  ])
+  const imgMap = new Map<string, string>()
+  for (const r of imgRows ?? []) {
+    const first = Array.isArray(r.image_urls) ? r.image_urls[0] : null
+    if (first) imgMap.set(r.id, first)
+  }
 
   const meinStadtteil = districtName(profile?.district_id ?? null)
 
@@ -112,6 +124,7 @@ export default async function Feed() {
       counters: c.counters,
       alternatives: c.alternatives,
       beitraege: c.beitraege,
+      image: imgMap.get(d.id) ?? null,
       createdAt: d.created_at,
     })
   }

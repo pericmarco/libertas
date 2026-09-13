@@ -17,6 +17,7 @@ export type FeedForderung = {
   counters: number
   alternatives: number
   beitraege: number
+  image: string | null
   createdAt: string
 }
 
