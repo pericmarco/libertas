@@ -48,7 +48,7 @@ export default async function Ueberblick() {
       <main className="pt-16 min-h-screen bg-gray-50">
         <div className="mx-auto max-w-2xl px-4 sm:px-6 py-8">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Überblick</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Stadt</h1>
             <p className="mt-0.5 text-sm text-gray-500">Politik, Zahlen und Entwicklungen aus {city.name}</p>
           </div>
 

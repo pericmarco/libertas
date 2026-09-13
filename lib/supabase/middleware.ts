@@ -25,8 +25,8 @@ const PUBLIC_PATHS = [
   // Abstimmen, Einreichen) erfordert weiter eine Anmeldung; die Seiten
   // selbst leiten dann zur Registrierung.
   '/dashboard', '/forderungen', '/abstimmungen', '/politiker',
-  // Neue Hauptnavigation (öffentlich lesbar wie oben): Feed, Karte, Überblick
-  '/feed', '/karte', '/ueberblick',
+  // Neue Hauptnavigation (öffentlich lesbar wie oben): Feed, Karte, Mitmachen, Stadt
+  '/feed', '/karte', '/mitmachen', '/ueberblick',
   // PWA-Assets müssen ohne Login ladbar sein
   '/manifest.webmanifest', '/icon', '/apple-icon',
 ]

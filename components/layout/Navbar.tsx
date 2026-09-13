@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutGrid, Map, ClipboardCheck, BarChart3, Plus, ShieldCheck } from 'lucide-react'
+import { LayoutGrid, Map, Handshake, Landmark, Plus, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { useCity, useCityBrand } from '@/lib/city/context'
@@ -13,10 +13,13 @@ import PlusMenu from '@/components/PlusMenu'
 import MainMenu from '@/components/layout/MainMenu'
 import { tenant } from '@/lib/tenant'
 
-// Neue Hauptnavigation: Feed · Karte · ➕ · Abstimmungen · Überblick.
-// „Forderungen", „Politiker", „Wirkung", „Dashboard" haben keinen eigenen
-// Punkt mehr — ihre Routen bleiben erreichbar (aus Feed/Plus/Überblick verlinkt).
-type NavItem = { href: string; label: string; icon: typeof LayoutGrid; show?: boolean }
+// Hauptnavigation: Feed · Karte · ➕ · Mitmachen · Stadt.
+// „Mitmachen" bündelt alle Beteiligungsformate (Forderungen, Abstimmungen/
+// Umfragen … später Bürgerbudget, Vorhaben, Verfahren). „Stadt" bündelt Politik,
+// Zahlen und Wirkung. „Forderungen", „Politiker", „Wirkung", „Dashboard",
+// „Abstimmungen" haben keinen eigenen Punkt mehr — ihre Routen bleiben
+// erreichbar (aus Feed/Plus/Mitmachen/Stadt verlinkt).
+type NavItem = { href: string; label: string; icon: typeof LayoutGrid; show?: boolean; match?: string[] }
 
 export default function Navbar() {
   const brand = useCityBrand()
@@ -60,8 +63,8 @@ export default function Navbar() {
     { href: '/karte', label: 'Karte', icon: Map, show: tenant.modules.karte },
   ]
   const rightItems: NavItem[] = [
-    { href: '/abstimmungen', label: 'Abstimmen', icon: ClipboardCheck },
-    { href: '/ueberblick', label: 'Überblick', icon: BarChart3 },
+    { href: '/mitmachen', label: 'Mitmachen', icon: Handshake, match: ['/forderungen', '/abstimmungen'] },
+    { href: '/ueberblick', label: 'Stadt', icon: Landmark, match: ['/politiker', '/wirkung', '/dashboard'] },
   ]
   const left = leftItems.filter(i => i.show !== false)
   const right = rightItems.filter(i => i.show !== false)
@@ -79,18 +82,23 @@ export default function Navbar() {
       active ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50')
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/')
+  // Ein Nav-Punkt ist auch aktiv, wenn eine seiner „untergeordneten" Routen offen ist.
+  const itemActive = (item: NavItem) => isActive(item.href) || (item.match?.some(isActive) ?? false)
 
-  const cell = (item: NavItem) => (
-    <Link
-      key={item.href}
-      href={item.href}
-      className={cn('flex flex-col items-center justify-center gap-1 transition-colors',
-        isActive(item.href) ? 'text-blue-600' : 'text-gray-500 hover:text-gray-900')}
-    >
-      <item.icon size={20} strokeWidth={isActive(item.href) ? 2.5 : 1.8} />
-      <span className="text-[10px] font-medium max-w-full truncate px-0.5">{item.label}</span>
-    </Link>
-  )
+  const cell = (item: NavItem) => {
+    const active = itemActive(item)
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        className={cn('flex flex-col items-center justify-center gap-1 transition-colors',
+          active ? 'text-blue-600' : 'text-gray-500 hover:text-gray-900')}
+      >
+        <item.icon size={20} strokeWidth={active ? 2.5 : 1.8} />
+        <span className="text-[10px] font-medium max-w-full truncate px-0.5">{item.label}</span>
+      </Link>
+    )
+  }
 
   return (
     <>
@@ -109,7 +117,7 @@ export default function Navbar() {
 
           <nav className="hidden md:flex items-center gap-1">
             {topLinks.map(item => (
-              <Link key={item.href} href={item.href} className={navLink(isActive(item.href))}>
+              <Link key={item.href} href={item.href} className={navLink(itemActive(item))}>
                 <item.icon size={16} />
                 {item.label}
               </Link>
